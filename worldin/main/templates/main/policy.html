@@ -1,0 +1,217 @@
+{% extends "main/base.html" %}
+
+{% block title %}Política de Privacidad{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Fredoka One', cursive;
+            font-size: 140%;
+            overflow-x: hidden;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            margin-bottom: 10%;
+        }
+
+        section {
+            height: auto; /* Cambiado de 70vh a auto para adaptarse al contenido */
+            scroll-snap-align: start;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center; /* Centra el texto */
+            margin-bottom: 20px; /* Agrega un margen inferior entre secciones */
+        }
+
+        .section-content h2 {
+            color: #786dce;
+            font-size: 3em;
+        }
+
+        .section-content h3 {
+            color: #786dce;
+        }
+
+        ul {
+            list-style-type: disc; /* Establece el tipo de viñetas */
+            padding-left: 20px; /* Agrega un poco de espacio a la izquierda */
+            text-align: left; /* Alinea el texto de la lista a la izquierda */
+        }
+
+        .button-condiciones {
+            background-color: rgba(106, 79, 184, 0.8);
+        }
+
+        /* Navbar */
+        nav {
+            background-color: rgba(106, 79, 184, 0.8);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item mb-3">
+                    <a class="nav-link btn btn-primary" href="{% url 'home' %}" style="background-color:#6a4fb8; color:white; border-color:white; margin-right:3%;">Inicio</a>
+                </li>
+                <li class="nav-item mb-3">
+                    <a class="nav-link btn btn-primary" href="{% url 'contact_us' %}" style="background-color:#6a4fb8; color:white; border-color:white; margin-right:3%;">Contacta con nosotros</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-primary" href="#" style="background-color:#6a4fb8; color:white; border-color:white;">Iniciar sesión</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Sección 1: TITULO -->
+    <section id="term">
+        <div class="section-content">
+            <h2>Política de privacidad</h2>
+            v1.0.0 - 10/10/2024
+        </div>
+    </section>
+
+    <!-- Sección 2: INTRODUCCION -->
+    <section id="term" style="margin-top:10%;">
+        <div class="section-content">
+            <h3>Introducción</h3>
+            <p>
+                Esta política de privacidad describe cómo recopilamos, 
+                usamos y protegemos la información personal de los usuarios que utilizan nuestra plataforma.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 3: INFORMACION QUE RECOPILAMOS -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Información que recopilamos</h3>
+            <p>
+                Recopilamos la siguiente información de los usuarios:
+            </p>
+            <ul>
+                <li>Nombre completo</li>
+                <li>Fecha de nacimiento</li>
+                <li>Imagen de perfil</li>
+                <li>Ciudad de residencia</li>
+                <li>Estado (si son residentes o están de Erasmus)</li>
+                <li>Aficiones</li>
+                <li>Nombre de usuario</li>
+                <li>Email</li>
+                <li>Artículos a la venta</li>
+                <li>Descripción del perfil</li>
+                <li>Valoraciones de artículos vendidos</li>
+                <li>Seguidores y seguidos</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Sección 4: USO DE LA INFORMACION -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Uso de la información</h3>
+            <p>
+                La información recopilada se usa para:
+            </p>
+            <ul>
+                <li>Crear y gestionar cuentas de usuario.</li>
+                <li>Facilitar la interacción entre los usuarios (seguidores, valoraciones, compra-venta de artículos, etc.).</li>
+                <li>Permitir a los usuarios publicar y gestionar artículos a la venta.</li>
+                <li>Mejorar la experiencia del usuario en nuestra plataforma.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Sección 5: ALMACENAMIENTO DE DATOS -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Almacenamiento de datos</h3>
+            <p>
+                Los datos de los usuarios se almacenan en nuestra base de datos de forma segura y son accesibles únicamente a través de la plataforma. <br>
+                No compartimos, vendemos ni alquilamos esta información a terceros.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 6: SEGURIDAD DE LA INFORMACIÓN -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Seguridad de la información</h3>
+            <p>
+                Tomamos medidas razonables para proteger la información personal de los usuarios,
+                incluyendo la implementación de medidas de seguridad técnicas y administrativas.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 7: DERECHOS DE LOS USUARIOS -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Derechos de los usuarios</h3>
+            <p>
+                Los usuarios tienen derecho a:
+            </p>
+            <ul>
+                <li>Acceder a su información personal.</li>
+                <li>Editar la corrección de datos inexactos en su perfil.</li>
+                <li>Solicitar la corrección de información inexacta en la red social.</li>
+                <li>Solicitar la eliminación de su cuenta y datos personales.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Sección 8: CAMBIOS A ESTA POLÍTICA -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Cambios a esta política</h3>
+            <p>
+                Nos reservamos el derecho de actualizar esta política de privacidad. <br>
+                Cualquier cambio será publicado en esta página con la fecha de la última actualización.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 9: CONTACTO -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Contacto</h3>
+            <p>
+                Si tienes preguntas o inquietudes sobre esta política de privacidad, puedes contactarnos en: acastealonso@gmail.com <br>
+                Para más información, visitar la <a href="{% url 'contact_us' %}">página de contacto</a>.
+            </p>
+        </div>
+    </section>
+
+    <section id="term">
+        <div class="section-content">
+            <a href="{% url 'usage' %}" class="btn btn-primary button-condiciones">CONDICIONES DE USO Y TÉRMINOS DEL SISTEMA</a>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+{% endblock %}

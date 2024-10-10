@@ -1,3 +1,193 @@
-HOLA MUNDO
-<br>
-LA PÁGINA INICIAL IRÁ AQUÍ
+{% extends "main/base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 140%;
+      overflow-x: hidden;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    section {
+      height: 70vh;
+      scroll-snap-align: start;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Estilos para la primera sección */
+    #worldin-title {
+      text-align: center;
+    }
+
+    #worldin-title h1 {
+      font-size: 4em;
+      color: #786dce;
+    }
+
+    /* Segunda sección (GIF del mundo) */
+    #world-gif {
+        background:  
+                    radial-gradient(circle, rgba(106, 79, 184, 0.8), transparent 60%);
+        height: 70vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    #world-gif img {
+      max-width: 70%;
+    }
+
+    /* Estilos para la tercera sección */
+    #features {
+      text-align: left;
+      height: 70vh;
+    }
+
+    .info-icons {
+      margin: 10% 10% 10% 10%;
+    }
+
+    .info-icons i {
+      font-size: 2em;
+      margin-right: 3%;
+    }
+
+    .info-icons span {
+      font-size: 20px;
+    }
+
+    .info-icons p{
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .info-icons span {
+          display: none;
+        }
+  
+        .info-icons p:nth-child(1)::after {
+          content: 'Descubre fiestas y eventos por todo el mundo';
+          font-size: 16px;
+        }
+  
+        .info-icons p:nth-child(2)::after {
+          content: 'Compra y vende sin parar';
+          font-size: 16px;
+        }
+  
+        .info-icons p:nth-child(3)::after {
+          content: 'Conoce las comunidades';
+          font-size: 16px;
+        }
+  
+        .info-icons p:nth-child(4)::after {
+          content: 'Descubre cientos de destinos';
+          font-size: 16px;
+        }
+    }
+
+    /* Estilo para el botón fijo */
+    .fixed-button-world {
+      position: fixed;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%); 
+      background-color: rgba(106, 79, 184, 0.8);
+      z-index: 1001;
+    }
+
+    @media (max-width: 768px) {
+      .fixed-button-world {
+        width: 80%;
+        bottom: 2%;
+        font-size: 16px;
+      }
+    }
+
+    /* Navbar */
+    nav {
+      background-color: rgba(106, 79, 184, 0.8);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+    }
+  </style>
+
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item mb-3">
+          <a class="nav-link btn btn-primary" href="contact_us" style="background-color:#6a4fb8; color:white; border-color:white; margin-right:3%;">Contacta con nosotros</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link btn btn-primary" href="#" style="background-color:#6a4fb8; color:white; border-color:white;">Iniciar sesión</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Sección 1: Título -->
+  <section id="worldin-title">
+    <div>
+      <h1>WORLDIN</h1>
+      <p>
+        ¿Tienes un viaje con amigos a algún destino en el que hay Erasmus?<br>
+        ¿Te vas de Erasmus este año y te gustaría conocer más la gente, el ambiente y la ciudad?<br>
+        Has venido al lugar correcto.
+      </p>
+    </div>
+  </section>
+
+  <!-- Sección 2: GIF del mundo -->
+  <section id="world-gif">
+    <img src="{% static 'images/rotating_earth_animated_transparent.gif' %}" alt="Rotación de la Tierra">
+  </section>
+
+  <!-- Sección 3: Funcionalidades -->
+  <section id="features">
+    <div class="info-icons">
+      <p><i class="bi bi-cup-straw"></i><span>Descubre eventos en las discotecas más punteras de cada ciudad</span></p>
+      <p><i class="bi bi-bag"></i><span>Accede a miles de artículos o publica los tuyos</span></p>
+      <p><i class="bi bi-chat-dots"></i><span>Conoce nuestras comunidades y chatea con su gente</span></p>
+      <p><i class="bi bi-geo-fill"></i><span>Visita cualquier ciudad Erasmus del mundo</span></p>
+    </div>
+  </section>
+
+  <!-- Botón fijo para explorar el mundo -->
+  <a href="#" class="btn btn-primary fixed-button-world">COMIENZA A EXPLORAR EL MUNDO</a>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+{% endblock %}
