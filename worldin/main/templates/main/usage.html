@@ -1,6 +1,6 @@
 {% extends "main/base.html" %}
 
-{% block title %}Política de Privacidad{% endblock %}
+{% block title %}Condiciones de Uso y Términos del Servicio{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -19,14 +19,11 @@
             font-family: 'Fredoka One', cursive;
             font-size: 140%;
             overflow-x: hidden;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
             margin-bottom: 10%;
         }
 
         section {
             height: auto; /* Cambiado de 70vh a auto para adaptarse al contenido */
-            scroll-snap-align: start;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -43,13 +40,14 @@
             color: #786dce;
         }
 
+        /* Estilo para las listas */
         ul {
             list-style-type: disc; /* Establece el tipo de viñetas */
             padding-left: 20px; /* Agrega un poco de espacio a la izquierda */
             text-align: left; /* Alinea el texto de la lista a la izquierda */
         }
 
-        .button-condiciones {
+        .button-policy {
             background-color: rgba(106, 79, 184, 0.8);
         }
 
@@ -88,7 +86,7 @@
     <!-- Sección 1: TITULO -->
     <section id="term">
         <div class="section-content">
-            <h2>Política de privacidad</h2>
+            <h2>Condiciones de Uso y Términos del Servicio</h2>
             v1.0.0 - 10/10/2024
         </div>
     </section>
@@ -98,107 +96,97 @@
         <div class="section-content">
             <h3>Introducción</h3>
             <p>
-                Esta política de privacidad describe cómo recopilamos, 
-                usamos y protegemos la información personal de los usuarios que utilizan nuestra plataforma.
+                Estas condiciones de uso establecen los términos bajo los cuales los usuarios pueden utilizar nuestra plataforma.
             </p>
         </div>
     </section>
 
-    <!-- Sección 3: INFORMACION QUE RECOPILAMOS -->
+    <!-- Sección 3: ACEPTACION DE LOS TERMINOS -->
     <section id="term">
         <div class="section-content">
-            <h3>Información que recopilamos</h3>
+            <h3>Aceptación de los Términos</h3>
             <p>
-                Recopilamos la siguiente información de los usuarios:
+                Al utilizar nuestra plataforma, aceptas estos términos y condiciones en su totalidad.
             </p>
-            <ul>
-                <li>Nombre completo</li>
-                <li>Fecha de nacimiento</li>
-                <li>Imagen de perfil</li>
-                <li>Ciudad de residencia</li>
-                <li>Estado (si son residentes o están de Erasmus)</li>
-                <li>Aficiones</li>
-                <li>Nombre de usuario</li>
-                <li>Email</li>
-                <li>Artículos a la venta</li>
-                <li>Descripción del perfil</li>
-                <li>Valoraciones de artículos vendidos</li>
-                <li>Seguidores y seguidos</li>
-            </ul>
         </div>
     </section>
 
-    <!-- Sección 4: USO DE LA INFORMACION -->
+    <!-- Sección 4: CAMBIOS EN LOS TERMINOS -->
     <section id="term">
         <div class="section-content">
-            <h3>Uso de la información</h3>
+            <h3>Cambios en los Términos</h3>
             <p>
-                La información recopilada se usa para:
+                Nos reservamos el derecho de modificar estos términos en cualquier momento. Te notificaremos sobre cambios significativos.
             </p>
-            <ul>
-                <li>Crear y gestionar cuentas de usuario.</li>
-                <li>Facilitar la interacción entre los usuarios (seguidores, valoraciones, compra-venta de artículos, etc.).</li>
-                <li>Permitir a los usuarios publicar y gestionar artículos a la venta.</li>
-                <li>Mejorar la experiencia del usuario en nuestra plataforma.</li>
-            </ul>
         </div>
     </section>
 
-    <!-- Sección 5: ALMACENAMIENTO DE DATOS -->
+    <!-- Sección 5: USO DEL SERVICIO -->
     <section id="term">
         <div class="section-content">
-            <h3>Almacenamiento de datos</h3>
+            <h3>Uso del Servicio</h3>
             <p>
-                Los datos de los usuarios se almacenan en nuestra base de datos de forma segura y son accesibles únicamente a través de la plataforma. <br>
-                No compartimos, vendemos ni alquilamos esta información a terceros.
+                Los usuarios deben utilizar la plataforma de manera responsable y respetuosa.
             </p>
         </div>
     </section>
 
-    <!-- Sección 6: SEGURIDAD DE LA INFORMACIÓN -->
+    <!-- Sección 6: REGISTRO Y SEGURIDAD -->
     <section id="term">
         <div class="section-content">
-            <h3>Seguridad de la información</h3>
+            <h3>Registro y Seguridad</h3>
             <p>
-                Tomamos medidas razonables para proteger la información personal de los usuarios,
-                incluyendo la implementación de medidas de seguridad técnicas y administrativas.
+                Es tu responsabilidad mantener la seguridad de tu cuenta y notificar cualquier uso no autorizado.
             </p>
         </div>
     </section>
 
-    <!-- Sección 7: DERECHOS DE LOS USUARIOS -->
+    <!-- Sección 7: CONTENIDO DEL USUARIO -->
     <section id="term">
         <div class="section-content">
-            <h3>Derechos de los usuarios</h3>
+            <h3>Contenido del Usuario</h3>
             <p>
-                Los usuarios tienen derecho a:
+                Los usuarios son responsables del contenido que publican y otorgan a la plataforma los derechos necesarios para mostrarlo.
             </p>
-            <ul>
-                <li>Acceder a su información personal.</li>
-                <li>Editar la corrección de datos inexactos en su perfil.</li>
-                <li>Solicitar la corrección de información inexacta en la red social.</li>
-                <li>Solicitar la eliminación de su cuenta y datos personales.</li>
-            </ul>
         </div>
     </section>
 
-    <!-- Sección 8: CAMBIOS A ESTA POLÍTICA -->
+    <!-- Sección 8: PROPIEDAD INTELECTUAL -->
     <section id="term">
         <div class="section-content">
-            <h3>Cambios a esta política</h3>
+            <h3>Propiedad Intelectual</h3>
             <p>
-                Nos reservamos el derecho de actualizar esta política de privacidad. <br>
-                Cualquier cambio será publicado en esta página con la fecha de la última actualización.
+                Todos los derechos de propiedad intelectual sobre la plataforma y su contenido pertenecen a nosotros.
             </p>
         </div>
     </section>
 
-    <!-- Sección 9: CONTACTO -->
+    <!-- Sección 9: LIMITACION DE RESPONSABILIDAD -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Limitación de Responsabilidad</h3>
+            <p>
+                No somos responsables de daños directos, indirectos, incidentales o consecuentes derivados de tu uso de la plataforma.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 10: LEY APLICABLE -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Ley Aplicable</h3>
+            <p>
+                Estos términos se regirán por las leyes del país en el que operamos.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 11: CONTACTO -->
     <section id="term">
         <div class="section-content">
             <h3>Contacto</h3>
             <p>
-                Si tienes preguntas o inquietudes sobre esta política de privacidad, puedes contactarnos en: acastealonso@gmail.com <br>
+                Para preguntas o aclaraciones sobre estos términos, contáctanos en: acastealonso@gmail.com <br>
                 Para más información, visitar la <a href="{% url 'contact_us' %}">página de contacto</a>.
             </p>
         </div>
@@ -206,7 +194,7 @@
 
     <section id="term">
         <div class="section-content">
-            <a href="{% url 'usage' %}" class="btn btn-primary button-condiciones">CONDICIONES DE USO Y TÉRMINOS DEL SISTEMA</a>
+            <a href="{% url 'policy' %}" class="btn btn-primary button-policy">POLÍTICA DE PRIVACIDAD</a>
         </div>
     </section>
 

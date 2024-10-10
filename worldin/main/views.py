@@ -9,3 +9,6 @@ def contact_us(request):
 
 def policy(request):
     return render(request, 'policy.html')
+
+def usage(request):
+    return render(request, 'usage.html')

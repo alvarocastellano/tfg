@@ -222,12 +222,12 @@
   <!-- Nueva Sección de botones para pantallas pequeñas -->
   <section id="buttons-section">
     <a href="{% url 'policy' %}" class="btn buttons-section-btn">Accede a nuestra política de privacidad</a>
-    <a href="#" class="btn buttons-section-btn">Condiciones de uso y términos del servicio</a>
+    <a href="{% url 'usage' %}" class="btn buttons-section-btn">Condiciones de uso y términos del servicio</a>
   </section>
 
   <!-- Botones fijos de política de privacidad y condiciones de uso -->
   <a href="{% url 'policy' %}" class="btn btn-primary fixed-button-privacy">Accede a nuestra política de privacidad</a>
-  <a href="#" class="btn btn-primary fixed-button-usage">Condiciones de uso y términos del servicio</a>
+  <a href="{% url 'usage' %}" class="btn btn-primary fixed-button-usage">Condiciones de uso y términos del servicio</a>
 
 
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
