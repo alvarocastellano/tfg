@@ -18,15 +18,19 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 LOGIN_REDIRECT_URL = '/world/'
+LOGOUT_REDIRECT_URL = '/home/'
+
 
 # Configuración SMTP para enviar emails reales
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'noreply.confirmation.worldin@gmail.com'  # Reemplaza con tu correo
-EMAIL_HOST_PASSWORD = 'aebg yhfr iktu tuno'   # Reemplaza con tu contraseña
+EMAIL_HOST_USER = 'noreply.confirmation.worldin@gmail.com'
+EMAIL_HOST_PASSWORD = 'aebg yhfr iktu tuno'
 
+# Dirección de correo predeterminada
+DEFAULT_FROM_EMAIL = 'noreply.confirmation.worldin@gmail.com'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -50,17 +54,34 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+#Si falla probar 2,3,4...
+SITE_ID = 1
+
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',  # Para usar allauth
+)
+
+
+# Configuración del email
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # O puedes usar 'none' si no quieres verificación de email
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
+        'APP': {
+            'client_id': '591159284903-ne46njmqjain4c2hf235s28tehcbic88.apps.googleusercontent.com',
+            'secret': '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',
+            'key': ''
         }
     }
 }
@@ -74,6 +95,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'worldin.urls'

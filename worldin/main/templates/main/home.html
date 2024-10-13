@@ -116,6 +116,7 @@
       transform: translateX(-50%); 
       background-color: rgba(106, 79, 184, 0.8);
       z-index: 1001;
+      border-color:white;
     }
 
     @media (max-width: 768px) {
@@ -123,6 +124,7 @@
         width: 80%;
         bottom: 2%;
         font-size: 16px;
+        border-color: white;
       }
     }
 
@@ -184,7 +186,7 @@
   </section>
 
   <!-- Botón fijo para explorar el mundo -->
-  <a href="#" class="btn btn-primary fixed-button-world">COMIENZA A EXPLORAR EL MUNDO</a>
+  <a href="{% url 'world' %}" class="btn btn-primary fixed-button-world">COMIENZA A EXPLORAR EL MUNDO</a>
 
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

@@ -39,47 +39,6 @@
             overflow: hidden;
         }
 
-        #globe {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Asegura que la esfera esté detrás del contenido */
-        }
-
-        .fixed-button-city {
-            position: fixed;
-            bottom: 10%;
-            left: 15%;
-            border-radius: 50%;
-            background-color: #6a4fb8;
-            width: 100px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-color: #6a4fb8;
-        }
-
-        .fixed-button-city i {
-            font-size: 3em;
-            color: white; /* Cambia el color del icono si lo deseas */
-        }
-
-        @media (max-width: 768px) {
-            .fixed-button-city {
-                bottom: 5%;
-                left: 5%;
-                width: 70px;
-                height: 70px;
-            }
-
-            .fixed-button-city i {
-                font-size: 2em;
-            }
-        }
-
         .fixed-button-profile {
             position: fixed;
             bottom: 10%;
@@ -112,55 +71,28 @@
             }
         }
 
-        .ui-autocomplete {
-            max-height: 200px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 1000;
-            background-color: white; /* Fondo blanco para las sugerencias */
-            border: 1px solid #6a4fb8; /* Borde morado para las sugerencias */
-        }
-
-        .ui-menu-item {
-            padding: 5px 10px; /* Añade espacio entre los elementos de la lista */
-            cursor: pointer; /* Cambia el cursor al pasar sobre las sugerencias */
-        }
-
-        .ui-menu-item:hover {
-            background-color: #f0f0f0; /* Color de fondo al pasar el cursor sobre las sugerencias */
-        }
-
-                /* Estilos CSS personalizados */
-        .input-group {
-            box-shadow: 0px 0px 5px #6a4fb8; /* Luz morada en los bordes */
-        }
-
-        .input-group-text {
-            background-color: #6a4fb8; /* Fondo morado para el botón */
-            border-color: #6a4fb8; /* Borde morado para el botón */
-        }
-
-        .btn-purple {
-            background-color: #6a4fb8; /* Fondo morado para el botón */
-            border-color: #6a4fb8; /* Borde morado para el botón */
-        }
-
-        .btn-purple:hover {
-            background-color: #7d63aa; /* Color morado más oscuro al pasar el cursor */
-            border-color: #7d63aa; /* Borde morado más oscuro al pasar el cursor */
-        }
-
-        .btn-purple:focus {
-            box-shadow: 0 0 0 0.25rem rgba(106, 79, 184, 0.5); /* Luz morada cuando está enfocado */
-        }
-
+       
     </style>
 
 </head>
 
 <body>
-   
+    {% if user.is_authenticated %}
     
+    <a href="#" class="btn btn-primary fixed-button-profile">
+        <i class="bi bi-person-fill"></i>
+    </a>
+    <a class="dropdown-item" href="#"><form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">CERRAR SESIÓN</button>
+      </form></a>
+    {% else %}
+    <div class="alert alert-danger" role="alert" style="position: fixed; bottom: 5%; left: 50%; transform: translateX(-50%);">
+        Para acceder a las demás funcionalidades es necesario estar logueado. <a href="{% url 'login' %}">Inicia sesión ahora.</a>
+    </div>
+
+    {% endif %}
+        
     
     
 

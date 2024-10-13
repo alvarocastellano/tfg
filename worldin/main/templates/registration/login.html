@@ -4,6 +4,7 @@
 
 {% block content %}
 {% load static %}
+{% load socialaccount %}
 
 <head>
   <meta charset="UTF-8">
@@ -112,14 +113,19 @@
 
         <div class="d-flex justify-content-around align-items-center" style="margin-top: 5%;">
           <div class="form-group text-center">
-            <button type="button" class="btn btn-primary btn-block" style="background-color: #786dce; font-size: 20px; width:auto; border-color: white;"> 
-              <img src="{% static 'images/color_google.png' %}" alt="Iniciar sesión con Google" style="width:20%; max-width:180px;">
-            </button>
+            <a href="{% provider_login_url 'google' %}">
+              <button type="button" class="btn btn-primary btn-block" style="background-color: #786dce; font-size: 20px; width:auto; border-color: white;"> 
+                  <img src="{% static 'images/color_google.png' %}" alt="Iniciar sesión con Google" style="width:20%; max-width:180px;">
+              </button>
+          </a>
           </div>
         
         </div>
         
       </form>
+      <div class="text-center" style="font-size:20px; color:black;">
+        <a href="{%  url 'password_reset' %}" style="color:black;"> <u>No recuerdo mi contraseña</u> </a>
+      </div>
       <hr>
         <div class="text-center" style="font-size:20px; color:black;">
           ¿Nuevo por aquí? <a href="{%  url 'register' %}" style="color:black;"> <u>Regístrate</u> </a>

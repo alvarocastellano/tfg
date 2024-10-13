@@ -1,11 +1,14 @@
 from django.shortcuts import  render
 from worldin.forms import CustomUserCreationForm, CustomAuthenticationForm
 from django.shortcuts import  render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from .models import CustomUser
+from django.views.decorators.cache import never_cache
+from django.contrib.auth.decorators import login_required
+
 
 
 def home(request):
@@ -20,6 +23,7 @@ def policy(request):
 def usage(request):
     return render(request, 'usage.html')
 
+@never_cache
 def login_user(request):
     if request.method == 'POST':
         form = CustomAuthenticationForm(data=request.POST)
@@ -84,7 +88,7 @@ def register(request):
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
-
+@never_cache
 def confirm_account(request):
     if request.method == 'POST':
         input_code = request.POST.get('code')
@@ -105,6 +109,17 @@ def confirm_account(request):
 
     return render(request, 'confirm_account.html')
 
+#NO ESTA AUN EL BACKEND
+def password_reset(request):
+    return render(request, 'password_reset.html')
+
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('home')
+
+
 def world_page(request):
     user_city = None
     if request.user.is_authenticated:
@@ -114,3 +129,4 @@ def world_page(request):
         # Otros datos del contexto
     }
     return render(request, 'world.html', context)
+
