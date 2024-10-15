@@ -76,13 +76,17 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # O puedes usar 'none' si no quieres v
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 
+SOCIALACCOUNT_ADAPTER = 'main.views.MySocialAccountAdapter'
+
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
             'client_id': '591159284903-ne46njmqjain4c2hf235s28tehcbic88.apps.googleusercontent.com',
             'secret': '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',
             'key': ''
-        }
+        },
+        'VERIFIED_EMAIL': True,
     }
 }
 

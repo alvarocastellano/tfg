@@ -8,6 +8,8 @@ from django.utils.crypto import get_random_string
 from .models import CustomUser
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.contrib.auth import get_user_model
 
 
 
@@ -102,14 +104,18 @@ def confirm_account(request):
             user.save()
             del request.session['confirmation_code']  # Limpiar la sesión
             del request.session['user_id']
-            login(request, user)  # Loguear al usuario
+            
+            # Establecer el backend antes de iniciar sesión
+            user.backend = 'django.contrib.auth.backends.ModelBackend'  # o 'allauth.account.auth_backends.AuthenticationBackend' si usas allauth
+
+            # Loguear al usuario
+            login(request, user)  
             return redirect('world')  # Redirigir a la página principal
         else:
             return render(request, 'confirm_account.html', {'error': 'Código incorrecto'})
 
     return render(request, 'confirm_account.html')
 
-#NO ESTA AUN EL BACKEND
 def password_reset(request):
     return render(request, 'password_reset.html')
 
@@ -130,3 +136,16 @@ def world_page(request):
     }
     return render(request, 'world.html', context)
 
+class MySocialAccountAdapter(DefaultSocialAccountAdapter):
+    def pre_social_login(self, request, sociallogin):
+        email = sociallogin.account.extra_data.get('email', '').lower()
+        User = get_user_model()
+
+        try:
+            # Verificar si ya existe una cuenta con ese correo electrónico
+            existing_user = User.objects.get(email=email)
+            sociallogin.state['process'] = 'login'
+            sociallogin.connect(request, existing_user)
+        except User.DoesNotExist:
+            # Si no existe el usuario, continuar con el registro normal
+            pass

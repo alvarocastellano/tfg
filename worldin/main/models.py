@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser,Group, Permission
 
 class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
     birthday = models.DateField(null=True, blank=True)
     city = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
