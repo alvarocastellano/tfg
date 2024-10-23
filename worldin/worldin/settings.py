@@ -17,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/world/'
 LOGOUT_REDIRECT_URL = '/home/'
 
@@ -116,8 +117,6 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'events'),
             os.path.join(BASE_DIR, 'main', 'templates', 'market'),
             os.path.join(BASE_DIR, 'main', 'templates', 'turism'),
-
-
 
             ],
         'APP_DIRS': True,
