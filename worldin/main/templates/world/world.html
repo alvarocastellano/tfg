@@ -1,0 +1,340 @@
+{% extends "main/base.html" %}
+
+{% block title %}Mundo {% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Importación de estilos y fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+
+    <script>
+        const STATIC_URL = "{% static '' %}";
+    </script>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        #globe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        #search-bar {
+            position: relative;
+            z-index: 10;
+        }
+
+        .fixed-button-search,
+        .fixed-button-profile {
+            position: fixed;
+            border-radius: 50%;
+            background-color: #6a4fb8;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-color: #6a4fb8;
+            z-index: 10; /* Por encima del globo */
+        }
+
+        .fixed-button-search {
+            bottom: 10%;
+            left: 15%;
+        }
+
+        .fixed-button-profile {
+            bottom: 10%;
+            right: 15%;
+        }
+
+        .fixed-button-search i,
+        .fixed-button-profile i {
+            font-size: 3em;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .fixed-button-search, .fixed-button-profile {
+                bottom: 5%;
+                width: 70px;
+                height: 70px;
+            }
+
+            .fixed-button-search i,
+            .fixed-button-profile i {
+                font-size: 2em;
+            }
+
+            .search-container {
+                width: 40%;
+                z-index: 10; /* Por encima del globo */
+
+            }
+        }
+
+        .search-container {
+            position: relative;
+            z-index: 10; /* Por encima del globo */
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .ui-autocomplete {
+            max-height: 100px;
+            overflow-y: auto;
+            z-index: 1000;
+            border: 1px solid #6a4fb8;
+        }
+
+        .input-group {
+            box-shadow: 0px 0px 5px #6a4fb8;
+        }
+
+        .input-group-text, .btn-purple {
+            background-color: #6a4fb8;
+            border-color: #6a4fb8;
+        }
+
+        .btn-purple:hover {
+            background-color: #7d63aa;
+            border-color: #7d63aa;
+        }
+
+        .btn-purple:focus {
+            box-shadow: 0 0 0 0.25rem rgba(106, 79, 184, 0.5);
+        }
+
+        .modal-dialog {
+            margin: 100px auto;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Spinner */
+        #spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 50;
+        }
+    </style>
+
+</head>
+
+<body>
+    <canvas id='globe'></canvas>
+    
+    <!--Botones fflotantes-->
+    {% if user.is_authenticated %}
+    
+    <a href="{% url 'my_profile' %}" class="btn btn-primary fixed-button-profile">
+        <i class="bi bi-person-fill"></i>
+    </a>
+    <a href="{% url 'search_users' %}" class="btn btn-primary fixed-button-search">
+        <i class="bi bi-person-plus-fill"></i>
+    </a>
+
+    {% else %}
+    <div class="alert alert-danger align-items-center" role="alert" style="position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%);">
+        Para acceder a las demás funcionalidades es necesario estar logueado. <a href="{% url 'login' %}">Inicia sesión ahora.</a>
+    </div>
+
+    {% endif %}
+
+    <!-- Buscador -->
+    <div class="search-container">
+        <div class="input-group">
+            <input type="text" class="form-control rounded-start" list="ciudades" id="city-search" placeholder="Buscar ciudad..." style="border-color: #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8;">
+            <datalist id="ciudades" style="overflow-y: auto;">
+                    <option value="Bruselas">Bélgica</option>
+                    <option value="Sofia">Bulgaria</option>
+                    <option value="Praga">Chequia</option>
+                    <option value="Copenhague">Dinamarca</option>
+                    <option value="Berlin">Alemania</option>
+                    <option value="Munich">Alemania</option>
+                    <option value="Tallin">Estonia</option>
+                    <option value="Dublin">Irlanda</option>
+                    <option value="Cork">Irlanda</option>
+                    <option value="Atenas">Grecia</option>
+                    <option value="Madrid">España</option>
+                    <option value="Sevilla">España</option>
+                    <option value="Barcelona">España</option>
+                    <option value="Paris">Francia</option>
+                    <option value="Lens">Francia</option>
+                    <option value="Marsella">Francia</option>
+                    <option value="Zagreb">Croacia</option>
+                    <option value="Split">Croacia</option>
+                    <option value="Roma">Italia</option>
+                    <option value="Salerno">Italia</option>
+                    <option value="Florencia">Italia</option>
+                    <option value="Bari">Italia</option>
+                    <option value="Luxemburgo">Luxemburgo</option>
+                    <option value="Budapest">Hungría</option>
+                    <option value="La Valeta">Malta</option>
+                    <option value="Amsterdam">Países Bajos</option>
+                    <option value="Roterdam">Países Bajos</option>
+                    <option value="Viena">Austria</option>
+                    <option value="Varsovia">Polonia</option>
+                    <option value="Lisboa">Portugal</option>
+                    <option value="Oporto">Portugal</option>
+            </datalist>
+            <button  class="btn btn-purple rounded-end text-white" id="search-button" data-bs-toggle="modal" data-bs-target="#FunctionalitiesModal">
+                Buscar
+            </button>
+        </div>
+    </div>
+
+    <div id="city-suggestions"></div>
+
+    <!-- Modal de funcionalidades de una ciudad -->
+    <div class="modal fade" id="FunctionalitiesModal" tabindex="-1" aria-labelledby="FunctionalitiesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: rgba(120, 109, 206, 0.9);">
+                <div class="modal-header align-items-center">
+                    <h5 class="modal-title align-items-center" id="city-name" style="color:white;"></h5>
+                    <h5 class="modal-title align-items-center" id="city-country" style="color:white;"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="color:white;">
+                    <div class="row">
+                        <div class="col-sm d-flex flex-column align-items-center">
+                            <div>
+                                <a href="#" class="btn btn-primary" style="background-color:#4e148c; border-radius:40%; border-color:#4e148c; width:80px; height:80px;">
+                                    <i class="bi bi-bag-fill" style="font-size: 3em;"></i>
+                                </a>
+                            </div>
+                            <div>
+                                <h5>Mercado</h5>
+                            </div>
+                        </div>
+                        <div class="col-sm d-flex flex-column align-items-center">
+                            <div class="d-flex justify-content-center align-items-center" style="width: 80px; height: 80px; background-color: #4e148c; border-radius: 40%;">
+                                <a href="#" class="btn btn-primary" style="background-color: transparent; border: none;">
+                                    <i class="fa-solid fa-martini-glass-citrus" style="font-size: 3em; color: white;"></i>
+                                </a>
+                            </div>
+                            <div>
+                                <h5>Eventos</h5>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="row mt-2 mb-5">
+                        <div class="col-sm d-flex flex-column align-items-center">
+                            <div>
+                                <a href="#" class="btn btn-primary" style="background-color:#4e148c; border-radius:40%; border-color:#4e148c; width:80px; height:80px;">
+                                    <i class="bi bi-people-fill" style="font-size: 3em;"></i>
+                                </a>
+                            </div>
+                            <div>
+                                <h5>Comunidad</h5>
+                            </div>
+                        </div>
+                        <div class="col-sm d-flex flex-column align-items-center">
+                            <div>
+                                <a href="#" class="btn btn-primary" style="background-color:#4e148c; border-color:#4e148c; border-radius:40%; width:80px; height:80px;">
+                                    <i class="bi bi-geo-alt-fill" style="font-size: 3em;"></i>
+                                </a>
+                            </div>
+                            <div>
+                                <h5>Turismo</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spinner de carga -->
+    <div class="text-center">
+        <div id="spinner" class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Cargando...</span>
+        </div>
+    </div>
+
+    <script src="{% static 'js/three.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <script>
+        $(document).ready(function() {
+    
+            $('#search-button').on('click', function(event) {
+                event.preventDefault(); // Prevenir la acción predeterminada del botón
+    
+                const cityName = $('#city-search').val(); // Obtener el valor del campo de búsqueda
+                if (!cityName) {
+                    alert('Por favor, introduce el nombre de una ciudad.');
+                    return;
+                }
+    
+    
+                // Simulación de una llamada a la API o búsqueda de datos
+                // Reemplaza esta parte con una llamada real a tu servidor si es necesario
+                setTimeout(() => {
+                    // Ejemplo de datos que podrías obtener de tu servidor
+                    const cityData = {
+                        name: cityName,
+                        country: 'País Simulado', // Cambia esto por el país real
+                        // Otras propiedades que desees mostrar
+                    };
+    
+                    // Llenar el modal con la información de la ciudad
+                    $('#city-name').text(cityData.name);
+                    $('#city-country').text(cityData.country);
+                    
+                    // Ocultar el spinner
+                    $('#spinner').hide();
+    
+                    // Mostrar el modal
+                    $('#FunctionalitiesModal').modal('show');
+                }, 1000); // Simula un retraso de 1 segundo
+            });
+        });
+    </script>
+    <script>
+        // Cuando se selecciona una ciudad
+        document.getElementById('search-button').addEventListener('click', function () {
+            const cityName = document.getElementById('city-search').value;
+            const marker = markers.find(m => m.cities.includes(cityName));
+            
+            if (!marker) {
+                alert('Ciudad no encontrada');
+                return;
+            }
+
+            // Convertir la latitud y longitud a rotación en el globo
+            const phi = (90 - marker.lat) * (Math.PI / 180);
+            const theta = (marker.lng + 180) * (Math.PI / 180);
+
+            // Aplicar la rotación al globo
+            targetRotationX = theta;
+            targetRotationY = phi;
+        });
+    </script>
+    
+</body>
+
+{% endblock %}
