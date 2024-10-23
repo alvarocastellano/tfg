@@ -22,6 +22,16 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('world/', views.world_page, name='world'),
     path('accounts/', include('allauth.urls')),
+    path('my_profile/', views.profile, name='my_profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/profile_settings/', views.profile_settings, name='profile_settings'),
+    path('profile/profile_settings/delete_account', views.delete_account, name='delete_account'),
+    path('follow/<int:user_id>/', views.follow_user, name='follow_user'),
+    path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'),
+    path('search/', views.search_users, name='search_users'),
+    path('profile/<int:user_id>/', views.other_user_profile, name='other_user_profile'),
+    path('followers_and_following/<int:user_id>/', views.followers_and_following, name='followers_and_following'),
+
     
     #path('profile/', views.profile, name='profile'),
     #path('profile/edit/', views.edit_profile, name='edit_profile'),
