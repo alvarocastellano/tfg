@@ -1,0 +1,281 @@
+{% extends "main/base.html" %}
+
+{% block title %}Perfil de {{ profile_user.username }}{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%; /* Ocupar el máximo ancho disponible */
+            padding: 0; /* Sin padding para que ocupe todo el ancho */
+        }
+
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+        }
+
+        .imagen-sin-datos {
+            width: 150px;
+            height: auto;
+        }
+
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 150px;
+                height: 150px; /* Tamaño para pantallas más grandes */
+            }
+
+            .imagen-sin-datos {
+                width: 200px;
+                height: auto;
+            }
+        }
+
+        .profile-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .profile-section p {
+            align-items: center;
+            text-align: center;
+        }
+
+        hr {
+            border: 1px solid #6a4fb8;
+            margin-left: 5%;
+            margin-right: 5%;
+        }
+
+        /* Estilos para hacer la vista más responsiva */
+        @media (max-width: 767px) {
+            .profile-top {
+                flex-direction: column;
+                text-align: center;
+            }
+            .usuario-y-nombre {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container profile-container">
+        <div class="profile-top d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{% url 'search_users' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+            </div>
+            <div>
+                {% if profile_user.profile_picture %}
+                    <img src="{{ profile_user.profile_picture.url }}" class="profile-picture" alt="Perfil de {{ profile_user.username }}">
+                {% else %}
+                    <i class="bi bi-person-circle" style="font-size: 120px; color: #a6a0d6;"></i>
+                {% endif %}
+            </div>
+            <div class="usuario-y-nombre text-center">
+                <h2>@{{ profile_user.username }}</h2>
+                <p>{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Artículos</h5>
+                    <p>0</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'followers_and_following' profile_user.id %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Seguidores</h5>
+                    <p id="followers-count">{{ followers_count }}</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'followers_and_following' profile_user.id %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Seguidos</h5>
+                    <p id="following-count">{{ following_count }}</p>
+                </a>
+            </div>
+            {% if not is_own_profile %}
+            <div class="text-center" style="margin-top: 10px;">
+                
+                    {% if is_following %}
+                        <form action="{% url 'unfollow_user' profile_user.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;" data-following="true">Dejar de seguir</button>
+                        </form>
+                    {% else %}
+                        <form action="{% url 'follow_user' profile_user.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;" data-following="false">Seguir</button>
+                        </form>
+                    {% endif %}
+                
+            </div>
+            {% endif %}
+
+            <a href="#" class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                <i class="bi bi-shop"></i>
+                PERFIL DE MERCADO
+            </a>
+
+
+        </div>
+        
+        {% if is_following or profile_user.account_visibility == 'public' %}
+            <div class="profile-section">
+                <h3>SOBRE MÍ</h3>
+                <p>
+                {% if not profile_user.description and not profile_user.birthday and not profile_user.city and not profile_user.erasmus %}
+                    <img src="{% static 'images/sobre_mi.png' %}" class="imagen-sin-datos" alt="Imagen sobre mi"><br>
+                    <b>El usuario no tiene datos guardados . . .</b>
+                {% endif %}
+                    
+                <p>{% if profile_user.description %}{{ profile_user.description }}{% endif %}</p>
+                <p>{% if profile_user.age and profile_user.show_age %}Edad: {{ profile_user.age }}{% endif %}</p>
+                <p>{% if profile_user.city %}Ciudad de residencia: {{ profile_user.city }}{% endif %}</p>
+                <p>{% if profile_user.erasmus %}Estoy de Erasmus{% endif %}</p>
+                <p>{% for hobby in profile_user.aficiones.all %}
+                    <button class=btn btn-primary style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                        {{hobby.name}}
+                    </button>
+                {% endfor %}</p>
+            </div>
+
+            <hr>
+            <div class="profile-section">
+                <h3>ARTÍCULOS A LA VENTA</h3>
+                <!-- Aquí puedes listar los artículos a la venta -->
+                <img src="{% static 'images/articulos_usuario.png' %}" class="imagen-sin-datos" style="margin-bottom:15px;" alt="Usuario sin artículos"><br>
+                <p><b>El usuario no tiene ningún artículo a la venta . . .</b></p>
+            </div>
+        </div>
+        {% else %}
+        <div class="profile-section">
+            <h3>PERFIL PRIVADO</h3>
+            <p>Para ver información de este usuario, solicita seguirle.</p>
+            <img src="{% static 'images/purple_lock.png' %}" class="imagen-sin-datos" style="margin-bottom:15px;" alt="Perfil privado"><br>
+
+        </div>
+            
+    {% endif %}
+
+    <script>
+        document.querySelectorAll('form').forEach(form => {
+            form.onsubmit = function(e) {
+                e.preventDefault(); // Previene el envío normal del formulario
+                const actionUrl = form.action;
+        
+                fetch(actionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Actualiza los contadores de seguidores y seguidos en el DOM
+                    document.querySelector('#followers-count').innerText = data.followers_count;
+                    document.querySelector('#following-count').innerText = data.following_count;
+        
+                    // Actualiza el texto del botón según el estado
+                    const button = form.querySelector('button');
+                    if (data.created) {
+                        button.innerText = 'Dejar de seguir';
+                        button.setAttribute('data-following', 'true'); // Cambia el estado
+                    } else {
+                        button.innerText = 'Seguir';
+                        button.setAttribute('data-following', 'false'); // Cambia el estado
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            };
+        });
+        
+    </script>
+    <script>
+        function setupFollowForms() {
+            document.querySelectorAll('form').forEach(form => {
+                form.onsubmit = function(e) {
+                    e.preventDefault(); // Previene el envío normal del formulario
+                    const actionUrl = form.action;
+        
+                    fetch(actionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Actualiza los contadores de seguidores y seguidos en el DOM
+                        document.querySelector('#followers-count').innerText = data.followers_count;
+                        document.querySelector('#following-count').innerText = data.following_count;
+        
+                        // Actualiza el texto del botón según el estado
+                        const button = form.querySelector('button');
+                        if (data.created) {
+                            // Cambiar el formulario a "Dejar de seguir"
+                            form.action = "{% url 'unfollow_user' profile_user.id %}";
+                            button.innerText = 'Dejar de seguir';
+                            button.setAttribute('data-following', 'true');
+                            button.classList.remove('btn-primary');
+                            button.classList.add('btn-danger');
+                        } else {
+                            // Cambiar el formulario a "Seguir"
+                            form.action = "{% url 'follow_user' profile_user.id %}";
+                            button.innerText = 'Seguir';
+                            button.setAttribute('data-following', 'false');
+                            button.classList.remove('btn-danger');
+                            button.classList.add('btn-primary');
+                        }
+        
+                        // Reinicializa el comportamiento del formulario después del cambio
+                        setupFollowForms();
+                    })
+                    .catch(error => console.error('Error:', error));
+                };
+            });
+        }
+        
+        // Ejecuta la función para configurar los formularios en la carga inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFollowForms();
+        });
+    </script>        
+    
+    
+    
+
+</body>
+
+{% endblock %}
