@@ -150,8 +150,12 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
             sociallogin.state['process'] = 'login'
             sociallogin.connect(request, existing_user)
         except User.DoesNotExist:
-            # Si no existe el usuario, continuar con el registro normal
-            return redirect(request, 'register.html')
+            # Si no existe el usuario, redirigir al formulario de registro en lugar de crear uno nuevo
+            return redirect('register')
+
+        # Si existe, continuar con el inicio de sesión
+        return super().pre_social_login(request, sociallogin)
+
 
 @login_required
 def profile(request):

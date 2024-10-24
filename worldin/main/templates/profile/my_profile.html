@@ -18,68 +18,56 @@
             font-family: 'Work Sans', sans-serif;
             color: #6a4fb8;
         }
-
         .profile-container {
             display: flex;
             flex-direction: column;
             max-width: 100%; /* Ocupar el máximo ancho disponible */
             padding: 0; /* Sin padding para que ocupe todo el ancho */
         }
-
         .profile-top {
             background-color: #6a4fb8;
             color: white;
             padding: 20px;
         }
-
         .profile-picture {
             border-radius: 50%;
             border: 4px solid #786dce;
             width: 100px;
             height: 100px;
         }
-
         .imagen-sin-datos {
             width: 150px;
             height: auto;
         }
-
         @media (min-width: 768px) {
             .profile-picture {
                 width: 150px;
                 height: 150px; /* Tamaño para pantallas más grandes */
             }
-
             .imagen-sin-datos {
                 width: 200px;
                 height: auto;
             }
         }
-
         .dropdown-menu {
             background-color: white;
         }
-
         .profile-section {
             text-align: center;
             padding: 20px;
         }
-
         .profile-section p {
             align-items: center;
             text-align: center;
         }
-
         hr {
             border: 1px solid #6a4fb8;
             margin-left: 5%;
             margin-right: 5%;
         }
-
         .bi-arrow-left-short {
             font-size: 2em;
         }
-
         /* Estilos para hacer la vista más responsiva */
         @media (max-width: 767px) {
             .profile-top {
@@ -186,8 +174,10 @@
         </div>
     </div>
 
+    <!-- Script actualizado para evitar interferencia con el logout -->
     <script>
-        document.querySelectorAll('form').forEach(form => {
+        // Solo aplica a los formularios de seguimiento
+        document.querySelectorAll('.follow-form').forEach(form => {
             form.onsubmit = function(e) {
                 e.preventDefault(); // Previene el envío normal del formulario
                 const actionUrl = form.action;
@@ -202,18 +192,9 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Actualiza los contadores de seguidores y seguidos en el DOM
-                    document.querySelector('#followers-count').innerText = data.followers_count;
-                    document.querySelector('#following-count').innerText = data.following_count;
-    
-                    // Actualiza el texto del botón según el estado
-                    const button = form.querySelector('button');
-                    if (data.created) {
-                        button.innerText = 'Dejar de seguir';
-                        button.setAttribute('data-following', 'true'); // Cambia el estado
-                    } else {
-                        button.innerText = 'Seguir';
-                        button.setAttribute('data-following', 'false'); // Cambia el estado
+                    if (data.success) {
+                        // Actualiza el texto del botón o haz cualquier otra acción
+                        alert('¡Acción realizada con éxito!');
                     }
                 })
                 .catch(error => console.error('Error:', error));
@@ -222,5 +203,4 @@
     </script>
 
 </body>
-
 {% endblock %}

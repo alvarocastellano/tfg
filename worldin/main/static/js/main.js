@@ -1,9 +1,4 @@
-let controls;
-
-// Step 1
-// Create a main function.
 function main() {
-    // Step 2
     // We now establish the core components: scene, renderer, and camera.
     const scene = new THREE.Scene();
     const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#globe') });
@@ -34,7 +29,6 @@ function main() {
         { lat: 38.7223, lng: -9.1393, cities: ['Lisboa','Oporto'], country: 'Portugal', flag: 'portugal.png' },
     ];
 
-    // Step 3
     // Let's get into the Earth itself.
 
     const map = '/static/images/earthmap.jpeg';
@@ -49,13 +43,11 @@ function main() {
     const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
     scene.add(earthMesh);
 
-    // Step 4
     // Let's light up our globe by adding some lighting effects.
     const pointLight = new THREE.PointLight(0xffffff, 1.5, 3.5,-1);
     pointLight.position.set(0.1, 0.1, 1);
     scene.add(pointLight);
 
-    // Step 5
     // Let’s make our globe more realistic by adding clouds.
     const earthCloud = '/static/images/earthCloud.png';
     const cloudGeometry = new THREE.SphereGeometry(0.51, 32, 32);
@@ -77,7 +69,6 @@ function main() {
     //const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
     //scene.add(atmosphereMesh);
 
-    // Step 6
     // To create a celestial atmosphere, we will introduce a star-ry background texture.
     const galaxy = '/static/images/galaxy.png';
     const backgroundLoader = new THREE.TextureLoader();
@@ -87,21 +78,13 @@ function main() {
         scene.background = texture; // Asignar la textura al fondo de la escena
     });
 
-    // Step 7
     // Declare and initialize variables for interaction and rotation.
     let targetRotationX = 0.0005;
     let targetRotationY = 0.00;
     let mouseX = 0, mouseXOnMouseDown = 0, mouseY = 0, mouseYOnMouseDown = 0;
     const windowHalfX = window.innerWidth / 2;
     const windowHalfY = window.innerHeight / 2;
-    const dragFactor = 0.00005;
-
-    // Controles de órbita para permitir interacción del usuario
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enablePan = false; // Desactivar el desplazamiento horizontal
-    controls.minPolarAngle = Math.PI / 3.5; // Limitar el ángulo polar mínimo
-    controls.maxPolarAngle = Math.PI - (Math.PI / 3.5); // Limitar el ángulo polar máximo
-    controls.enableDamping = true; // Habilitar amortiguación para suavizar los movimientos
+    const dragFactor = 0.0001;
 
     //marcadores
     // Step 1: Crear la función para convertir lat/lng a Vector3
@@ -155,7 +138,7 @@ function main() {
         const position = latLngToVector3(lat, lng, 0.52); // Ajusta el radio según tu esfera
         const sprite = new THREE.Sprite(markerMaterial);
         sprite.position.copy(position);
-        sprite.scale.set(0.02, 0.02, 1); // Ajusta el tamaño del marcador
+        sprite.scale.set(0.03, 0.03, 1); // Ajusta el tamaño del marcador
         earthMesh.add(sprite); // Añadir el marcador como hijo de la Tierra
         markersSprites.push(sprite); // Almacenar el sprite en el array
     });
@@ -187,8 +170,8 @@ function main() {
     let rotationSpeedX = 0;
     let rotationSpeedY = 0;
     let isDragging = false; // Variable para comprobar si el ratón está siendo arrastrado
-    const dampingFactor = 0.01; // Factor de amortiguación para que se suavice
-    const stopThreshold = 0.5; // Umbral para detener la rotación
+    const dampingFactor = 0.9; // Factor de amortiguación para que se suavice
+    const stopThreshold = 0.0001; // Umbral para detener la rotación
 
     function onDocumentMouseDown(event) {
         event.preventDefault();
@@ -248,7 +231,6 @@ function main() {
 
     const animate = () => {
         requestAnimationFrame(animate);
-        controls.update();
         render();
     }
 
