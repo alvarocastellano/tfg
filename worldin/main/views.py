@@ -14,7 +14,7 @@ from django.contrib import messages
 from datetime import datetime
 from django.http import HttpResponseRedirect, JsonResponse
 from django.db.models import Q
-from django.urls import reverse
+from django.contrib.messages import get_messages
 
 
 def home(request):
@@ -144,6 +144,10 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
         email = sociallogin.account.extra_data.get('email', '').lower()
         User = get_user_model()
 
+        # Limpiar mensajes existentes
+        storage = get_messages(request)
+        list(storage)  # Esto limpia los mensajes previos
+
         try:
             # Verificar si ya existe una cuenta con ese correo electrónico
             existing_user = User.objects.get(email=email)
@@ -182,6 +186,7 @@ def profile(request):
 @login_required
 def edit_profile(request):
     available_hobbies = Hobby.objects.all()
+    error_messages = []
 
     if request.method == 'POST':
         # Obtener el usuario actualmente autenticado
@@ -190,8 +195,8 @@ def edit_profile(request):
         selected_hobbies = request.POST.getlist('hobbies')  # Obtener aficiones seleccionadas
 
         if len(selected_hobbies) > 7:
-            messages.error(request, 'No puedes seleccionar más de 7 aficiones.')
-            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies': available_hobbies})
+            error_messages.append('No puedes seleccionar más de 7 aficiones.')
+            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies': available_hobbies, 'error_messages': error_messages})
 
         user.aficiones.set(Hobby.objects.filter(id__in=selected_hobbies))  # Actualiza las aficiones del usuario
 
@@ -201,10 +206,10 @@ def edit_profile(request):
         user.first_name = request.POST.get('name')
         user.last_name = request.POST.get('surname')
 
-                # Validar que los campos requeridos no estén vacíos
+        # Validar que los campos requeridos no estén vacíos
         if not user.username or not user.email or not user.first_name or not user.last_name:
-            messages.error(request, 'Por favor, completa todos los campos requeridos: Nombre de usuario, correo electrónico, nombre y apellidos.')
-            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies' : available_hobbies})
+            error_messages.append('Por favor, completa todos los campos requeridos: Nombre de usuario, correo electrónico, nombre y apellidos.')
+            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies' : available_hobbies, 'error_messages': error_messages})
         
         # Verificar si se proporcionó la fecha de nacimiento
         birthday = request.POST.get('birthday')
@@ -234,11 +239,14 @@ def edit_profile(request):
         # Guardar los cambios en el usuario
         user.save()
 
+        if error_messages:
+            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies': available_hobbies, 'error_messages': error_messages})
+
         # Redirigir al usuario a una página de éxito o a otra página relevante
         return redirect('my_profile')  # Cambia 'profile' por el nombre de la URL de la página de perfil
 
     # Si el método de solicitud es GET, renderiza el formulario vacío
-    return render(request, 'edit_profile.html', {'user': request.user, 'available_hobbies':available_hobbies})
+    return render(request, 'edit_profile.html', {'user': request.user, 'available_hobbies':available_hobbies, 'error_messages': error_messages})
 
 @login_required
 def profile_settings(request):

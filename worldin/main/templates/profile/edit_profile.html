@@ -109,10 +109,10 @@
 
         <h1 style="padding:5%;">EDITAR PERFIL</h1>
 
-        {% if messages %}
+        {% if error_messages %}
         <div class="alert alert-danger" style="font-size:18px;" role="alert">
-          {% for message in messages %}
-            {{ message }}<br>
+          {% for message in error_messages %}
+              {{ message }}<br>
           {% endfor %}
         </div>
       {% endif %}
