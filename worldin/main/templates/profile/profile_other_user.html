@@ -93,14 +93,14 @@
                 <a href="{% url 'search_users' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
             </div>
             <div>
-                {% if profile_user.profile_picture %}
+                {% if profile_user.profile_picture and profile_user.profile_picture.url %}
                     <img src="{{ profile_user.profile_picture.url }}" class="profile-picture" alt="Perfil de {{ profile_user.username }}">
                 {% else %}
                     <i class="bi bi-person-circle" style="font-size: 120px; color: #a6a0d6;"></i>
                 {% endif %}
             </div>
             <div class="usuario-y-nombre text-center">
-                <h2>@{{ profile_user.username }}</h2>
+                <h2>@{{ profile_user }}</h2>
                 <p>{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
             </div>
             <div class="text-center">
@@ -110,33 +110,37 @@
                 </a>
             </div>
             <div class="text-center">
-                <a href="{% url 'followers_and_following' profile_user.id %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                <a href="{% url 'followers_and_following' username=profile_user.username %}" class="text-white text-decoration-none" 
+                style="background-color: transparent; border-color: white;" id="followers-count">
                     <h5>Seguidores</h5>
-                    <p id="followers-count">{{ followers_count }}</p>
+                    <p>{{ user_followers }}</p>
                 </a>
             </div>
             <div class="text-center">
-                <a href="{% url 'followers_and_following' profile_user.id %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                <a href="{% url 'followers_and_following' username=profile_user.username %}" class="text-white text-decoration-none" 
+                style="background-color: transparent; border-color: white;" id="following-count">
                     <h5>Seguidos</h5>
-                    <p id="following-count">{{ following_count }}</p>
+                    <p>{{ user_following }}</p>
                 </a>
             </div>
             {% if not is_own_profile %}
             <div class="text-center" style="margin-top: 10px;">
-                
-                    {% if is_following %}
-                        <form action="{% url 'unfollow_user' profile_user.id %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;" data-following="true">Dejar de seguir</button>
-                        </form>
-                    {% else %}
-                        <form action="{% url 'follow_user' profile_user.id %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;" data-following="false">Seguir</button>
-                        </form>
-                    {% endif %}
-                
+                <form action="{% url 'followers_count' username=profile_user.username %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="user" value="{{ current_user.username }}" readonly/>
+                    <input type="hidden" name="follower" value="{{ profile_user.username }}" readonly/>
+                    <input type="hidden" name="value" value="{{ follow_button_value }}" readonly/>
+                    <button type="submit" class="btn" 
+                    style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                        {% if follow_button_value == 'follow' %}
+                            Seguir
+                        {% else %}
+                            Dejar de seguir
+                        {% endif %}
+                    </button>
+                </form>
             </div>
+            
             {% endif %}
 
             <a href="#" class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
@@ -184,97 +188,6 @@
         </div>
             
     {% endif %}
-
-    <script>
-        document.querySelectorAll('form').forEach(form => {
-            form.onsubmit = function(e) {
-                e.preventDefault(); // Previene el envío normal del formulario
-                const actionUrl = form.action;
-        
-                fetch(actionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Actualiza los contadores de seguidores y seguidos en el DOM
-                    document.querySelector('#followers-count').innerText = data.followers_count;
-                    document.querySelector('#following-count').innerText = data.following_count;
-        
-                    // Actualiza el texto del botón según el estado
-                    const button = form.querySelector('button');
-                    if (data.created) {
-                        button.innerText = 'Dejar de seguir';
-                        button.setAttribute('data-following', 'true'); // Cambia el estado
-                    } else {
-                        button.innerText = 'Seguir';
-                        button.setAttribute('data-following', 'false'); // Cambia el estado
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            };
-        });
-        
-    </script>
-    <script>
-        function setupFollowForms() {
-            document.querySelectorAll('form').forEach(form => {
-                form.onsubmit = function(e) {
-                    e.preventDefault(); // Previene el envío normal del formulario
-                    const actionUrl = form.action;
-        
-                    fetch(actionUrl, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Actualiza los contadores de seguidores y seguidos en el DOM
-                        document.querySelector('#followers-count').innerText = data.followers_count;
-                        document.querySelector('#following-count').innerText = data.following_count;
-        
-                        // Actualiza el texto del botón según el estado
-                        const button = form.querySelector('button');
-                        if (data.created) {
-                            // Cambiar el formulario a "Dejar de seguir"
-                            form.action = "{% url 'unfollow_user' profile_user.id %}";
-                            button.innerText = 'Dejar de seguir';
-                            button.setAttribute('data-following', 'true');
-                            button.classList.remove('btn-primary');
-                            button.classList.add('btn-danger');
-                        } else {
-                            // Cambiar el formulario a "Seguir"
-                            form.action = "{% url 'follow_user' profile_user.id %}";
-                            button.innerText = 'Seguir';
-                            button.setAttribute('data-following', 'false');
-                            button.classList.remove('btn-danger');
-                            button.classList.add('btn-primary');
-                        }
-        
-                        // Reinicializa el comportamiento del formulario después del cambio
-                        setupFollowForms();
-                    })
-                    .catch(error => console.error('Error:', error));
-                };
-            });
-        }
-        
-        // Ejecuta la función para configurar los formularios en la carga inicial
-        document.addEventListener('DOMContentLoaded', function() {
-            setupFollowForms();
-        });
-    </script>        
-    
-    
-    
 
 </body>
 

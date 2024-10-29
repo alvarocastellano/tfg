@@ -78,7 +78,7 @@
         <ul class="list-group d-block mx-5">
             {% for user in users %}
                 <li class="list-group-item">
-                    {% if user.id == request.user.id %}
+                    {% if user.username == request.user.username %}
                         <a href="{% url 'my_profile' %}">
                             {% if user.profile_picture %}
                             <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
@@ -88,7 +88,7 @@
                             {{ user.username }}
                         (YO)</a>
                     {% else %}
-                        <a href="{% url 'other_user_profile' user.id %}">
+                        <a href="{% url 'other_user_profile' user.username %}">
                             {% if user.profile_picture %}
                             <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                             {% else %}

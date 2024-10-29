@@ -102,8 +102,8 @@
 </head>
 <div class="container profile-container">
     <div class="profile-top d-flex justify-content-between align-items-center">
-        {% if request.user.id != user.id %}
-            <a href="{% url 'other_user_profile' user.id %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+        {% if request.user.username != user.username %}
+            <a href="{% url 'other_user_profile' username=user.username %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
         {% else %}
             <a href="{% url 'my_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
         {% endif %}
@@ -126,7 +126,7 @@
             <button type="submit" class="btn btn-outline-light ml-2">Ordenar</button>
         </form>
 
-        <a href="{% url 'followers_and_following' user.id %}" class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:18px;">
+        <a href="{% url 'followers_and_following' user.username %}" class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:18px;">
             <p>Reestablecer filtros</p>
         </a>
 
@@ -157,7 +157,7 @@
                             (YO)
                         </a>
                         {% else %}
-                            <a href="{% url 'other_user_profile' follow.follower.id %}">
+                            <a href="{% url 'other_user_profile' follow.follower.username %}">
                                 {% if follow.follower.profile_picture %}
                                 <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                 {% else %}
@@ -195,7 +195,7 @@
                                 (YO)
                             </a>
                         {% else %}
-                            <a href="{% url 'other_user_profile' follow.following.id %}">
+                            <a href="{% url 'other_user_profile' follow.following.username %}">
                                 {% if follow.following.profile_picture %}
                                     <img src="{{ follow.following.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                 {% else %}

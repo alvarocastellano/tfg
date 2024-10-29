@@ -3,7 +3,6 @@ from django.urls import path, include
 from main import views
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -26,17 +25,9 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/profile_settings/', views.profile_settings, name='profile_settings'),
     path('profile/profile_settings/delete_account', views.delete_account, name='delete_account'),
-    path('follow/<int:user_id>/', views.follow_user, name='follow_user'),
-    path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'),
+    path('profile/user/<str:username>/followers_count/', views.followers_count, name='followers_count'),
     path('search/', views.search_users, name='search_users'),
-    path('profile/<int:user_id>/', views.other_user_profile, name='other_user_profile'),
-    path('followers_and_following/<int:user_id>/', views.followers_and_following, name='followers_and_following'),
+    path('profile/user/<str:username>/', views.other_user_profile, name='other_user_profile'),
+    path('followers_and_following/user/<str:username>/', views.followers_and_following, name='followers_and_following'),
 
-    
-    #path('profile/', views.profile, name='profile'),
-    #path('profile/edit/', views.edit_profile, name='edit_profile'),
-    #path('logout/', views.logout_view, name='logout'),
-
-
-
-]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

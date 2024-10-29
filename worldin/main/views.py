@@ -16,7 +16,6 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from django.contrib.messages import get_messages
 
-
 def home(request):
     return render(request, 'home.html')
 
@@ -271,66 +270,49 @@ def delete_account(request):
     user.delete()  # Borra el usuario
     return redirect('home')  # Redirige a una página adecuada después de borrar
 
-@login_required
-def follow_user(request, user_id):
-    profile_user = get_object_or_404(CustomUser, id=user_id)
-
-    follow_instance, created = Follow.objects.get_or_create(follower=request.user, following=profile_user)
-
-    # Actualizar los contadores de seguidores y seguidos
-    followers_count = request.user.followers.count()  # Los seguidores del perfil
-    following_count = profile_user.following.count()  # Los seguidos del usuario actual
-
-    return JsonResponse({
-        'followers_count': followers_count,  # Actualizar seguidores del perfil
-        'following_count': following_count,  # Actualizar seguidos del usuario actual
-        'created': created,
-    })
-
-@login_required
-def unfollow_user(request, user_id):
-    profile_user = get_object_or_404(CustomUser, id=user_id)
-
-    Follow.objects.filter(follower=request.user, following=profile_user).delete()
-
-    # Actualizar los contadores de seguidores y seguidos
-    followers_count = request.user.followers.count()  # Los seguidores del perfil
-    following_count = profile_user.following.count()  # Los seguidos del usuario actual
-
-    return JsonResponse({
-        'followers_count': followers_count,  # Actualizar seguidores del perfil
-        'following_count': following_count,  # Actualizar seguidos del usuario actual
-        'created': False,
-    })
-
-
 def search_users(request):
     query = request.GET.get('q')
     users = CustomUser.objects.filter(username__icontains=query) if query else CustomUser.objects.none()  # Cambia a CustomUser
     return render(request, 'search_users.html', {'users': users})
 
 @login_required
-def other_user_profile(request, user_id):
-    profile_user = get_object_or_404(CustomUser, id=user_id)
+def followers_count(request, username):
+    user_to_follow = get_object_or_404(CustomUser, username=username)
+    
+    if request.method == "POST":
+        if request.POST['value'] == 'follow':
+            Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
+        elif request.POST['value'] == 'unfollow':
+            Follow.objects.filter(follower=request.user, following=user_to_follow).delete()
+    
+    return redirect('other_user_profile', username=user_to_follow.username)
 
-    # Comprobar si el usuario actual ya sigue al perfil
+@login_required
+def other_user_profile(request, username):
+    profile_user = get_object_or_404(CustomUser, username=username)
+    is_own_profile = profile_user == request.user
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
+    user_followers = profile_user.followers.count()
+    user_following = profile_user.following.count()
 
-    # Contar seguidores y seguidos
-    followers_count = profile_user.followers.count()
-    following_count = profile_user.following.count()
+    follow_button_value = 'unfollow' if is_following else 'follow'
 
-    return render(request, 'profile_other_user.html', {
+    context = {
         'profile_user': profile_user,
-        'followers_count': followers_count,
-        'following_count': following_count,
-        'is_following': is_following, 
-    })
+        'is_own_profile': is_own_profile,
+        'is_following': is_following,
+        'user_followers': user_followers,
+        'user_following': user_following,
+        'follow_button_value': follow_button_value,
+        'current_user': request.user,
+    }
+    
+    return render(request, 'profile_other_user.html', context)
 
 
 @login_required
-def followers_and_following(request, user_id):
-    profile_user = get_object_or_404(CustomUser, id=user_id)
+def followers_and_following(request, username):
+    profile_user = get_object_or_404(CustomUser, username=username)
     
     # Capturar parámetros de búsqueda y ordenación
     search_query = request.GET.get('search', '')

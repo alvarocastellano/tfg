@@ -106,13 +106,13 @@
                 </a>
             </div>
             <div class="text-center">
-                <a href="{% url 'followers_and_following' request.user.id %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                <a href="{% url 'followers_and_following' username=request.user.username %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Seguidores</h5>
                     <p>{% if followers_count == 0 %} 0 {%else%}{{ followers_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
-                <a href="{% url 'followers_and_following' request.user.id %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                <a href="{% url 'followers_and_following' username=request.user.username %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Seguidos</h5>
                     <p>{% if following_count == 0 %} 0 {%else%}{{ following_count }} {% endif %}</p>
                 </a>

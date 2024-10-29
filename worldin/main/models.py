@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
@@ -32,14 +33,13 @@ class CustomUser(AbstractUser):
     groups = models.ManyToManyField(Group, verbose_name='groups', blank=True, related_name='customuser_set')
     user_permissions = models.ManyToManyField(Permission, verbose_name='user permissions', blank=True, related_name='customuser_set')
 
-
-# Modelo para gestionar la relación de seguimiento entre usuarios
 class Follow(models.Model):
-    follower = models.ForeignKey(CustomUser, related_name='following', on_delete=models.CASCADE)
-    following = models.ForeignKey(CustomUser, related_name='followers', on_delete=models.CASCADE)
+    follower = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='following', on_delete=models.CASCADE)
+    following = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='followers', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('follower', 'following')  # Asegura que un usuario no pueda seguir a otro más de una vez
+        unique_together = ('follower', 'following')  # Un usuario no puede seguir al mismo usuario más de una vez
 
     def __str__(self):
         return f"{self.follower.username} follows {self.following.username}"
