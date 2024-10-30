@@ -68,6 +68,29 @@
             font-size: 2em;
         }
 
+        .user-info {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            color: black;
+            flex-grow: 1;
+            margin-bottom: 10px;
+        }
+        .user-info a {
+            color: black;
+            margin-right: 5px;
+        }
+        .user-info span {
+            white-space: nowrap;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
         @media (min-width: 768px) {
             .profile-picture {
                 width: 100px;
@@ -77,6 +100,15 @@
             .imagen-sin-datos {
                 width: 200px;
                 height: auto;
+            }
+
+            .action-buttons {
+                flex-wrap: nowrap;
+                margin-left: auto;
+            }
+
+            .usuario-y-nombre {
+                margin-bottom: 15px;
             }
         }
     </style>
@@ -88,36 +120,54 @@
             <h1>Buscar Usuarios</h1>
         </div>
         <form method="GET">
-            <input type="text" name="q" placeholder="Buscar por nombre de usuario" style="width:300px;" class="mt-5">
-            <button type="submit">Buscar</button>
+            <input type="text" name="q" placeholder="Buscar por nombre de usuario" style="height:45px; width: 300px; border: 2px solid #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8; border-radius: 20px;" class="mt-5">
+            <button type="submit" style="background-color: #6a4fb8; color: white; border: none; border-radius: 20px; padding: 10px 20px; cursor: pointer;">Buscar</button>
+
         </form>
 
-        <img src="{% static 'images/shake_hands.png' %}" alt="Manos unidas en saludo cordial" style="width:200px;" class="d-block mx-auto"><br>
-
-        <ul class="list-group d-block">
+        <ul class="list-group d-block mt-5">
             {% if users|length == 0 and request.GET.q %}
-                <li class="list-group-item"><p>No se encuentran usuarios.</p></li>
+                <li class="list-group-item">
+                    <div style="text-align: center;">
+                        <p style="display: inline;">No se encuentran usuarios.</p>
+                        <a style="display: inline; text-decoration: underline;" href="{% url 'search_users' %}">¿Deseas reestablecer filtros?</a>
+                    </div>
+                </li>
             {% endif %}
             {% for user in users %}
                 <li class="list-group-item">
-                    {% if user.username == request.user.username %}
-                        <a href="{% url 'my_profile' %}">
-                    {% else %}
-                        <a href="{% url 'other_user_profile' user.username %}">
-                    {% endif %}
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                    <div class="user-info">
+                        {% if user.username == request.user.username %}
+                            <a href="{% url 'my_profile' %}">
                         {% else %}
-                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                            <a href="{% url 'other_user_profile' user.username %}">
                         {% endif %}
-                        <span>{{ user.username }}{% if user.username == request.user.username %} (VER MI PERFIL){% endif %}</span>
-                    </a>
-                    <a href="#" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
-                        VER PERFIL
-                    </a>
-                    <a href="#" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
-                        VER PERFIL DE MERCADO
-                    </a>
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                            {% else %}
+                                <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                            {% endif %}
+                            <div class="usuario-y-nombre mt-2">
+                                <p style="font-size: 20px;"><strong>@{{ user.username }}</strong></p>
+                                <p style="font-size: 16px;">{{ user.first_name }} {{ user.last_name }}</p>
+                            </div>
+
+                        </a>
+                    </div>
+                    <div class="action-buttons d-none d-md-block">
+                        {% if user.username != request.user.username %}
+                            <a href="{% url 'other_user_profile' user.username %}" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                                VER PERFIL
+                            </a>
+                            <a href="#" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                                ENVIAR MENSAJE
+                            </a>
+                        {% else %}
+                            <a href="{% url 'my_profile' %}" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                                VER MI PERFIL
+                            </a>
+                        {% endif %}
+                    </div>
                 </li>
                 <hr class="dropdown-divider">
             {% endfor %}

@@ -131,10 +131,36 @@ def logout_view(request):
 
 def world_page(request):
     user_city = None
+    total_alerts = 0
+
+    
     if request.user.is_authenticated:
+        user = request.user
+        complete_profile_alerts = 0
+        pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+        if user.birthday is None:
+            complete_profile_alerts+=1
+        
+        if user.city=="":
+            complete_profile_alerts+=1
+
+        if user.description=="":
+            complete_profile_alerts+=1
+        
+        if user.profile_picture=="":
+            complete_profile_alerts+=1
+
+        total_alerts = pending_requests_count + complete_profile_alerts
+
         user_city = request.user.city.split(',')[0] if request.user.city else None
+
+    else:
+        pending_requests_count = 0
+
     context = {
         'user_city': user_city,
+        'total_alerts': total_alerts,
     }
     return render(request, 'world.html', context)
 
@@ -163,6 +189,7 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
 @login_required
 def profile(request):
     user = request.user
+    complete_profile_alerts = 0
 
     # Calcular la edad
     if user.birthday:
@@ -171,11 +198,30 @@ def profile(request):
     else:
         age = None
 
+    
+
+    if user.birthday is None:
+        complete_profile_alerts+=1
+    
+    if user.city=="":
+        complete_profile_alerts+=1
+
+    if user.description=="":
+        complete_profile_alerts+=1
+    
+    if user.profile_picture=="":
+        complete_profile_alerts+=1
+
+    if len(user.aficiones.all()) == 0:
+        complete_profile_alerts+=1
+
     # Contar seguidores y seguidos
     followers_count = user.followers.count()  # Suponiendo que tienes una relación de muchos a muchos
     following_count = user.following.count()  # Suponiendo que tienes una relación de muchos a muchos
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+
+    total_alerts = pending_requests_count + complete_profile_alerts
 
     return render(request, 'my_profile.html', {
         'user': user,
@@ -183,6 +229,8 @@ def profile(request):
         'followers_count': followers_count,
         'following_count': following_count,
         'pending_requests_count': pending_requests_count,
+        'complete_profile_alerts': complete_profile_alerts,
+        'total_alerts' : total_alerts,
     })
 
 @login_required
@@ -410,14 +458,14 @@ def accept_follow_request(request, request_id):
         # Crear relación de seguimiento y actualizar el estado de la solicitud
         Follow.objects.create(follower=follow_request.sender, following=follow_request.receiver)
         follow_request.delete()
-    return redirect('followers_and_following', username=request.user.username)
+    return redirect('follow_requests')
 
 @login_required
 def reject_follow_request(request, request_id):
     follow_request = get_object_or_404(FollowRequest, id=request_id, receiver=request.user)
     if follow_request.status == 'pending':
         follow_request.delete()
-    return redirect('followers_and_following', username=request.user.username)
+    return redirect('follow_requests')
 
 @login_required
 def follow_requests(request):

@@ -101,6 +101,14 @@
         </div>
 
         <ul class="list-group d-block">
+            {% if not pending_requests%}
+                <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+                    No hay solicitudes de seguimiento pendientes.
+                    <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endif %}
             {% for follow_request in pending_requests %}
                 <li class="list-group-item">
                     <div class="user-info">
@@ -110,7 +118,7 @@
                             <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
                         {% endif %}
                         <a href="{% url 'other_user_profile' follow_request.sender.username %}">@{{ follow_request.sender.username }}</a>
-                        <span>quiere seguirte</span>
+                        <span>ha solicitado seguirte.</span>
                     </div>
                     <div class="action-buttons">
                         <form action="{% url 'accept_follow_request' follow_request.id %}" method="POST">

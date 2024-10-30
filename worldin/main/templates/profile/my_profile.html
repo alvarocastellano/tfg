@@ -122,14 +122,20 @@
                     <i class="bi bi-list" style="color:white; font-size: 2.5em;"></i>
                     
                     <!-- Círculo de notificación para solicitudes pendientes -->
-                    {% if pending_requests_count > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {{ pending_requests_count }}
+                    {% if total_alerts > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:18px;">
+                            {{ total_alerts }}
                         </span>
                     {% endif %}
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{% url 'edit_profile' %}">Editar perfil</a></li> 
+                    <li>
+                        <a class="dropdown-item" href="{% url 'edit_profile' %}">
+                            Editar perfil
+                            {% if complete_profile_alerts > 0 %}
+                                <span class="badge bg-danger ms-2">{{ complete_profile_alerts }}</span>
+                            {% endif %}
+                        </a></li> 
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="{% url 'profile_settings' %}">Configuración</a></li>
                     <li><hr class="dropdown-divider"></li>
@@ -163,6 +169,23 @@
             </a>
         </div>
         
+        {% if complete_profile_alerts > 0 %}
+            <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+                Aún puedes completar más tu perfil...
+                <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endif %}
+
+        {% if pending_requests_count > 0 %}
+            <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+                Tienes solicitudes de seguimiento pendientes...
+                <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endif %}
 
         <div class="profile-section">
             <h3>SOBRE MÍ</h3>
