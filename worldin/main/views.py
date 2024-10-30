@@ -151,6 +151,9 @@ def world_page(request):
         if user.profile_picture=="":
             complete_profile_alerts+=1
 
+        if len(user.aficiones.all()) == 0:
+            complete_profile_alerts+=1
+
         total_alerts = pending_requests_count + complete_profile_alerts
 
         user_city = request.user.city.split(',')[0] if request.user.city else None
@@ -233,70 +236,127 @@ def profile(request):
         'total_alerts' : total_alerts,
     })
 
+def is_profile_complete(user):
+    return (
+        user.birthday is not None and
+        user.city != "" and
+        user.description != "" and
+        user.profile_picture != "" and
+        user.aficiones.exists()
+    )
+
+
 @login_required
 def edit_profile(request):
     available_hobbies = Hobby.objects.all()
     error_messages = []
+    complete_profile_alerts = 0
+
+    if request.user.birthday is None:
+        complete_profile_alerts += 1
+    if request.user.city == "":
+        complete_profile_alerts += 1
+    if request.user.description == "":
+        complete_profile_alerts += 1
+    if request.user.profile_picture == "":
+        complete_profile_alerts += 1
+    if len(request.user.aficiones.all()) == 0:
+        complete_profile_alerts += 1
 
     if request.method == 'POST':
-        # Obtener el usuario actualmente autenticado
         user = request.user
+        selected_hobbies = request.POST.getlist('hobbies')
 
-        selected_hobbies = request.POST.getlist('hobbies')  # Obtener aficiones seleccionadas
-
+        # Verificar número de aficiones seleccionadas
         if len(selected_hobbies) > 7:
             error_messages.append('No puedes seleccionar más de 7 aficiones.')
-            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies': available_hobbies, 'error_messages': error_messages})
+            return render(request, 'edit_profile.html', {
+                'user': user,
+                'available_hobbies': available_hobbies,
+                'error_messages': error_messages,
+                'complete_profile_alerts': complete_profile_alerts
+            })
 
-        user.aficiones.set(Hobby.objects.filter(id__in=selected_hobbies))  # Actualiza las aficiones del usuario
+        # Actualizar aficiones
+        user.aficiones.set(Hobby.objects.filter(id__in=selected_hobbies))
 
-        # Procesar los datos del formulario
+        # Procesar datos del formulario
         user.username = request.POST.get('username')
         user.email = request.POST.get('email')
         user.first_name = request.POST.get('name')
         user.last_name = request.POST.get('surname')
 
-        # Validar que los campos requeridos no estén vacíos
         if not user.username or not user.email or not user.first_name or not user.last_name:
-            error_messages.append('Por favor, completa todos los campos requeridos: Nombre de usuario, correo electrónico, nombre y apellidos.')
-            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies' : available_hobbies, 'error_messages': error_messages})
-        
-        # Verificar si se proporcionó la fecha de nacimiento
+            error_messages.append('Por favor, completa todos los campos obligatorios, marcados con "*".')
+            return render(request, 'edit_profile.html', {
+                'user': user,
+                'available_hobbies': available_hobbies,
+                'error_messages': error_messages,
+                'complete_profile_alerts': complete_profile_alerts
+            })
+
+        # Procesar cumpleaños
         birthday = request.POST.get('birthday')
-        if birthday:
-            user.birthday = birthday
-        else:
-            user.birthday = None
-        
+        user.birthday = birthday if birthday else None
+
+        # Actualizar otros datos
         user.city = request.POST.get('city')
         user.description = request.POST.get('description')
 
-        # Procesar la eliminación de la foto de perfil, si se solicita
+        # Eliminar foto de perfil
         if 'eliminar_foto_perfil' in request.POST:
-            # Eliminar la foto de perfil actual
             user.profile_picture.delete()
             user.save()
             return HttpResponseRedirect(request.path)
 
-        # Procesar la imagen de perfil, si se proporciona
+        # Procesar nueva foto de perfil
         if request.FILES.get('profile_photo'):
             user.profile_picture = request.FILES.get('profile_photo')
 
+        # Procesar Erasmus
         erasmus = request.POST.get('erasmus', False)
-
         user.erasmus = erasmus
 
-        # Guardar los cambios en el usuario
+        # Procesar la eliminación de seguidores
+        if 'remove_follower' in request.POST:
+            follower_id = request.POST.get('follower_id')
+            if follower_id:
+                try:
+                    follower = CustomUser.objects.get(id=follower_id)
+                    # Verificar que el usuario logueado tiene al seguidor en su lista de seguidores
+                    if follower in user.followers.all():
+                        user.followers.remove(follower)
+                    else:
+                        error_messages.append('El usuario no es un seguidor.')
+                except CustomUser.DoesNotExist:
+                    error_messages.append('El seguidor no existe.')
+
+        # Verificar si el perfil está completo
+        profile_is_now_complete = (
+            user.birthday and user.city and user.description and user.profile_picture and user.aficiones.exists()
+        )
+        if profile_is_now_complete and not user.profile_completed:
+            user.profile_completed = True
+            request.session['profile_completed_recently'] = True
+
         user.save()
 
         if error_messages:
-            return render(request, 'edit_profile.html', {'user': user, 'available_hobbies': available_hobbies, 'error_messages': error_messages})
+            return render(request, 'edit_profile.html', {
+                'user': user,
+                'available_hobbies': available_hobbies,
+                'error_messages': error_messages,
+                'complete_profile_alerts': complete_profile_alerts
+            })
 
-        # Redirigir al usuario a una página de éxito o a otra página relevante
-        return redirect('my_profile')  # Cambia 'profile' por el nombre de la URL de la página de perfil
+        return redirect('my_profile')
 
-    # Si el método de solicitud es GET, renderiza el formulario vacío
-    return render(request, 'edit_profile.html', {'user': request.user, 'available_hobbies':available_hobbies, 'error_messages': error_messages})
+    return render(request, 'edit_profile.html', {
+        'user': request.user,
+        'available_hobbies': available_hobbies,
+        'error_messages': error_messages,
+        'complete_profile_alerts': complete_profile_alerts
+    })
 
 @login_required
 def profile_settings(request):
@@ -362,6 +422,7 @@ def followers_count(request, username):
 
 @login_required
 def other_user_profile(request, username):
+    request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     profile_user = get_object_or_404(CustomUser, username=username)
     is_own_profile = profile_user == request.user
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
@@ -388,6 +449,7 @@ def other_user_profile(request, username):
 
 @login_required
 def followers_and_following(request, username):
+    request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     profile_user = get_object_or_404(CustomUser, username=username)
     
     # Capturar parámetros de búsqueda y ordenación

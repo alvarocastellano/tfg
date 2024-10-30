@@ -109,6 +109,58 @@
 
         <h1 style="padding:5%;">EDITAR PERFIL</h1>
 
+        {% if complete_profile_alerts == 1 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>90%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 2 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>80%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 3 %}
+          <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+            <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            Tu perfil está al <strong>70%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+            
+          </div>
+          
+        {% elif complete_profile_alerts == 4 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>60%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 5 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>50%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 0 %}
+        <div id="alertMessage" class="alert alert-success" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <i class="bi bi-trophy-fill"></i>
+          Tu perfil está actualmente <strong>100%.</strong> 
+          
+        </div>
+      {% endif %}
+
         {% if error_messages %}
         <div class="alert alert-danger" style="font-size:18px;" role="alert">
           {% for message in error_messages %}
@@ -119,22 +171,22 @@
 
         <div class="col-md-5">
           <div class="form-group">
-            <label for="text">Nombre de usuario:</label>
+            <label for="text">Nombre de usuario: *</label>
             <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}">
           </div>
 
           <div class="form-group">
-            <label for="email">Correo electrónico:</label>
+            <label for="email">Correo electrónico: *</label>
             <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
           </div>
 
           <div class="form-group">
-            <label for="name">Nombre:</label>
+            <label for="name">Nombre: *</label>
             <input type="text" class="form-control" id="name" name="name" value="{{ user.first_name }}">
           </div>
 
           <div class="form-group">
-            <label for="surname">Apellido:</label>
+            <label for="surname">Apellido: *</label>
             <input type="text" class="form-control" id="surname" name="surname" value="{{ user.last_name }}">
           </div>
 

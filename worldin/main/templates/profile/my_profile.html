@@ -168,6 +168,16 @@
                 PERFIL DE MERCADO
             </a>
         </div>
+        {% if profile_completed_recently %}
+            <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+                ¡Enhorabuena! Has completado tu perfil al 100%
+                <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endif %}
+
+
         
         {% if complete_profile_alerts > 0 %}
             <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">

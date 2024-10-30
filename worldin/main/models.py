@@ -17,6 +17,7 @@ class CustomUser(AbstractUser):
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True)
     erasmus = models.BooleanField(default=False)
     show_age = models.BooleanField(default=True)  # Nuevo campo para mostrar edad
+    profile_completed = models.BooleanField(default=False)
     account_visibility = models.CharField(
         max_length=10,
         choices=[

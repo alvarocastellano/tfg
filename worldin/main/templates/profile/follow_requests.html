@@ -108,6 +108,11 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
+                <hr style="margin-top:5%;">
+                <h3>Descubre nuevos usuarios</h3>
+                <a class="btn btn-primary mt-5" href="{% url 'search_users' %}" style="background-color:#6a4fb8; color:white; border-color:white; font-size:18px;">Buscar usuarios</a>
+
+
             {% endif %}
             {% for follow_request in pending_requests %}
                 <li class="list-group-item">
