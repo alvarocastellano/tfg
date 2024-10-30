@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
-from .models import CustomUser, Hobby, Follow
+from .models import CustomUser, Hobby, Follow, FollowRequest
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -175,11 +175,14 @@ def profile(request):
     followers_count = user.followers.count()  # Suponiendo que tienes una relación de muchos a muchos
     following_count = user.following.count()  # Suponiendo que tienes una relación de muchos a muchos
 
+    pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+
     return render(request, 'my_profile.html', {
         'user': user,
         'age': age,
         'followers_count': followers_count,
         'following_count': following_count,
+        'pending_requests_count': pending_requests_count,
     })
 
 @login_required
@@ -250,16 +253,27 @@ def edit_profile(request):
 @login_required
 def profile_settings(request):
     user = request.user
+
+    has_pending_requests = user.follow_requests_received.filter(status='pending').exists()
     
     if request.method == 'POST':
-        # Actualiza los campos del usuario
-        user.show_age = request.POST.get('show_age') == 'on'  # Convierte a booleano
-        user.account_visibility = request.POST.get('account_visibility')
+        show_age = request.POST.get('show_age') == 'on'
+        account_visibility = request.POST.get('account_visibility')
+
+        # Comprobar si intenta cambiar a pública con solicitudes pendientes
+        if has_pending_requests and account_visibility == 'public' and user.account_visibility == 'private':
+            messages.warning(request, "Para hacer tu cuenta pública, primero debes aceptar o rechazar todas las solicitudes de seguimiento pendientes.")
+            return redirect('profile_settings')
+
+        # Guardar cambios
+        user.show_age = show_age
+        user.account_visibility = account_visibility
         user.save()
-        return redirect('my_profile')  # Redirige al perfil después de guardar los cambios
+        return redirect('my_profile')
     
     context = {
-        'user': user
+        'user': user,
+        'has_pending_requests': has_pending_requests,
     }
     
     return render(request, 'profile_settings.html', context)
@@ -272,7 +286,11 @@ def delete_account(request):
 
 def search_users(request):
     query = request.GET.get('q')
-    users = CustomUser.objects.filter(username__icontains=query) if query else CustomUser.objects.none()  # Cambia a CustomUser
+    users = CustomUser.objects.exclude(username=request.user.username)
+
+    if query:
+        users = CustomUser.objects.filter(username__icontains=query)
+    
     return render(request, 'search_users.html', {'users': users})
 
 @login_required
@@ -281,8 +299,15 @@ def followers_count(request, username):
     
     if request.method == "POST":
         if request.POST['value'] == 'follow':
-            Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
+            # Verificar visibilidad de la cuenta
+            if user_to_follow.account_visibility == 'private' and not Follow.objects.filter(follower=request.user, following=user_to_follow).exists():
+                # Crear una solicitud de seguimiento si es cuenta privada
+                FollowRequest.objects.get_or_create(sender=request.user, receiver=user_to_follow)
+            else:
+                # Si es cuenta pública, seguir directamente
+                Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
         elif request.POST['value'] == 'unfollow':
+            # Eliminar seguimiento
             Follow.objects.filter(follower=request.user, following=user_to_follow).delete()
     
     return redirect('other_user_profile', username=user_to_follow.username)
@@ -295,6 +320,8 @@ def other_user_profile(request, username):
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
 
+    pending_follow_request = FollowRequest.objects.filter(sender=request.user, receiver=profile_user, status='pending').first()
+
     follow_button_value = 'unfollow' if is_following else 'follow'
 
     context = {
@@ -305,6 +332,7 @@ def other_user_profile(request, username):
         'user_following': user_following,
         'follow_button_value': follow_button_value,
         'current_user': request.user,
+        'pending_follow_request': pending_follow_request
     }
     
     return render(request, 'profile_other_user.html', context)
@@ -361,3 +389,37 @@ def followers_and_following(request, username):
     }
     
     return render(request, 'followers_and_following.html', context)
+
+
+def remove_follower(request, follower_id):
+    if request.method == "POST":
+        follow_instance = get_object_or_404(Follow, follower_id=follower_id, following=request.user)
+        follow_instance.delete()
+        return redirect('followers_and_following', username=request.user.username)
+
+def unfollow_user(request, following_id):
+    if request.method == "POST":
+        follow_instance = get_object_or_404(Follow, follower=request.user, following_id=following_id)
+        follow_instance.delete()
+        return redirect('followers_and_following', username=request.user.username)
+    
+@login_required
+def accept_follow_request(request, request_id):
+    follow_request = get_object_or_404(FollowRequest, id=request_id, receiver=request.user)
+    if follow_request.status == 'pending':
+        # Crear relación de seguimiento y actualizar el estado de la solicitud
+        Follow.objects.create(follower=follow_request.sender, following=follow_request.receiver)
+        follow_request.delete()
+    return redirect('followers_and_following', username=request.user.username)
+
+@login_required
+def reject_follow_request(request, request_id):
+    follow_request = get_object_or_404(FollowRequest, id=request_id, receiver=request.user)
+    if follow_request.status == 'pending':
+        follow_request.delete()
+    return redirect('followers_and_following', username=request.user.username)
+
+@login_required
+def follow_requests(request):
+    pending_requests = request.user.follow_requests_received.filter(status='pending')
+    return render(request, 'follow_requests.html', {'pending_requests': pending_requests})

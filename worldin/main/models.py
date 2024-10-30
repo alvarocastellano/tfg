@@ -43,3 +43,24 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"{self.follower.username} follows {self.following.username}"
+    
+class FollowRequest(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='follow_requests_sent', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='follow_requests_received', on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('pending', 'Pendiente'),
+            ('accepted', 'Aceptada'),
+            ('rejected', 'Rechazada')
+        ],
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('sender', 'receiver')
+
+    def __str__(self):
+        return f"{self.sender.username} solicita seguir a {self.receiver.username}"
+

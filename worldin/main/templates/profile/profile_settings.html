@@ -80,6 +80,11 @@
     </div>
 
     <div class="container mt-4">
+      {% if has_pending_requests %}
+        <div id="alertMessage" class="alert alert-warning" style="display: none; font-size: 20px;">
+          Para hacer tu cuenta pública, primero debes aceptar o rechazar todas las solicitudes de seguimiento pendientes.
+        </div>
+      {% endif %}
       <form method="POST" action="{% url 'profile_settings' %}">
         {% csrf_token %}
         
@@ -165,6 +170,19 @@
     </div>
 
   </div>
+
+  <script>
+    // Mostrar el mensaje de advertencia si tiene solicitudes pendientes y elige cuenta pública
+    document.getElementById("account_visibility").addEventListener("change", function () {
+      const hasPendingRequests = {{ has_pending_requests|yesno:"true,false" }};
+      const visibilityOption = this.value;
+      if (hasPendingRequests && visibilityOption === "public") {
+        document.getElementById("alertMessage").style.display = "block";
+      } else {
+        document.getElementById("alertMessage").style.display = "none";
+      }
+    });
+  </script>
 
 </body>
 

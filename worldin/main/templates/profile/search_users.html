@@ -18,13 +18,13 @@
             font-family: 'Work Sans', sans-serif;
             color: #6a4fb8;
             align-items: center;
-            text-align:center;
+            text-align: center;
         }
         .profile-container {
             display: flex;
             flex-direction: column;
-            max-width: 100%; /* Ocupar el máximo ancho disponible */
-            padding: 0; /* Sin padding para que ocupe todo el ancho */
+            max-width: 100%;
+            padding: 0;
         }
 
         .profile-top {
@@ -36,8 +36,32 @@
         .profile-picture {
             border-radius: 50%;
             border: 4px solid #786dce;
-            width: 100px;
-            height: 100px;
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        .list-group {
+            margin-right: 20%;
+            margin-left: 20%;
+        }
+
+        .list-group-item {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centra el contenido en el eje horizontal */
+        }
+
+        .list-group-item a {
+            color: black; /* Cambia el color del texto a negro */
+            text-decoration: none; /* Elimina el subrayado */
+            flex-grow: 1; /* Permite que el texto ocupe el espacio disponible */
+            display: flex;
+            align-items: center; /* Alinea verticalmente el contenido */
+        }
+
+        .list-group-item img {
+            margin-right: 10px; /* Espacio entre la imagen y el texto */
         }
 
         .bi-arrow-left-short {
@@ -46,8 +70,8 @@
 
         @media (min-width: 768px) {
             .profile-picture {
-                width: 150px;
-                height: 150px; /* Tamaño para pantallas más grandes */
+                width: 100px;
+                height: 100px; /* Tamaño para pantallas más grandes */
             }
 
             .imagen-sin-datos {
@@ -55,16 +79,12 @@
                 height: auto;
             }
         }
-
-
-        
     </style>
 </head>
 <body>
     <div class="container profile-container">
         <div class="profile-top d-flex justify-content-between align-items-center">
             <a href="{% url 'world' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
-
             <h1>Buscar Usuarios</h1>
         </div>
         <form method="GET">
@@ -74,33 +94,34 @@
 
         <img src="{% static 'images/shake_hands.png' %}" alt="Manos unidas en saludo cordial" style="width:200px;" class="d-block mx-auto"><br>
 
-
-        <ul class="list-group d-block mx-5">
+        <ul class="list-group d-block">
+            {% if users|length == 0 and request.GET.q %}
+                <li class="list-group-item"><p>No se encuentran usuarios.</p></li>
+            {% endif %}
             {% for user in users %}
                 <li class="list-group-item">
                     {% if user.username == request.user.username %}
                         <a href="{% url 'my_profile' %}">
-                            {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
-                            {% else %}
-                            <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
-                            {% endif %}
-                            {{ user.username }}
-                        (YO)</a>
                     {% else %}
                         <a href="{% url 'other_user_profile' user.username %}">
-                            {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
-                            {% else %}
-                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
-                            {% endif %}
-                            {{ user.username }}
-                        </a>
                     {% endif %}
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                        {% else %}
+                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                        {% endif %}
+                        <span>{{ user.username }}{% if user.username == request.user.username %} (VER MI PERFIL){% endif %}</span>
+                    </a>
+                    <a href="#" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                        VER PERFIL
+                    </a>
+                    <a href="#" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                        VER PERFIL DE MERCADO
+                    </a>
                 </li>
+                <hr class="dropdown-divider">
             {% endfor %}
         </ul>
     </div>
 </body>
 {% endblock %}
-

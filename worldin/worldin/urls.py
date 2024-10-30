@@ -29,5 +29,10 @@ urlpatterns = [
     path('search/', views.search_users, name='search_users'),
     path('profile/user/<str:username>/', views.other_user_profile, name='other_user_profile'),
     path('followers_and_following/user/<str:username>/', views.followers_and_following, name='followers_and_following'),
+    path('remove_follower/<int:follower_id>/', views.remove_follower, name='remove_follower'),
+    path('unfollow_user/<int:following_id>/', views.unfollow_user, name='unfollow_user'),
+    path('follow_requests/', views.follow_requests, name='follow_requests'),
+    path('accept_follow_request/<int:request_id>/', views.accept_follow_request, name='accept_follow_request'),
+    path('reject_follow_request/<int:request_id>/', views.reject_follow_request, name='reject_follow_request'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

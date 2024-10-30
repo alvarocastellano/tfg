@@ -135,37 +135,33 @@
         <div class="col-md-6">
             <h3>Seguidores</h3>
             <ul class="list-group">
-                {% if no_followers_results %}
-                    <div class="alert alert-warning" role="alert">
-                        No hay resultados para los seguidores.
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endif %}
-
                 {% for follow in followers %}
                     <li class="list-group-item">
                         {% if follow.follower.id == request.user.id %}
-                        <a href="{% url 'my_profile' %}">
-                            {% if follow.follower.profile_picture %}
-                            <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
-                            {% else %}
-                            <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
-                            {% endif %}
-                            {{ follow.follower.username }}
-                            (YO)
-                        </a>
-                        {% else %}
-                            <a href="{% url 'other_user_profile' follow.follower.username %}">
+                            <a href="{% url 'my_profile' %}">
                                 {% if follow.follower.profile_picture %}
-                                <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                    <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                 {% else %}
-                                <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                                    <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
                                 {% endif %}
                                 {{ follow.follower.username }}
                             </a>
-                    {% endif %}
+                        {% else %}
+                            <a href="{% url 'other_user_profile' follow.follower.username %}">
+                                {% if follow.follower.profile_picture %}
+                                    <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                {% else %}
+                                    <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
+                                {% endif %}
+                                {{ follow.follower.username }}
+                            </a>
+                        {% endif %}
+                        {% if follow.follower.id != request.user.id and is_own_profile %}
+                            <form action="{% url 'remove_follower' follow.follower.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar seguidor</button>
+                            </form>
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>
@@ -173,41 +169,26 @@
         <div class="col-md-6">
             <h3>Seguidos</h3>
             <ul class="list-group">
-                
-                {% if no_following_results %}
-                <div class="alert alert-warning" role="alert">
-                    No hay resultados para los seguidos.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                {% endif %}
                 {% for follow in following %}
                     <li class="list-group-item">
-                        {% if follow.following.id == request.user.id %}
-                            <a href="{% url 'my_profile' %}">
-                                {% if follow.following.profile_picture %}
+                        <a href="{% url 'other_user_profile' follow.following.username %}">
+                            {% if follow.following.profile_picture %}
                                 <img src="{{ follow.following.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
-                                {% else %}
+                            {% else %}
                                 <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
-                                {% endif %}
-                                {{ follow.following.username }}
-                                (YO)
-                            </a>
-                        {% else %}
-                            <a href="{% url 'other_user_profile' follow.following.username %}">
-                                {% if follow.following.profile_picture %}
-                                    <img src="{{ follow.following.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
-                                {% else %}
-                                    <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
-                                {% endif %}
-                                {{ follow.following.username }}
-                            </a>
+                            {% endif %}
+                            {{ follow.following.username }}
+                        </a>
+                        {% if follow.following.id != request.user.id and is_own_profile %}
+                            <form action="{% url 'unfollow_user' follow.following.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Dejar de seguir</button>
+                            </form>
                         {% endif %}
                     </li>
                 {% endfor %}
             </ul>
-        </div>
+        </div>        
     </div>
 </div>
 {% endblock %}

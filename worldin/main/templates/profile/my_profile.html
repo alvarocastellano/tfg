@@ -118,14 +118,33 @@
                 </a>
             </div>
             <div class="dropdown">
-                <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn dropdown-toggle position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-list" style="color:white; font-size: 2.5em;"></i>
+                    
+                    <!-- Círculo de notificación para solicitudes pendientes -->
+                    {% if pending_requests_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ pending_requests_count }}
+                        </span>
+                    {% endif %}
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{% url 'edit_profile' %}">Editar perfil</a></li>
+                    <li><a class="dropdown-item" href="{% url 'edit_profile' %}">Editar perfil</a></li> 
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="{% url 'profile_settings' %}">Configuración</a></li>
                     <li><hr class="dropdown-divider"></li>
+                    
+                    <!-- Opción de solicitudes de seguimiento si la cuenta es privada -->
+                    {% if request.user.account_visibility == 'private' %}
+                        <li><a class="dropdown-item" href="{% url 'follow_requests' %}">
+                            Solicitudes de seguimiento
+                            {% if pending_requests_count > 0 %}
+                                <span class="badge bg-danger ms-2">{{ pending_requests_count }}</span>
+                            {% endif %}
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                    {% endif %}
+                    
                     <li>
                         <form action="{% url 'logout' %}" method="post">
                             {% csrf_token %}
@@ -134,6 +153,7 @@
                     </li>
                 </ul>
             </div>
+            
         </div>
         <!-- Botón debajo de la cabecera -->
         <div class="text-center" style="background-color: #6a4fb8; padding: 10px;">
