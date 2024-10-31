@@ -533,3 +533,31 @@ def reject_follow_request(request, request_id):
 def follow_requests(request):
     pending_requests = request.user.follow_requests_received.filter(status='pending')
     return render(request, 'follow_requests.html', {'pending_requests': pending_requests})
+
+@login_required
+def sidebar(request):
+    user = request.user
+    complete_profile_alerts = 0    
+
+    if user.birthday is None:
+        complete_profile_alerts+=1
+    
+    if user.city=="":
+        complete_profile_alerts+=1
+
+    if user.description=="":
+        complete_profile_alerts+=1
+    
+    if user.profile_picture=="":
+        complete_profile_alerts+=1
+
+    if len(user.aficiones.all()) == 0:
+        complete_profile_alerts+=1
+
+    pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+
+    return render(request, 'sidebar.html', {
+        'user': user,
+        'pending_requests_count': pending_requests_count,
+        'complete_profile_alerts': complete_profile_alerts,
+    })

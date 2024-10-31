@@ -154,7 +154,7 @@
                     <li>
                         <form action="{% url 'logout' %}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                            <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
                         </form>
                     </li>
                 </ul>
@@ -211,7 +211,7 @@
             <p>{% if user.city %}Ciudad de residencia: {{ user.city }}{% endif %}</p>
             <p>{% if user.erasmus %}Estoy de Erasmus{% endif %}</p>
             <p>{% for hobby in user.aficiones.all %}
-                <button class=btn btn-primary style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                <button class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px; outline:none; box-shadow:none;">
                     {{hobby.name}}
                 </button>
                {% endfor %}</p>

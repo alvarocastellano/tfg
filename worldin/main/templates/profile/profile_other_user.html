@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Perfil de {{ profile_user.username }}{% endblock %}
+{% block title %}Perfil de @{{ profile_user.username }}{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -177,7 +177,7 @@
                 <p>{% if profile_user.city %}Ciudad de residencia: {{ profile_user.city }}{% endif %}</p>
                 <p>{% if profile_user.erasmus %}Estoy de Erasmus{% endif %}</p>
                 <p>{% for hobby in profile_user.aficiones.all %}
-                    <button class=btn btn-primary style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                    <button class=btn btn-primary style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px; outline:none; box-shadow:none;">
                         {{hobby.name}}
                     </button>
                 {% endfor %}</p>

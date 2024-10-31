@@ -98,6 +98,15 @@
             align-items: flex-start;
             justify-content: space-between;
         }
+
+        .list-group-item a {
+            color: black; /* Cambia el color del texto a negro */
+            text-decoration: none; /* Elimina el subrayado */
+            flex-grow: 1; /* Permite que el texto ocupe el espacio disponible */
+            display: flex;
+            align-items: center; /* Alinea verticalmente el contenido */
+        }
+
         .profile-picture {
             border-radius: 50%;
             border: 4px solid #786dce;
@@ -184,7 +193,11 @@
                                     {% else %}
                                         <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
                                     {% endif %}
-                                    @{{ follow.follower.username }}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ follow.follower.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ follow.follower.first_name }} {{ follow.follower.last_name }}</p>
+                                    </div>
+                                    
                                 </a>
                             
                             {% else %}
@@ -194,7 +207,10 @@
                                     {% else %}
                                         <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
                                     {% endif %}
-                                    @{{ follow.follower.username }}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ follow.follower.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ follow.follower.first_name }} {{ follow.follower.last_name }}</p>
+                                    </div>
                                 </a>
                             {% endif %}
                         </div>
@@ -224,7 +240,10 @@
                                     {% else %}
                                         <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
                                     {% endif %}
-                                    @{{ follow.following.username }}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ follow.following.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ follow.following.first_name }} {{ follow.following.last_name }}</p>
+                                    </div>
                                 </a>
                             
                             {% else %}
@@ -234,7 +253,10 @@
                                 {% else %}
                                     <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
                                 {% endif %}
-                                @{{ follow.following.username }}
+                                <div class="usuario-y-nombre mt-2">
+                                    <p style="font-size: 20px;"><strong>@{{ follow.following.username }}</strong></p>
+                                    <p style="font-size: 16px;">{{ follow.following.first_name }} {{ follow.following.last_name }}</p>
+                                </div>
                             </a>
                         </div>
                         {% endif %}
