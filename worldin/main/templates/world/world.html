@@ -16,6 +16,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
@@ -31,18 +32,16 @@
         body {
             font-family: 'Work Sans', sans-serif;
             margin: 0;
+            overflow: hidden;
         }
     
         #globe {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            z-index: 0;
-        }
-    
-        #search-bar {
-            position: relative;
-            z-index: 10;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
         }
     
         .fixed-button-search,
@@ -75,11 +74,16 @@
             flex-direction: column; /* Asegura que el icono y el texto se alineen verticalmente */
             align-items: center;
         }
+
+        .text-center .btn:hover{
+            color: #6a4fb8;
+            background-color: white;
+        }
+
     
         .fixed-button-search i,
         .fixed-button-profile i {
             font-size: 3em;
-            color: white;
         }
 
         .button-text {
@@ -98,49 +102,11 @@
             .fixed-button-profile i {
                 font-size: 2em;
             }
-    
-            .search-container {
-                width: 40%;
-                z-index: 10; /* Por encima del globo */
-            }
 
             .button-text {
                 font-size: 14px; /* Tamaño para pantallas pequeñas */
                 margin: 0;
             }
-        }
-    
-        .search-container {
-            position: relative;
-            z-index: 10; /* Por encima del globo */
-            width: 80%;
-            max-width: 800px;
-            margin: 20px auto;
-        }
-    
-        .ui-autocomplete {
-            max-height: 100px;
-            overflow-y: auto;
-            z-index: 1000;
-            border: 1px solid #6a4fb8;
-        }
-    
-        .input-group {
-            box-shadow: 0px 0px 5px #6a4fb8;
-        }
-    
-        .input-group-text, .btn-purple {
-            background-color: #6a4fb8;
-            border-color: #6a4fb8;
-        }
-    
-        .btn-purple:hover {
-            background-color: #7d63aa;
-            border-color: #7d63aa;
-        }
-    
-        .btn-purple:focus {
-            box-shadow: 0 0 0 0.25rem rgba(106, 79, 184, 0.5);
         }
     
         .modal-dialog {
@@ -166,11 +132,72 @@
             justify-content: center; /* Centrar horizontalmente */
             align-items: center; /* Centrar verticalmente */
         }
+
+        .city-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+            gap: 10px; /* Espacio entre los botones */
+        }
+        
+        .city-buttons .btn {
+            display: flex; /* Usa flexbox para centrar el contenido */
+            flex-direction: column; /* Coloca el icono y el texto en columnas */
+            align-items: center; /* Centra horizontalmente */
+            justify-content: center; /* Centra verticalmente */
+            text-align: center; /* Centra el texto */
+            height: 100px; /* Altura fija para los botones */
+            width: 100%; /* Asegura que los botones ocupen todo el ancho de la celda */
+            background-color: #6a4fb8;
+            border-color:white;
+        }
+
+        .city-buttons .btn:hover {
+            color: #6a4fb8;
+            background-color: white;
+        }
+        
+        .city-buttons .btn i {
+            font-size: 2em; /* Tamaño del icono */
+            margin-bottom: 5px; /* Espacio entre el icono y el texto */
+        }
+
+        .input-group-append .btn{
+            background-color: #6a4fb8;
+            border-color: #6a4fb8;
+        }
+
+        .suggestions {
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            border-radius: 5px;
+        }
+        
+        .suggestions div {
+            padding: 10px;
+            cursor: pointer;
+        }
+        
+        .suggestions div:hover {
+            background-color: #f0f0f0;
+        }
+
+        .modal-title {
+            display: flex;
+            width: 100%; /* Asegura que el título ocupa todo el ancho */
+        }
+        
+        .modal-title img {
+            margin-left: 8px; /* Espaciado entre el texto y la imagen */
+        }
+        
+        
+        
     </style>
     
     <body>
+
         <canvas id='globe'></canvas>
-        
         <!-- Botones flotantes -->
         {% if user.is_authenticated %}
         
@@ -206,110 +233,53 @@
 
     {% endif %}
 
-    <!-- Buscador -->
-    <div class="search-container">
-        <div class="input-group">
-            <input type="text" class="form-control rounded-start" list="ciudades" id="city-search" placeholder="Buscar ciudad..." style="border-color: #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8;">
-            <datalist id="ciudades" style="overflow-y: auto;">
-                    <option value="Bruselas">Bélgica</option>
-                    <option value="Sofia">Bulgaria</option>
-                    <option value="Praga">Chequia</option>
-                    <option value="Copenhague">Dinamarca</option>
-                    <option value="Berlin">Alemania</option>
-                    <option value="Munich">Alemania</option>
-                    <option value="Tallin">Estonia</option>
-                    <option value="Dublin">Irlanda</option>
-                    <option value="Cork">Irlanda</option>
-                    <option value="Atenas">Grecia</option>
-                    <option value="Madrid">España</option>
-                    <option value="Sevilla">España</option>
-                    <option value="Barcelona">España</option>
-                    <option value="Paris">Francia</option>
-                    <option value="Lens">Francia</option>
-                    <option value="Marsella">Francia</option>
-                    <option value="Zagreb">Croacia</option>
-                    <option value="Split">Croacia</option>
-                    <option value="Roma">Italia</option>
-                    <option value="Salerno">Italia</option>
-                    <option value="Florencia">Italia</option>
-                    <option value="Bari">Italia</option>
-                    <option value="Luxemburgo">Luxemburgo</option>
-                    <option value="Budapest">Hungría</option>
-                    <option value="La Valeta">Malta</option>
-                    <option value="Amsterdam">Países Bajos</option>
-                    <option value="Roterdam">Países Bajos</option>
-                    <option value="Viena">Austria</option>
-                    <option value="Varsovia">Polonia</option>
-                    <option value="Lisboa">Portugal</option>
-                    <option value="Oporto">Portugal</option>
-            </datalist>
-            <button  class="btn btn-purple rounded-end text-white" id="search-button" data-bs-toggle="modal" data-bs-target="#FunctionalitiesModal">
-                Buscar
-            </button>
+    <!-- City Search Input -->
+    <div class="input-group mb-3" style="width:auto; position: fixed; top: 3%; left: 50%; transform: translateX(-50%); z-index: 9999;">
+        <input type="text" id="citySearch" class="form-control" placeholder="Buscar ciudad">
+        <div class="input-group-append">
+            <button class="btn btn-primary" id="searchBtn" type="button">Buscar</button>
         </div>
     </div>
+    <div id="suggestions" class="suggestions" style="position: fixed; top: 45px; left: 50%; transform: translateX(-50%); z-index: 9999; background-color: white; border: 1px solid #ccc; display: none;"></div>
 
-    <div id="city-suggestions"></div>
 
-    <!-- Modal de funcionalidades de una ciudad -->
-    <div class="modal fade" id="FunctionalitiesModal" tabindex="-1" aria-labelledby="FunctionalitiesModalLabel" aria-hidden="true">
+    <!-- Modal for City Information -->
+    <div class="modal fade" id="cityModal" tabindex="-1" aria-labelledby="cityModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content" style="background-color: rgba(120, 109, 206, 0.9);">
-                <div class="modal-header align-items-center">
-                    <h5 class="modal-title align-items-center" id="city-name" style="color:white;"></h5>
-                    <h5 class="modal-title align-items-center" id="city-country" style="color:white;"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content" style="background-color: #6a4fb8;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cityModalLabel" style="color:white;"></h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" style="color:white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="modal-body" style="color:white;">
-                    <div class="row">
-                        <div class="col-sm d-flex flex-column align-items-center">
-                            <div>
-                                <a href="#" class="btn btn-primary" style="background-color:#4e148c; border-radius:40%; border-color:#4e148c; width:80px; height:80px;">
-                                    <i class="bi bi-bag-fill" style="font-size: 3em;"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <h5>Mercado</h5>
-                            </div>
-                        </div>
-                        <div class="col-sm d-flex flex-column align-items-center">
-                            <div class="d-flex justify-content-center align-items-center" style="width: 80px; height: 80px; background-color: #4e148c; border-radius: 40%;">
-                                <a href="#" class="btn btn-primary" style="background-color: transparent; border: none;">
-                                    <i class="fa-solid fa-martini-glass-citrus" style="font-size: 3em; color: white;"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <h5>Eventos</h5>
-                            </div>
-                        </div>
-                        
-                    </div>
-                    <div class="row mt-2 mb-5">
-                        <div class="col-sm d-flex flex-column align-items-center">
-                            <div>
-                                <a href="#" class="btn btn-primary" style="background-color:#4e148c; border-radius:40%; border-color:#4e148c; width:80px; height:80px;">
-                                    <i class="bi bi-people-fill" style="font-size: 3em;"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <h5>Comunidad</h5>
-                            </div>
-                        </div>
-                        <div class="col-sm d-flex flex-column align-items-center">
-                            <div>
-                                <a href="#" class="btn btn-primary" style="background-color:#4e148c; border-color:#4e148c; border-radius:40%; width:80px; height:80px;">
-                                    <i class="bi bi-geo-alt-fill" style="font-size: 3em;"></i>
-                                </a>
-                            </div>
-                            <div>
-                                <h5>Turismo</h5>
-                            </div>
-                        </div>
+                <div class="modal-body">
+                    <div class="city-buttons">
+                        <a href="#" class="btn btn-info">
+                            <i class="bi bi-bag-fill"></i>
+                            <div>Mercado</div>
+                        </a>
+                        <a href="#" class="btn btn-info">
+                            <i class="bi bi-calendar-check"></i>
+                            <div>Eventos</div>
+                        </a>
+                        <a href="#" class="btn btn-info">
+                            <i class="bi bi-people-fill"></i>
+                            <div>Comunidad</div>
+                        </a>
+                        <a href="#" class="btn btn-info">
+                            <i class="bi bi-geo-fill"></i>
+                            <div>Turismo</div>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+
+
+    
 
     <!-- Spinner de carga -->
     <div class="text-center">
@@ -322,64 +292,11 @@
     <script type="module" src="{% static 'js/main.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://threejs.org/examples/jsm/controls/OrbitControls.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
+    
 
-    <script>
-        $(document).ready(function() {
-    
-            $('#search-button').on('click', function(event) {
-                event.preventDefault(); // Prevenir la acción predeterminada del botón
-    
-                const cityName = $('#city-search').val(); // Obtener el valor del campo de búsqueda
-                if (!cityName) {
-                    alert('Por favor, introduce el nombre de una ciudad.');
-                    return;
-                }
-    
-    
-                // Simulación de una llamada a la API o búsqueda de datos
-                // Reemplaza esta parte con una llamada real a tu servidor si es necesario
-                setTimeout(() => {
-                    // Ejemplo de datos que podrías obtener de tu servidor
-                    const cityData = {
-                        name: cityName,
-                        country: 'País Simulado', // Cambia esto por el país real
-                        // Otras propiedades que desees mostrar
-                    };
-    
-                    // Llenar el modal con la información de la ciudad
-                    $('#city-name').text(cityData.name);
-                    $('#city-country').text(cityData.country);
-                    
-                    // Ocultar el spinner
-                    $('#spinner').hide();
-    
-                    // Mostrar el modal
-                    $('#FunctionalitiesModal').modal('show');
-                }, 1000); // Simula un retraso de 1 segundo
-            });
-        });
-    </script>
-    <script>
-        // Cuando se selecciona una ciudad
-        document.getElementById('search-button').addEventListener('click', function () {
-            const cityName = document.getElementById('city-search').value;
-            const marker = markers.find(m => m.cities.includes(cityName));
-            
-            if (!marker) {
-                alert('Ciudad no encontrada');
-                return;
-            }
-
-            // Convertir la latitud y longitud a rotación en el globo
-            const phi = (90 - marker.lat) * (Math.PI / 180);
-            const theta = (marker.lng + 180) * (Math.PI / 180);
-
-            // Aplicar la rotación al globo
-            targetRotationX = theta;
-            targetRotationY = phi;
-        });
-    </script>
     
 </body>
 

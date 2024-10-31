@@ -6,6 +6,9 @@ function main() {
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 1.7;
 
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
 
     const markers = [
         { lat: 50.8503, lng: 4.3517, cities: ['Bruselas'], country: 'Belgica', flag: 'belgica.png' },
@@ -26,8 +29,77 @@ function main() {
         { lat: 52.3676, lng: 4.9041, cities: ['Amsterdam','Roterdam'], country: 'Paises Bajos', flag: 'holanda.png' },
         { lat: 48.2082, lng: 16.3738, cities: ['Viena'], country: 'Austria', flag: 'austria.png' },
         { lat: 52.2297, lng: 21.0122, cities: ['Varsovia'], country: 'Polonia', flag: 'polonia.png' },
-        { lat: 38.7223, lng: -9.1393, cities: ['Lisboa','Oporto'], country: 'Portugal', flag: 'portugal.png' },
+        { lat: 38.7167, lng: -9.1333, cities: ['Lisboa','Oporto'], country: 'Portugal', flag: 'portugal.png' },
     ];
+
+    const suggestionsDiv = document.getElementById("suggestions");
+
+
+    document.getElementById("citySearch").addEventListener("input", function() {
+        const searchValue = this.value.toLowerCase();
+        
+        // Limpia las sugerencias previas
+        suggestionsDiv.innerHTML = '';
+
+        // Si no hay entrada o es menor que 1 caracter, no mostramos sugerencias
+        if (searchValue.length < 1) {
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+
+        // Filtra las ciudades que coinciden con la búsqueda
+        const filteredMarkers = markers.filter(marker => 
+            marker.cities.some(city => city.toLowerCase().startsWith(searchValue))
+        );
+
+        if (filteredMarkers.length > 0) {
+            filteredMarkers.forEach(marker => {
+                marker.cities.forEach(city => {
+                    if (city.toLowerCase().startsWith(searchValue)) {
+                        const suggestion = document.createElement("div");
+                        suggestion.textContent = city; // Muestra el nombre de la ciudad
+                        suggestion.addEventListener("click", () => {
+                            document.getElementById("citySearch").value = city; // Completa el input con la ciudad
+                            suggestionsDiv.style.display = 'none'; // Oculta las sugerencias
+                        });
+                        suggestionsDiv.appendChild(suggestion);
+                    }
+                });
+            });
+            suggestionsDiv.style.display = 'block'; // Muestra las sugerencias
+        } else {
+            suggestionsDiv.style.display = 'none'; // Oculta las sugerencias si no hay resultados
+        }
+    });
+
+    document.getElementById("searchBtn").addEventListener("click", () => {
+        const searchValue = document.getElementById("citySearch").value.toLowerCase();
+        const marker = markers.find(m =>
+            m.cities.some(city => city.toLowerCase() === searchValue) ||
+            m.country.toLowerCase() === searchValue
+        );
+
+        if (marker) {
+            // Encontrar la ciudad exacta dentro del marcador
+            const city = marker.cities.find(city => city.toLowerCase() === searchValue) || marker.cities[0];
+            
+            // Asigna los valores al modal mostrando solo la ciudad buscada
+            document.getElementById("cityModalLabel").innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <span style="margin-right: 10px;">${city}, ${marker.country}</span>
+                    <img src="/static/images/${marker.flag}" alt="${marker.country} flag" style="width: 30px; height: auto;">
+                </div>
+            `;
+
+    
+            // Mostrar el modal
+            $('#cityModal').modal('show');
+        } else {
+            alert("La ciudad buscada no está en Worldin");
+        }
+    });
+    
+    
 
     // Let's get into the Earth itself.
 
@@ -44,8 +116,8 @@ function main() {
     scene.add(earthMesh);
 
     // Let's light up our globe by adding some lighting effects.
-    const pointLight = new THREE.PointLight(0xffffff, 1.5, 3.5,-1);
-    pointLight.position.set(0.1, 0.1, 1);
+    const pointLight = new THREE.PointLight(0xffffff, 1.05, 3.5, 0);
+    pointLight.position.set(0.1, 0.1, 3);
     scene.add(pointLight);
 
     // Let’s make our globe more realistic by adding clouds.
@@ -84,7 +156,7 @@ function main() {
     let mouseX = 0, mouseXOnMouseDown = 0, mouseY = 0, mouseYOnMouseDown = 0;
     const windowHalfX = window.innerWidth / 2;
     const windowHalfY = window.innerHeight / 2;
-    const dragFactor = 0.0001;
+    const dragFactor = 0.00005;
 
     //marcadores
     // Step 1: Crear la función para convertir lat/lng a Vector3
@@ -134,11 +206,12 @@ function main() {
     
     // Coloca los marcadores como hijos de earthMesh para que se sincronicen con la rotación de la Tierra
     markers.forEach(marker => {
-        const { lat, lng } = marker;
-        const position = latLngToVector3(lat, lng, 0.52); // Ajusta el radio según tu esfera
+        const { lat, lng, cities, country, flag } = marker;
+        const position = latLngToVector3(lat, lng, 0.515); // Ajusta el radio según tu esfera
         const sprite = new THREE.Sprite(markerMaterial);
         sprite.position.copy(position);
         sprite.scale.set(0.03, 0.03, 1); // Ajusta el tamaño del marcador
+        sprite.userData = { cities, country, flag };
         earthMesh.add(sprite); // Añadir el marcador como hijo de la Tierra
         markersSprites.push(sprite); // Almacenar el sprite en el array
     });
@@ -175,66 +248,142 @@ function main() {
 
     function onDocumentMouseDown(event) {
         event.preventDefault();
-        document.addEventListener('mousemove', onDocumentMouseMove, false);
-        document.addEventListener('mouseup', onDocumentMouseUp, false);
-        mouseXOnMouseDown = event.clientX - windowHalfX;
-        mouseYOnMouseDown = event.clientY - windowHalfY;
-        isDragging = true; // Comenzamos a arrastrar
+        // Calcula la posición del clic del ratón en el espacio de coordenadas normalizadas
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Utiliza el raycaster para detectar intersecciones con earthMesh
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(earthMesh);
+
+        // Si el clic es sobre la esfera, habilita el arrastre
+        if (intersects.length > 0) {
+            document.addEventListener('mousemove', onDocumentMouseMove, false);
+            document.addEventListener('mouseup', onDocumentMouseUp, false);
+            mouseXOnMouseDown = event.clientX;
+            mouseYOnMouseDown = event.clientY;
+            isDragging = true;
+        }
     }
 
-    function onDocumentMouseMove(event) {
-        mouseX = event.clientX - windowHalfX;
-        rotationSpeedX = (mouseX - mouseXOnMouseDown) * dragFactor;
-        mouseY = event.clientY - windowHalfY;
-        rotationSpeedY = (mouseY - mouseYOnMouseDown) * dragFactor;
+    const inputElement = document.getElementById('citySearch');
+        inputElement.addEventListener('mousedown', function(event) {
+            event.stopPropagation(); // Detiene la propagación del evento al documento
+        });
 
-        targetRotationX = rotationSpeedX;
-        targetRotationY = rotationSpeedY;
+    function onDocumentMouseDown2(event) {
+        event.preventDefault();
+        
+        // Configurar las coordenadas del ratón para el raycaster
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        
+        raycaster.setFromCamera(mouse, camera);
+        
+        // Verificar la intersección con los marcadores
+        const intersects = raycaster.intersectObjects(markersSprites);
+        const intersectsEarth = raycaster.intersectObject(earthMesh);
+    
+        if (intersectsEarth.length > 0) {
+            if (intersects.length > 0) {
+                const marker = intersects[0].object;
+                const { cities, country, flag } = marker.userData;
+                
+                document.getElementById("cityModalLabel").innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <span style="margin-right: 10px;">${cities[0]}, ${country}</span>
+                    <img src="/static/images/${flag}" alt="${country} flag" style="width: 30px; height: auto;">
+                </div>
+            `;
+                
+                // Muestra el modal con los datos del marcador
+                $('#cityModal').modal('show');
+            } else {
+                console.log("No marker intersection detected.");
+            }
+        }
+    }
+    
+    window.addEventListener('mousedown', onDocumentMouseDown2);
+    
+
+    function onDocumentMouseMove(event) {
+        if (isDragging) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            // Calcula la rotación en base al movimiento del ratón
+            targetRotationX = (mouseX - mouseXOnMouseDown) * dragFactor;
+            targetRotationY = (mouseY - mouseYOnMouseDown) * dragFactor;
+        }
     }
 
     function onDocumentMouseUp(event) {
         document.removeEventListener('mousemove', onDocumentMouseMove, false);
         document.removeEventListener('mouseup', onDocumentMouseUp, false);
-        isDragging = false; // Detenemos el arrastre al soltar el ratón
-    
-        // Guarda la velocidad actual al soltar el ratón
-        rotationSpeedX = (mouseX - mouseXOnMouseDown) * dragFactor * 0.5; // Ajusta el factor si es necesario
-        rotationSpeedY = (mouseY - mouseYOnMouseDown) * dragFactor * 0.5;
+        isDragging = false;
     }
-    
 
-    // Step 10
-    // Add an Event listener to the document for the mousedown event.
-    document.addEventListener('mousedown', onDocumentMouseDown, false); 
-    
+    renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
 
-    const render = () => {
-        // Si no estamos arrastrando, aplicamos la amortiguación
-        if (!isDragging) {
-            // Suavizar la velocidad de rotación
-            rotationSpeedX *= dampingFactor; // Reduce la velocidad lentamente
-            rotationSpeedY *= dampingFactor;
-    
-            // Detenemos la rotación si la velocidad es suficientemente baja
-            if (Math.abs(rotationSpeedX) < stopThreshold) rotationSpeedX = 0;
-            if (Math.abs(rotationSpeedY) < stopThreshold) rotationSpeedY = 0;
+
+    let scale = 1; // Escala inicial
+    const maxScale = 2.5; // Escala máxima
+    const minScale = 0.25; // Escala mínima (puedes ajustar esto si quieres permitir más reducción)
+
+    function onDocumentWheel(event) {
+        event.preventDefault(); // Evita el desplazamiento de la página
+
+        // Cambiar la escala en función de la dirección de la rueda del ratón
+        if (event.deltaY < 0) {
+            scale += 0.1; // Ampliar
+        } else {
+            scale -= 0.1; // Disminuir
         }
-    
-        // Aplicar la rotación
-        earthMesh.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), rotationSpeedX);
-        earthMesh.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), rotationSpeedY);
-        cloudMesh.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), rotationSpeedX);
-        cloudMesh.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), rotationSpeedY);
-    
-        renderer.render(scene, camera);
-    };
 
-    const animate = () => {
-        requestAnimationFrame(animate);
-        render();
+        // Asegurarse de que la escala esté dentro de los límites
+        scale = Math.min(maxScale, Math.max(minScale, scale));
+
+        // Aplicar la escala a la tierra y capa de nubes
+        earthMesh.scale.set(scale, scale, scale);
+        cloudMesh.scale.set(scale,scale,scale);
+
+        const distanceFromEarth = 2; // Distancia fija desde la Tierra en el eje Z
+        pointLight.position.set(0.1 / scale, 0.1 / scale, distanceFromEarth);
+
     }
 
+    // Añadir el evento de la rueda del ratón
+    window.addEventListener('wheel', onDocumentWheel,  { passive: false });
+
+
+    // Función de animación
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Rotar la Tierra y la capa de nubes
+        earthMesh.rotation.y += targetRotationX; // Rota la Tierra
+        cloudMesh.rotation.y += targetRotationX; // Rota las nubes un poco más rápido para realismo
+        earthMesh.rotation.x += targetRotationY; // Rota la Tierra
+        cloudMesh.rotation.x += targetRotationY; // Rota las nubes un poco más rápido para realismo
+
+        // Amortiguación de la velocidad de rotación
+        rotationSpeedX *= dampingFactor;
+        rotationSpeedY *= dampingFactor;
+
+        // Aplicar la velocidad de rotación al modelo
+        earthMesh.rotation.x += rotationSpeedY;
+        earthMesh.rotation.y += rotationSpeedX;
+        cloudMesh.rotation.x += rotationSpeedY; // Rota las nubes en el eje X también
+        cloudMesh.rotation.y += rotationSpeedX;
+
+        // Renderizar la escena
+        renderer.render(scene, camera);
+    }
+
+    // Iniciar animación
     animate();
+
 }
 
 // Execute the 'main' function when the window finishes loading.
