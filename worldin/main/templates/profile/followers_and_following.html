@@ -1,0 +1,279 @@
+{% extends "main/sidebar.html" %}
+
+{% block title %}Seguidores y seguidos de @{{user.username}}{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+
+    
+    
+    
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%; /* Ocupar el máximo ancho disponible */
+            padding: 0; /* Sin padding para que ocupe todo el ancho */
+        }
+
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+        }
+
+        .imagen-sin-datos {
+            width: 150px;
+            height: auto;
+        }
+
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 150px;
+                height: 150px; /* Tamaño para pantallas más grandes */
+            }
+
+            .imagen-sin-datos {
+                width: 200px;
+                height: auto;
+            }
+        }
+
+        .dropdown-menu {
+            background-color: white;
+        }
+
+        .profile-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .profile-section p {
+            align-items: center;
+            text-align: center;
+        }
+
+        .bi-arrow-left-short {
+            font-size: 2em;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .list-group {
+            padding: 20px;
+        }
+        .list-group-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .list-group-item a {
+            color: black; /* Cambia el color del texto a negro */
+            text-decoration: none; /* Elimina el subrayado */
+            flex-grow: 1; /* Permite que el texto ocupe el espacio disponible */
+            display: flex;
+            align-items: center; /* Alinea verticalmente el contenido */
+        }
+
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+            margin-right: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            color: black;
+            flex-grow: 1;
+            margin-bottom: 10px;
+        }
+        .user-info a {
+            color: black;
+            margin-right: 5px;
+        }
+        .user-info span {
+            white-space: nowrap;
+        }
+
+        /* Estilos para hacer la vista más responsiva */
+        @media (max-width: 767px) {
+            .profile-top {
+                flex-direction: column;
+                text-align: center;
+            }
+            .usuario-y-nombre {
+                margin-bottom: 15px;
+            }
+
+            .action-buttons {
+                flex-wrap: nowrap;
+                margin-left: auto;
+            }
+        }
+    </style>
+</head>
+<div class="container profile-container">
+    <div class="profile-top d-flex justify-content-between align-items-center">
+        {% if request.user.username != user.username %}
+            <a href="{% url 'other_user_profile' username=user.username %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+        {% else %}
+            <a href="{% url 'my_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+        {% endif %}
+
+        <h3 class="text-center">Perfil de @{{ user.username }}</h3> 
+
+        <!-- Formulario de búsqueda -->
+        <form method="GET" class="d-flex mr-3">
+            <input type="text" name="search" class="form-control" placeholder="Buscar usuario...">
+            <button type="submit" class="btn btn-outline-light ml-2">Buscar</button>
+        </form>
+        
+        
+        <!-- Formulario de ordenación -->
+        <form method="GET" class="d-flex">
+            <select name="sort_order" class="form-control">
+                <option value="newest">Ordenar por el más reciente</option>
+                <option value="oldest">Ordenar por el más antiguo</option>
+            </select>
+            <button type="submit" class="btn btn-outline-light ml-2">Ordenar</button>
+        </form>
+
+        <a href="{% url 'followers_and_following' user.username %}" class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:18px;">
+            <p>Reestablecer filtros</p>
+        </a>
+
+    </div>
+    <div class="row" style="margin:5%;">
+        <div class="col-md-6">
+            <h3>Seguidores</h3>
+            <ul class="list-group">
+                {% for follow in followers %}
+                    <li class="list-group-item">
+                        <div class="user-info">
+                            {% if follow.follower.id == request.user.id %}
+                                <a href="{% url 'my_profile' %}">
+                                    {% if follow.follower.profile_picture %}
+                                        <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                    {% else %}
+                                        <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
+                                    {% endif %}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ follow.follower.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ follow.follower.first_name }} {{ follow.follower.last_name }}</p>
+                                    </div>
+                                    
+                                </a>
+                            
+                            {% else %}
+                                <a href="{% url 'other_user_profile' follow.follower.username %}">
+                                    {% if follow.follower.profile_picture %}
+                                        <img src="{{ follow.follower.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                    {% else %}
+                                        <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
+                                    {% endif %}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ follow.follower.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ follow.follower.first_name }} {{ follow.follower.last_name }}</p>
+                                    </div>
+                                </a>
+                            {% endif %}
+                        </div>
+                        {% if follow.follower.id != request.user.id and is_own_profile %}
+                            <div class="action-buttons">
+                                <form action="{% url 'remove_follower' follow.follower.id %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Eliminar seguidor</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </li>
+                    <hr class="dropdown-divider">
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h3>Seguidos</h3>
+            <ul class="list-group">
+                {% for follow in following %}
+                    <li class="list-group-item">
+                        <div class="user-info">
+                            {% if follow.following.id == request.user.id %}
+                                <a href="{% url 'my_profile' %}">
+                                    {% if follow.following.profile_picture %}
+                                        <img src="{{ follow.following.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                    {% else %}
+                                        <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
+                                    {% endif %}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ follow.following.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ follow.following.first_name }} {{ follow.following.last_name }}</p>
+                                    </div>
+                                </a>
+                            
+                            {% else %}
+                            <a href="{% url 'other_user_profile' follow.following.username %}">
+                                {% if follow.following.profile_picture %}
+                                    <img src="{{ follow.following.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                {% else %}
+                                    <img src="{% static 'images/default_user_icon.png' %}" class="profile-picture" alt="Perfil del cliente">
+                                {% endif %}
+                                <div class="usuario-y-nombre mt-2">
+                                    <p style="font-size: 20px;"><strong>@{{ follow.following.username }}</strong></p>
+                                    <p style="font-size: 16px;">{{ follow.following.first_name }} {{ follow.following.last_name }}</p>
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% if follow.following.id != request.user.id and is_own_profile %}
+                            <div class="action-buttons">
+                                <form action="{% url 'unfollow_user' follow.following.id %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Dejar de seguir</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </li>
+                    <hr class="dropdown-divider">
+
+                {% endfor %}
+            </ul>
+        </div>        
+    </div>
+</div>
+{% endblock %}

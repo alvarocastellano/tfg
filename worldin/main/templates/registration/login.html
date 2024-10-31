@@ -1,0 +1,143 @@
+{% extends "main/base.html" %}
+
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+{% load static %}
+{% load socialaccount %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      
+      color: white; /* Aplica la fuente Fredoka One al cuerpo del documento */
+    }
+    
+    .container {
+      height: 95vh; /* Establece la altura de la container como 100% de la altura de la ventana */
+      display: flex;
+      justify-content: center; /* Centra horizontalmente los elementos */
+      font-family: 'Work Sans', sans-serif;
+      font-weigth: 500;
+      font-size: 25px;
+      align-items: center; /* Centra verticalmente los elementos */
+    }
+    
+    .login-form {
+      width: 70%; /* Establece el ancho del formulario */
+      max-width: 300px; /* Establece el ancho máximo del formulario */
+    }
+
+    .background-diagonal {
+      position: fixed;
+      top: 0%;
+      left: 0%;
+      width: 150%;
+      height: 120%;
+      background: linear-gradient(to top left, transparent 49.5%, #6a4fb8 49.5%);
+      z-index: -1;
+    }
+
+    .background-diagonal-2{
+      position: absolute;
+      top: -1%;
+      left: 32%;
+      width: 40%;
+      height: 33%;
+      background: linear-gradient(to top right, transparent 49.5%, #786dce 49.5%);
+      z-index: -1;
+    }
+
+    @media (max-width: 768px) {
+      .back {
+        display:none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <div class="background-diagonal">
+    <div class="background-diagonal-2"></div>
+  </div>
+  <div class="back">
+    <a href="{% url 'home' %}" class="btn btn-primary" style="position: fixed; top: 5%; left: 5%; background-color: transparent; border-color: white;border-radius:40%;">
+      <i class="bi bi-arrow-left-short" style="font-size: 3em;" ></i>
+    </a>
+  </div>
+  <div class="container">
+    <div class="login-form">
+      <form action="{% url 'login' %}" method="post">
+        {% csrf_token %}
+
+        {% if form.errors %}
+          <div class="alert alert-danger" style="width:100%; font-size:18px">
+              Nombre de usuario y/o contraseña incorrectos
+          </div>
+
+          {% for field in form %}
+              <div class="form-group">
+                  <label for="{{ field.id_for_label }}"><b>{{ field.label }}</b></label>
+                  {{ field }}
+              </div>
+          {% endfor %}
+    
+          {% else %}
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}"><b>Usuario:</b></label>
+                {{ form.username }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}"><b>Contraseña:</b></label>
+                {{ form.password }}
+            </div>
+        {% endif %}
+
+
+        <div class="form-group text-center">
+          <button type="submit" class="btn btn-primary btn-block" style="background-color: #4e148c; font-size:25px; border-color: white;">Iniciar sesión</button>
+        </div>
+
+        <div class="d-flex justify-content-around align-items-center" style="margin-top: 5%;">
+          <div class="form-group text-center">
+            <a href="{% provider_login_url 'google' %}">
+              <button type="button" class="btn btn-primary btn-block" style="background-color: #786dce; font-size: 20px; width:auto; border-color: white;"> 
+                <img src="{% static 'images/color_google.png' %}" alt="Iniciar sesión con Google" style="width:20%; max-width:180px;">
+              </button>
+            </a>
+          </div>
+        </div>
+        
+      </form>
+      <div class="text-center" style="font-size:20px; color:black;">
+        <a href="{%  url 'password_reset' %}" style="color:black;"> <u>No recuerdo mi contraseña</u> </a>
+      </div>
+      <hr>
+        <div class="text-center" style="font-size:20px; color:black;">
+          ¿Nuevo por aquí? <a href="{%  url 'register' %}" style="color:black;"> <u>Regístrate</u> </a>
+        </div>
+
+    </div>
+
+  </div>
+  <img src="{% static 'images/logo_worldin_morado_sinfondo.png' %}" alt="foto" style="width:20%; max-width:250px; position: fixed; bottom: 5%; right: 5%;">
+
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+
+{% endblock %}

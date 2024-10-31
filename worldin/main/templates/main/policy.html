@@ -51,6 +51,7 @@
 
         .button-condiciones {
             background-color: rgba(106, 79, 184, 0.8);
+            border-color:white;
         }
 
         /* Navbar */
@@ -79,7 +80,7 @@
                     <a class="nav-link btn btn-primary" href="{% url 'contact_us' %}" style="background-color:#6a4fb8; color:white; border-color:white; margin-right:3%;">Contacta con nosotros</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link btn btn-primary" href="#" style="background-color:#6a4fb8; color:white; border-color:white;">Iniciar sesión</a>
+                    <a class="nav-link btn btn-primary" href="{% url 'login' %}" style="background-color:#6a4fb8; color:white; border-color:white;">Iniciar sesión</a>
                 </li>
             </ul>
         </div>
@@ -206,7 +207,7 @@
 
     <section id="term">
         <div class="section-content">
-            <a href="{% url 'usage' %}" class="btn btn-primary button-condiciones">CONDICIONES DE USO Y TÉRMINOS DEL SISTEMA</a>
+            <a href="{% url 'usage' %}" class="btn btn-primary button-condiciones">CONDICIONES DE USO Y TÉRMINOS DEL SERVICIO</a>
         </div>
     </section>
 

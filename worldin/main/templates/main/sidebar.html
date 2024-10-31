@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock title %} - Worldin</title>
+
+    <!-- Importación de estilos y fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'images/logo_worldin_morado_sinfondo.png' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+
+    {% block header %}
+    {% endblock header %}
+</head>
+<body>
+    <div class="container profile-container">
+        <!-- Botón para abrir el menú -->
+        <button id="menuToggle" class="btn btn-primary" style="background-color:#6a4fb8; border-color: white; position: fixed; top: 50%; 
+        left: 60px; transform: translateY(-50%); z-index: 1000; outline:none; box-shadow:none;">
+            <i class="bi bi-arrow-bar-right" style="font-size:3em;" id="menuIcon"></i>
+        </button>
+
+        <!-- Menú lateral -->
+        <div id="sidebar" class="sidebar" style="display: none; z-index: 999;">
+            <ul class="list-group-sidebar">
+                <li class="list-group-item-sidebar">Ciudad actual:</li>
+                <hr class="hr">
+                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-bag-fill"></i> Mercado</a></li>
+                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-calendar-check"></i> Eventos</a></li>
+                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-people-fill"></i> Comunidad</a></li>
+                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
+                <hr class="hr">
+                
+                <li class="list-group-item-sidebar"><a href="{% url 'world' %}"><i class="bi bi-globe-americas"></i> Mundo</a></li>
+                <hr class="hr">
+                <li class="list-group-item-sidebar"><a href="{% url 'search_users' %}"><i class="bi bi-person-fill-add"></i> Buscar usuarios</a></li>
+                
+                <hr class="hr">
+                
+                <li class="list-group-item-sidebar">
+                    <a href="{% url 'follow_requests' %}">
+                        Solicitudes de seguimiento
+                        {% if pending_requests_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ pending_requests_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="list-group-item-sidebar"><a href="{% url 'my_profile' %}">
+                    {% if request.user.profile_picture %}
+                        <img src="{{ request.user.profile_picture.url }}" class="profile-picture-sidebar" alt="Perfil del cliente">
+                    {% else %}
+                        <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture-sidebar" alt="Perfil del cliente">
+                    {% endif %}
+                    Mi perfil</a>
+                </li>
+                <hr class="hr">
+                <li class="list-group-item-sidebar">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" style="font-size:18px;"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Contenido principal aquí -->
+        <div class="main-content">
+            {% block content %}
+            <!-- Aquí se insertará el contenido de las plantillas que extiendan este template -->
+            {% endblock %}
+        </div>
+    </div>
+    <script>
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const menuIcon = document.getElementById('menuIcon');
+
+            if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+                sidebar.style.display = 'block';
+                menuIcon.classList.remove('bi-arrow-bar-right');
+                menuIcon.classList.add('bi-arrow-bar-left');
+                this.style.left = '240px'; // Ajusta el botón a la derecha
+            } else {
+                sidebar.style.display = 'none';
+                menuIcon.classList.remove('bi-arrow-bar-left');
+                menuIcon.classList.add('bi-arrow-bar-right');
+                this.style.left = '80px'; // Vuelve a la posición inicial
+            }
+        });
+    </script>
+    
+    {% block include_js %}
+    {% endblock %}
+</body>
+</html>
