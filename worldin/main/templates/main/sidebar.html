@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock title %} - Worldin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"> <!-- Asegúrate de que el CSS de Bootstrap Icons está incluido -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'images/logo_worldin_morado_sinfondo.png' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+
+    {% block header %}
+    {% endblock header %}
+</head>
+<body>
+    <div class="container profile-container">
+        <!-- Botón para abrir el menú -->
+        <button id="menuToggle" class="btn btn-primary" style="background-color:#6a4fb8; border-color: white; position: fixed; top: 50%; left: 60px; transform: translateY(-50%); z-index: 1000;">
+            <i class="bi bi-arrow-bar-right" style="font-size:3em;" id="menuIcon"></i>
+        </button>
+
+        <!-- Menú lateral -->
+        <div id="sidebar" class="sidebar" style="display: none; z-index: 999;">
+            <ul class="list-group">
+                <li class="list-group-item">Ciudad actual:</li>
+                <hr>
+                <li class="list-group-item"><a href="#">Mercado</a></li>
+                <li class="list-group-item"><a href="#">Eventos</a></li>
+                <li class="list-group-item"><a href="#">Comunidad</a></li>
+                <li class="list-group-item"><a href="#">Turismo</a></li>
+                <hr>
+                <li class="list-group-item"><a href="{% url 'my_profile' %}">Mi perfil</a></li>
+                <li class="list-group-item"><a href="{% url 'world' %}">Mundo</a></li>
+                <li class="list-group-item"><a href="{% url 'search_users' %}">Buscar usuarios</a></li>
+                <hr>
+                <li class="list-group-item">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Cerrar sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Contenido principal aquí -->
+        <div class="main-content">
+            {% block content %}
+            <!-- Aquí se insertará el contenido de las plantillas que extiendan este template -->
+            {% endblock %}
+        </div>
+    </div>
+    <script>
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const menuIcon = document.getElementById('menuIcon');
+
+            if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+                sidebar.style.display = 'block';
+                menuIcon.classList.remove('bi-arrow-bar-right');
+                menuIcon.classList.add('bi-arrow-bar-left');
+                this.style.left = '240px'; // Ajusta el botón a la derecha
+            } else {
+                sidebar.style.display = 'none';
+                menuIcon.classList.remove('bi-arrow-bar-left');
+                menuIcon.classList.add('bi-arrow-bar-right');
+                this.style.left = '80px'; // Vuelve a la posición inicial
+            }
+        });
+    </script>
+    
+    {% block include_js %}
+    {% endblock %}
+</body>
+</html>

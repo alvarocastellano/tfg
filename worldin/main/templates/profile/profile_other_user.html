@@ -1,4 +1,4 @@
-{% extends "main/base.html" %}
+{% extends "main/sidebar.html" %}
 
 {% block title %}Perfil de {{ profile_user.username }}{% endblock %}
 
@@ -70,6 +70,10 @@
             border: 1px solid #6a4fb8;
             margin-left: 5%;
             margin-right: 5%;
+        }
+
+        .bi-arrow-left-short {
+            font-size: 2em;
         }
 
         /* Estilos para hacer la vista más responsiva */
