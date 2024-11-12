@@ -12,9 +12,10 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from datetime import datetime
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.contrib.messages import get_messages
+from dateutil.relativedelta import relativedelta
 
 def home(request):
     return render(request, 'home.html')
@@ -196,12 +197,13 @@ def profile(request):
 
     # Calcular la edad
     if user.birthday:
-        today = datetime.now()
-        age = today.year - user.birthday.year - ((today.month, today.day) < (user.birthday.month, user.birthday.day))
+        birthday_date = datetime.strptime(user.birthday.strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+        today = datetime.today().date()
+        age = relativedelta(today, birthday_date).years
+
     else:
         age = None
-
-    
+   
 
     if user.birthday is None:
         complete_profile_alerts+=1
@@ -245,7 +247,6 @@ def is_profile_complete(user):
         user.aficiones.exists()
     )
 
-
 @login_required
 def edit_profile(request):
     available_hobbies = Hobby.objects.all()
@@ -281,7 +282,19 @@ def edit_profile(request):
         user.aficiones.set(Hobby.objects.filter(id__in=selected_hobbies))
 
         # Procesar datos del formulario
-        user.username = request.POST.get('username')
+        new_username = request.POST.get('username')
+
+        # Verificar si el nombre de usuario es único
+        if CustomUser.objects.filter(username=new_username).exclude(id=user.id).exists():
+            error_messages.append('El nombre de usuario ya está en uso.')
+            return render(request, 'edit_profile.html', {
+                'user': user,
+                'available_hobbies': available_hobbies,
+                'error_messages': error_messages,
+                'complete_profile_alerts': complete_profile_alerts
+            })
+
+        user.username = new_username
         user.email = request.POST.get('email')
         user.first_name = request.POST.get('name')
         user.last_name = request.POST.get('surname')
@@ -297,7 +310,25 @@ def edit_profile(request):
 
         # Procesar cumpleaños
         birthday = request.POST.get('birthday')
-        user.birthday = birthday if birthday else None
+        if birthday:
+            try:
+                birthday_date = datetime.strptime(birthday, '%Y-%m-%d').date()
+                today = datetime.today().date()
+                age = relativedelta(today, birthday_date).years
+
+                # Validar la edad
+                if birthday_date > today:
+                    error_messages.append("La fecha de nacimiento no puede ser en el futuro.")
+                elif age < 14:
+                    error_messages.append("Debes tener al menos 14 años.")
+                elif age > 100:
+                    error_messages.append("La edad máxima permitida es de 100 años.")
+                else:
+                    user.birthday = birthday_date
+            except ValueError:
+                error_messages.append("Formato de fecha de nacimiento no válido.")
+        else:
+            user.birthday = None
 
         # Actualizar otros datos
         user.city = request.POST.get('city')
@@ -412,7 +443,7 @@ def followers_count(request, username):
                 # Crear una solicitud de seguimiento si es cuenta privada
                 FollowRequest.objects.get_or_create(sender=request.user, receiver=user_to_follow)
             else:
-                # Si es cuenta pública, seguir directamente
+                # Si es cuenta publica, seguir directamente
                 Follow.objects.get_or_create(follower=request.user, following=user_to_follow)
         elif request.POST['value'] == 'unfollow':
             # Eliminar seguimiento
