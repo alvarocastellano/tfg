@@ -193,16 +193,7 @@ function main() {
     }
 
     // Añade el manejador de eventos para el redimensionamiento de la ventana
-    window.addEventListener('resize', onWindowResize, false);
-
-
-    
-    //OJO: MARCADORES NO FUNCIONAN
-    //PORQUE SON EN 2D Y NO CALCULO BIEN SUS POSICIONES RESPECTO A LA ESFERA 3D (TIERRA)????
-
-
-    
-    
+    window.addEventListener('resize', onWindowResize, false);    
     
     // Coloca los marcadores como hijos de earthMesh para que se sincronicen con la rotación de la Tierra
     markers.forEach(marker => {
@@ -235,9 +226,6 @@ function main() {
     textureLoader.load(map, onTextureLoad);
     textureLoader.load(bumpMap, onTextureLoad);
     textureLoader.load(earthCloud, onTextureLoad);
-
-
-    //OJO: QUIERO QUE AL SOLTAR EL RATON NO SIGA ROTANDO INFINITAMENTE, PERO NO FUNCIONA
     
     // Define functions that handle mouse events for interaction with the Globe.
     let rotationSpeedX = 0;
