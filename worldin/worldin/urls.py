@@ -34,5 +34,22 @@ urlpatterns = [
     path('follow_requests/', views.follow_requests, name='follow_requests'),
     path('accept_follow_request/<int:request_id>/', views.accept_follow_request, name='accept_follow_request'),
     path('reject_follow_request/<int:request_id>/', views.reject_follow_request, name='reject_follow_request'),
+    path('my_market_profile/', views.my_market_profile, name='my_market_profile'),
+    path('my_market_profile/ratings', views.my_market_ratings, name='my_market_ratings'),
+    path('my_market_profile/add_product', views.add_product, name='add_product'),
+    path('update-city/', views.update_city, name='update_city'),
+    path('product_details/<int:product_id>/', views.product_details, name='product_details'),
+    path('delete_product/<int:product_id>/', views.delete_product, name='delete_product'),
+    path('edit_product/<int:product_id>/', views.edit_product, name='edit_product'),
+    path('delete_image/<int:product_id>/<int:image_id>/', views.delete_product_image, name='delete_product_image'),
+    path('my_market_profile/add_renting', views.add_renting, name='add_renting'),
+    path('renting_details/<int:renting_id>/', views.renting_details, name='renting_details'),
+    path('delete_renting/<int:renting_id>/', views.delete_renting, name='delete_renting'),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

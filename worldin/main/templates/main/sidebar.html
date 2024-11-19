@@ -23,7 +23,6 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{% static 'images/logo_worldin_morado_sinfondo.png' %}">
-    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -38,6 +37,67 @@
 
     {% block header %}
     {% endblock header %}
+
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #6a4fb8; /* Color del menú */
+            padding: 12px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+            text-align: center;
+            overflow-y: auto;
+        }
+        
+        .sidebar ul {
+            padding: 0;
+        }
+        
+        .sidebar ul li {
+            font-size: 18px; /* Tamaño de letra más pequeño */
+            list-style: none;
+            margin-bottom: 10px;
+            color: white;
+            background-color: #6a4fb8;
+            border-color: #6a4fb8;
+            padding: 8px 0; /* Reduce el espacio interno de cada li */
+        }
+        
+        .sidebar a {
+            padding: 0;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .sidebar a:hover {
+            color: #b9b9b9;
+        }
+        
+        .sidebar .list-group-item-sidebar {
+            margin: 12px 0;
+        }
+        
+        .profile-picture-sidebar {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        
+        .custom-hr {
+            border: none; /* Elimina el borde por defecto */
+            height: 2px; /* Ajusta el grosor de la línea */
+            background-color: white; /* Cambia el color de la línea a blanco */
+            margin: 10px 0;
+            background-color: white;
+        }
+        
+    </style>
 </head>
 <body>
     <div class="container profile-container">
@@ -50,19 +110,63 @@
         <!-- Menú lateral -->
         <div id="sidebar" class="sidebar" style="display: none; z-index: 999;">
             <ul class="list-group-sidebar">
-                <li class="list-group-item-sidebar">Ciudad actual:</li>
-                <hr class="hr">
+                <li class="list-group-item-sidebar">
+                    Ciudad actual: <span id="selected-city">{{ request.user.selected_city }}</span><br>
+                    <button id="change-city-btn" class="btn btn-secondary mt-2">Cambiar ciudad</button>
+                
+                    <div id="city-form-container" style="display: none;">
+                        <form id="city-form" method="post">
+                            {% csrf_token %}
+                            <input type="text" class="form-control" list="ciudades" name="selected_city" placeholder="Seleccionar ciudad..." value="{{ request.user.selected_city }}" required>
+                            <datalist id="ciudades">
+                                <option value="Bruselas">Bélgica</option>
+                                <option value="Sofia">Bulgaria</option>
+                                <option value="Praga">Chequia</option>
+                                <option value="Copenhague">Dinamarca</option>
+                                <option value="Berlin">Alemania</option>
+                                <option value="Munich">Alemania</option>
+                                <option value="Tallin">Estonia</option>
+                                <option value="Dublin">Irlanda</option>
+                                <option value="Cork">Irlanda</option>
+                                <option value="Atenas">Grecia</option>
+                                <option value="Madrid">España</option>
+                                <option value="Sevilla">España</option>
+                                <option value="Barcelona">España</option>
+                                <option value="Paris">Francia</option>
+                                <option value="Lens">Francia</option>
+                                <option value="Marsella">Francia</option>
+                                <option value="Zagreb">Croacia</option>
+                                <option value="Split">Croacia</option>
+                                <option value="Roma">Italia</option>
+                                <option value="Salerno">Italia</option>
+                                <option value="Florencia">Italia</option>
+                                <option value="Bari">Italia</option>
+                                <option value="Luxemburgo">Luxemburgo</option>
+                                <option value="Budapest">Hungría</option>
+                                <option value="La Valeta">Malta</option>
+                                <option value="Amsterdam">Países Bajos</option>
+                                <option value="Roterdam">Países Bajos</option>
+                                <option value="Viena">Austria</option>
+                                <option value="Varsovia">Polonia</option>
+                                <option value="Lisboa">Portugal</option>
+                                <option value="Oporto">Portugal</option>
+                            </datalist>
+                            <button type="submit" class="btn btn-primary mt-2">Actualizar</button>
+                        </form>
+                    </div>
+                </li>
+                <hr class="custom-hr">
                 <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-bag-fill"></i> Mercado</a></li>
                 <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-calendar-check"></i> Eventos</a></li>
                 <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-people-fill"></i> Comunidad</a></li>
                 <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
-                <hr class="hr">
+                <hr class="custom-hr">
                 
                 <li class="list-group-item-sidebar"><a href="{% url 'world' %}"><i class="bi bi-globe-americas"></i> Mundo</a></li>
-                <hr class="hr">
+                <hr class="custom-hr">
                 <li class="list-group-item-sidebar"><a href="{% url 'search_users' %}"><i class="bi bi-person-fill-add"></i> Buscar usuarios</a></li>
                 
-                <hr class="hr">
+                <hr class="custom-hr">
                 
                 <li class="list-group-item-sidebar">
                     <a href="{% url 'follow_requests' %}">
@@ -80,7 +184,7 @@
                     {% endif %}
                     Mi perfil</a>
                 </li>
-                <hr class="hr">
+                <hr class="custom-hr">
                 <li class="list-group-item-sidebar">
                     <form action="{% url 'logout' %}" method="post">
                         {% csrf_token %}
@@ -113,6 +217,51 @@
                 menuIcon.classList.add('bi-arrow-bar-right');
                 this.style.left = '80px'; // Vuelve a la posición inicial
             }
+        });
+    </script>
+    <script>
+        // Obtener el botón y el formulario
+        const changeCityBtn = document.getElementById('change-city-btn');
+        const cityFormContainer = document.getElementById('city-form-container');
+    
+        // Función para mostrar u ocultar el formulario
+        changeCityBtn.addEventListener('click', function() {
+            if (cityFormContainer.style.display === 'none') {
+                cityFormContainer.style.display = 'block';
+                changeCityBtn.textContent = 'Cancelar';  // Cambiar el texto del botón a "Cancelar"
+            } else {
+                cityFormContainer.style.display = 'none';
+                changeCityBtn.textContent = 'Cambiar ciudad';  // Volver al texto original
+            }
+        });
+    </script>
+    <script>
+        // JavaScript para manejar el envío del formulario de manera asíncrona
+        document.getElementById('city-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+    
+            const formData = new FormData(this);
+            
+            fetch("{% url 'update_city' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualiza la ciudad mostrada en la página sin recargar
+                    document.getElementById('selected-city').textContent = data.new_city;
+                    
+                    // Cierra el menú lateral si es necesario
+                    const menu = document.getElementById('sidebar'); // Suponiendo que el ID del menú lateral es 'sidebar'
+                    menu.classList.remove('open'); // Cierra el menú lateral si tiene la clase 'open'
+                } else {
+                    alert(data.message); // Muestra el mensaje de error
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         });
     </script>
     

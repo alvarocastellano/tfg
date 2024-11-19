@@ -1,0 +1,238 @@
+{% extends "main/sidebar.html" %}
+
+{% block title %}Piso de alquiler{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+            overflow-x:hidden;
+        }
+        .rental-details {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        .rental-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .rental-price {
+            font-size: 18px;
+            color: #6a4fb8;
+        }
+        .rental-description {
+            margin-top: 15px;
+        }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+            padding: 0;
+        }
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+        }
+        .profile-info {
+            margin-top: 20px;
+        }
+        .profile-left {
+            color: #6a4fb8;
+            padding: 20px;
+        }
+
+        .carousel {
+            width: 100%;
+        }
+
+        .carousel-inner .carousel-item {
+            justify-content: center;
+            align-items: center;
+        }
+    
+        .carousel-inner .carousel-item img {
+            object-fit: cover;
+            width: auto;
+            max-width: 100%;
+            max-height: 400px; /* Ajusta la altura según sea necesario */
+        }
+
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            background-image: none; /* Eliminamos la imagen de fondo predeterminada */
+        }
+
+        .carousel-control-prev-icon::after,
+        .carousel-control-next-icon::after {
+            content: '‹'; /* Símbolo de flecha previa */
+            font-size: 40px; /* Tamaño del símbolo */
+            color: black; /* Color negro para el símbolo */
+        }
+
+        .carousel-control-next-icon::after {
+            content: '›'; /* Símbolo de flecha siguiente */
+        }
+
+
+        .carousel-indicators li {
+            color: black;
+        }
+
+        .contact-button {
+            color: white; /* Color del texto */
+            background-color: #6a4fb8; /* Fondo blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+        }
+
+        .contact-button:hover {
+            background-color: white ; /* Fondo color cuando el enlace está sobrevolado */
+            color: #6a4fb8; /* Cambiar color del texto al blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+
+        hr {
+            border: 1px solid black;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid profile-container">
+        <div class="profile-top d-flex justify-content-between align-items-center">
+            <div>
+                {% if rental.owner.id == request.user.id %}
+                    <a href="{% url 'my_market_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;"><h3 style="font-size:12px;">Mi perfil de mercado</h3></a>
+                {% else %}
+                    <a href="#" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: #6a4fb8;"><h3 style="font-size:12px;">Mercado de productos</h3></a>
+                {% endif %}
+            </div>
+            <h3><i class="bi bi-geo-fill"></i>Este alquiler se encuentra en {{ rental.city_associated }}</h3>
+            
+        </div>
+        <div class="row mt-5">
+            <!-- Detalles del vendedor (izquierda) -->
+            <div class="col-md-4" style="padding: 10px; margin:5px;">
+                <div class="profile-container">
+                    
+                    <div class="profile-info text-center">
+                        
+                        <h4 class="mt-3">{{ rental.rooms }} hab(s) / {{rental.max_people}} personas</h4>
+                        <h4 class="mt-3">{{ rental.square_meters }} metros cuadrados</h4>
+                        <p class="mt-3">
+                            {% for feature in rental.features.all %}
+                                <div class="mb-3"> <!-- Div para separar cada feature en una fila -->
+                                    <button class="btn btn-primary" 
+                                            style="width: auto; background-color: #786dce; color: white; border-color: white; font-size: 20px; outline: none; box-shadow: none;">
+                                        {{ feature.feature }}
+                                    </button>
+                                </div>
+                           {% endfor %}
+                        </p>
+                        
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles del producto (derecha) -->
+            <div class="col-md-7">
+                <div class="rental-details" style="border-color:#6a4fb8; padding: 10px; margin:5px;">
+                    <div id="carouselExampleIndicators" class="carousel slide">
+                        <ol class="carousel-indicators">
+                            {% for image in rental.images.all %}
+                                <li data-bs-target="#carouselExampleIndicators" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}"></li>
+                            {% endfor %}
+                        </ol>
+                        <div class="carousel-inner">
+                            {% for image in rental.images.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ image.image.url }}" alt="Imagen de producto" class="d-block mx-auto">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </a>
+                        <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </a>
+                    </div>
+                    <h1><strong>{{ rental.title }}</strong></h1>
+                    <br>
+                    <h2><strong>{{ rental.price }}€/mes</strong></h2>
+                    <br>
+                    <h4><strong>{{ rental.location }}</strong></h4>
+                    <br>
+                    <br>
+                    <p>{{ rental.description }}</p>
+                    <br><br>
+                    <h4><strong>Propietario</strong></h4>
+                    {% if rental.owner.id == request.user.id %}
+                        {% if rental.owner.profile_picture %}
+                            <a href="{% url 'my_profile' %}" style="text-decoration:none; color:#6a4fb8;">
+                            <h5 class="mt-3"><img src="{{ rental.owner.profile_picture.url }}" class="profile-picture" alt="Foto del vendedor">
+                                <strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h5>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'my_profile' %}" style="text-decoration:none; color:#6a4fb8;">
+                                <i class="bi bi-person-circle" style="font-size: 100px; color: #a6a0d6;"></i>
+                                <h2 class="mt-3"><strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h2>
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        {% if rental.owner.profile_picture %}
+                        <a href="{% url 'other_user_profile' rental.owner.username %}" style="text-decoration:none; color:#6a4fb8;">
+                        <h5 class="mt-3"><img src="{{ rental.owner.profile_picture.url }}" class="profile-picture" alt="Foto del vendedor">
+                            <strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h5>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'other_user_profile' rental.owner.username %}" style="text-decoration:none; color:#6a4fb8;">
+                            <i class="bi bi-person-circle" style="font-size: 100px; color: #a6a0d6;"></i>
+                            <h2 class="mt-3"><strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h2>
+                        </a>
+                            {% endif %}
+                        {% if rental.owner.id != request.user.id %}
+                            <a href="#" class="btn btn-primary contact-button">Contactar con {{ rental.owner.first_name }} {{ rental.owner.last_name }}</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+{% endblock %}

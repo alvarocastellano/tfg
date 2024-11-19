@@ -1,18 +1,19 @@
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import  render
-from worldin.forms import CustomUserCreationForm, CustomAuthenticationForm
+from worldin.forms import CustomUserCreationForm, CustomAuthenticationForm, ProductForm, RentalForm, ProductImageFormSet, RentalImageFormSet
 from django.shortcuts import  render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
-from .models import CustomUser, Hobby, Follow, FollowRequest
+from .models import CustomUser, Hobby, Follow, FollowRequest, Product, Rental, ProductImage, RentalImage, RentalFeature
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from datetime import datetime
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from django.contrib.messages import get_messages
 from dateutil.relativedelta import relativedelta
@@ -189,11 +190,28 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
         # Si existe, continuar con el inicio de sesión
         return super().pre_social_login(request, sociallogin)
 
-
+#ACCESO RÁPIDO A VISTA DE MI PERFIL
 @login_required
 def profile(request):
     user = request.user
     complete_profile_alerts = 0
+    announce_count = 0
+
+    filter_option = request.GET.get('filter', 'todos')
+
+    user_products = Product.objects.filter(owner=request.user)
+    user_rentings = Rental.objects.filter(owner=request.user)
+
+    # Contadores
+    announce_count = len(user_products) + len(user_rentings)
+
+    # Filtrado según el parámetro 'filter'
+    if filter_option == 'articulos':
+        user_rentings = []  # Solo mostrar productos
+    elif filter_option == 'alquileres':
+        user_products = []  # Solo mostrar alquileres
+
+    
 
     # Calcular la edad
     if user.birthday:
@@ -230,12 +248,16 @@ def profile(request):
 
     return render(request, 'my_profile.html', {
         'user': user,
+        'user_products': user_products,
+        'user_rentings' : user_rentings,
         'age': age,
         'followers_count': followers_count,
         'following_count': following_count,
         'pending_requests_count': pending_requests_count,
         'complete_profile_alerts': complete_profile_alerts,
         'total_alerts' : total_alerts,
+        'announce_count' : announce_count,
+        'filter_option': filter_option,
     })
 
 def is_profile_complete(user):
@@ -275,7 +297,7 @@ def edit_profile(request):
                 'user': user,
                 'available_hobbies': available_hobbies,
                 'error_messages': error_messages,
-                'complete_profile_alerts': complete_profile_alerts
+                'complete_profile_alerts': complete_profile_alerts,
             })
 
         # Actualizar aficiones
@@ -451,6 +473,7 @@ def followers_count(request, username):
     
     return redirect('other_user_profile', username=user_to_follow.username)
 
+#ACCESO RÁPIDO A LA VISTA DE PERFIL DE OTRO USUARIO
 @login_required
 def other_user_profile(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
@@ -459,6 +482,21 @@ def other_user_profile(request, username):
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
+    announce_count = 0
+
+    filter_option = request.GET.get('filter', 'todos')
+
+    user_products = Product.objects.filter(owner=profile_user)
+    user_rentings = Rental.objects.filter(owner=profile_user)
+
+    # Contadores
+    announce_count = len(user_products) + len(user_rentings)
+
+    # Filtrado según el parámetro 'filter'
+    if filter_option == 'articulos':
+        user_rentings = []  # Solo mostrar productos
+    elif filter_option == 'alquileres':
+        user_products = []  # Solo mostrar alquileres
 
     pending_follow_request = FollowRequest.objects.filter(sender=request.user, receiver=profile_user, status='pending').first()
 
@@ -467,12 +505,16 @@ def other_user_profile(request, username):
     context = {
         'profile_user': profile_user,
         'is_own_profile': is_own_profile,
+        'user_products' : user_products,
+        'user_rentings': user_rentings,
         'is_following': is_following,
         'user_followers': user_followers,
         'user_following': user_following,
         'follow_button_value': follow_button_value,
         'current_user': request.user,
-        'pending_follow_request': pending_follow_request
+        'pending_follow_request': pending_follow_request,
+        'announce_count' : announce_count,
+        'filter_option': filter_option,
     }
     
     return render(request, 'profile_other_user.html', context)
@@ -568,22 +610,21 @@ def follow_requests(request):
 @login_required
 def sidebar(request):
     user = request.user
+
+    selected_city = user.selected_city if user.selected_city!="" else user.city
+
+
     complete_profile_alerts = 0    
-
     if user.birthday is None:
-        complete_profile_alerts+=1
-    
-    if user.city=="":
-        complete_profile_alerts+=1
-
-    if user.description=="":
-        complete_profile_alerts+=1
-    
-    if user.profile_picture=="":
-        complete_profile_alerts+=1
-
+        complete_profile_alerts += 1
+    if user.city == "":
+        complete_profile_alerts += 1
+    if user.description == "":
+        complete_profile_alerts += 1
+    if user.profile_picture == "":
+        complete_profile_alerts += 1
     if len(user.aficiones.all()) == 0:
-        complete_profile_alerts+=1
+        complete_profile_alerts += 1
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
 
@@ -591,4 +632,397 @@ def sidebar(request):
         'user': user,
         'pending_requests_count': pending_requests_count,
         'complete_profile_alerts': complete_profile_alerts,
+        'selected_city': selected_city,
     })
+
+@login_required
+def update_city(request):
+    if request.method == 'POST':
+        selected_city = request.POST.get('selected_city')
+
+        # Verifica si la ciudad seleccionada está en la lista permitida
+        valid_cities = [
+            "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
+            "Tallin", "Dublin", "Cork", "Atenas", "Madrid", "Sevilla",
+            "Barcelona", "Paris", "Lens", "Marsella", "Zagreb", "Split",
+            "Roma", "Salerno", "Florencia", "Bari", "Luxemburgo", "Budapest",
+            "La Valeta", "Amsterdam", "Roterdam", "Viena", "Varsovia",
+            "Lisboa", "Oporto"
+        ]
+
+        if selected_city in valid_cities:
+            user = request.user
+            user.selected_city = selected_city
+            user.save()
+            
+            # Retorna una respuesta en formato JSON indicando éxito
+            return JsonResponse({'success': True, 'new_city': selected_city})
+        else:
+            return JsonResponse({'success': False, 'message': 'Ciudad no válida'}, status=400)
+
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+#===========================AQUI COMIENZAN LAS VISTAS DEL MERCADO==========================================
+
+def my_market_profile(request):
+    announce_count = 0
+    rating_count = 0
+    sell_count = 0
+    buy_count = 0
+    stars_sum = 0
+    range_of_stars = [i for i in range(5)]
+
+    # Parámetro para filtrar productos
+    filter_option = request.GET.get('filter', 'todos')  # Por defecto, 'todos'
+
+    if rating_count != 0:
+        average_rating = stars_sum / rating_count
+    else:
+        average_rating = 0.0
+
+    adjusted_rating = average_rating + 0.5
+
+    user_products = Product.objects.filter(owner=request.user)
+    user_rentings = Rental.objects.filter(owner=request.user)
+
+    announce_count = len(user_products) + len(user_rentings)
+
+    # Filtrado según el parámetro 'filter'
+    if filter_option == 'articulos':
+        user_rentings = []  # Solo mostrar productos
+    elif filter_option == 'alquileres':
+        user_products = []  # Solo mostrar alquileres
+
+    # Contadores
+    
+
+    context = {
+        'user_products': user_products,
+        'user_rentings': user_rentings,
+        'announce_count': announce_count,
+        'rating_count': rating_count,
+        'sell_count': sell_count,
+        'buy_count': buy_count,
+        'average_rating': average_rating,
+        'range_of_stars': range_of_stars,
+        'adjusted_rating': adjusted_rating,
+        'filter_option': filter_option,  # Pasar el filtro al template
+    }
+    return render(request, 'my_market_profile.html', context)
+
+
+def my_market_ratings(request):
+    return render(request, 'my_market_ratings.html')
+
+
+@login_required
+def add_product(request):
+    error_messages = []
+
+    if not request.user.city:
+        return redirect('my_market_profile')
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.none())
+
+        # Validaciones del formulario
+        if form.is_valid():
+            
+            title = form.cleaned_data.get('title')
+            if title.isnumeric():
+                error_messages.append("El título no puede ser únicamente numérico.")
+
+            price = form.cleaned_data.get('price')
+            if price is None:
+                error_messages.append("El precio es obligatorio.")
+            else:
+                try:
+                    price = Decimal(price)
+                    if price <= 0 or price < Decimal('0.1') or price > Decimal('1000'):
+                        error_messages.append("El precio debe estar entre 0.1 y 1000.")
+                    elif price.quantize(Decimal('.01')) != price:
+                        error_messages.append("El precio debe tener como máximo 2 decimales.")
+                except InvalidOperation:
+                    error_messages.append("El precio debe ser un número válido.")
+        else:
+            error_messages.append("Todos los campos son obligatorios.")
+
+        # Validación del formset para las imágenes
+        if formset.is_valid():
+            image_count = sum(1 for f in formset if f.cleaned_data.get('image'))
+            if image_count < 1:
+                error_messages.append("Debes cargar al menos 1 imagen.")
+        else:
+            error_messages.append("Las imágenes no son válidas o no se cargaron correctamente.")
+
+        if error_messages:
+            # Si hay errores, volver a mostrar los datos previos en los formularios
+            return render(request, 'add_product.html', {
+                'form': form,
+                'formset': formset,
+                'error_messages': error_messages
+            })
+
+        # Si no hay errores, guardar el producto
+        if form.is_valid() and formset.is_valid() and not error_messages:
+            product = form.save(commit=False)
+            product.owner = request.user
+            product.city_associated = request.user.city
+            product.save()
+
+            for f in formset:
+                if f.cleaned_data.get('image'):
+                    ProductImage.objects.create(product=product, image=f.cleaned_data['image'])
+
+            return redirect('my_market_profile')
+
+    else:
+        form = ProductForm()
+        formset = ProductImageFormSet(queryset=ProductImage.objects.none())
+
+    return render(request, 'add_product.html', {'form': form, 'formset': formset})
+
+
+def product_details(request, product_id):
+    # Obtener el producto y su propietario
+    product = get_object_or_404(Product, id=product_id)
+    rating_count = 0
+    stars_sum = 0
+    
+    if rating_count !=0 :
+        average_rating = stars_sum/rating_count
+    else:
+        average_rating = 0.0
+
+    adjusted_rating = average_rating + 0.5
+    
+    context = {
+        'product': product,
+    }
+    return render(request, 'product_details.html', context)
+
+@login_required
+def delete_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id, owner=request.user)
+    product.delete()
+    return redirect('my_market_profile')
+
+@login_required
+def edit_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    error_messages = []
+    images_count = 0
+
+    if not request.user.city:
+        return redirect('my_market_profile')
+
+    for image in product.images.all():
+            images_count += 1
+
+    if request.method == 'POST':
+        # Actualizar detalles del producto
+        product_title = request.POST.get('title')
+        product_description = request.POST.get('description')
+        product_price = request.POST.get('price')
+        product_city_associated = request.user.city
+
+
+        # Validar nombre de producto
+        if Product.objects.filter(title=product_title).exclude(id=product.id).exists():
+            error_messages.append('El nombre del producto ya está en uso.')
+
+        # Verificar que los campos obligatorios no estén vacíos
+        if not product_title or not product_description or not product_price:
+            error_messages.append('Por favor, completa todos los campos obligatorios.')
+
+        # Verificar que el producto tenga al menos una imagen
+        if product.images.count() == 0 and request.FILES.get('product_image') is None:
+            error_messages.append('El producto debe tener al menos una imagen.')
+
+        # Si hay errores, no actualizar el producto
+        if error_messages:
+            return render(request, 'edit_product.html', {
+                'product': product,
+                'error_messages': error_messages,
+                'images_count' : images_count,
+            })
+
+        # Si no hay errores, actualizar los detalles del producto
+        product.title = product_title
+        product.description = product_description
+        product.price = product_price
+        product.city_associated = product_city_associated
+
+        # Procesar nueva imagen del producto
+        if request.FILES.get('product_image'):
+            ProductImage.objects.create(product=product, image=request.FILES.get('product_image'))
+
+        # Eliminar imágenes seleccionadas por el usuario
+        if 'eliminar_imagen' in request.POST:
+            images_to_delete = request.POST.getlist('eliminar_imagen')
+            if len(images_to_delete) >= product.images.count():  # Si se elimina todas las imágenes, no permitimos la acción
+                error_messages.append('El producto debe tener al menos una imagen.')
+            else:
+                for image_id in images_to_delete:
+                    image = get_object_or_404(ProductImage, id=image_id)
+                    image.delete()
+
+        # Si hay errores después de eliminar imágenes, no actualizamos el producto
+        if error_messages:
+            return render(request, 'edit_product.html', {
+                'product': product,
+                'error_messages': error_messages,
+                'images_count' : images_count,
+            })
+
+        # Guardar cambios en el producto
+        product.save()
+        return redirect('product_details', product_id=product.id)
+
+    return render(request, 'edit_product.html', {
+        'product': product,
+        'error_messages': error_messages,
+        'images_count' : images_count,
+    })
+
+
+
+
+@login_required
+def delete_product_image(request, product_id, image_id):
+    product = get_object_or_404(Product, id=product_id, owner=request.user)
+    # Obtener la imagen y verificar que pertenece al producto del usuario
+    image = get_object_or_404(ProductImage, id=image_id, product=product)
+
+    if request.method == 'POST':
+        # Eliminar la imagen del producto
+        image.image.delete()  # Borra el archivo de imagen
+        image.delete()  # Elimina el registro de la base de datos
+        return redirect('edit_product', product_id=product.id)  # Redirige de nuevo a la página de edición
+
+    return redirect('edit_product', product_id=product.id)
+
+
+@login_required
+def add_renting(request):
+    available_features= RentalFeature.objects.all()
+    error_messages = []
+
+    if not request.user.city:
+        return redirect('my_market_profile')
+
+
+    if request.method == 'POST':
+        
+        form = RentalForm(request.POST)
+        formset = RentalImageFormSet(request.POST, request.FILES, queryset=RentalImage.objects.none())
+
+        # Validaciones
+        if form.is_valid():
+            title = form.cleaned_data.get('title')
+            if title.isnumeric():
+                error_messages.append("El título no puede ser únicamente numérico.")
+
+            # Validación del precio
+            price = form.cleaned_data.get('price')
+            if price is None:
+                error_messages.append("El precio es obligatorio.")
+            else:
+                try:
+                    price = int(price)  # Convertimos a entero
+                    if price <= 0 or price < 100 or price > 5000:
+                        error_messages.append("El precio debe ser un número entero entre 100 y 5000.")
+                except ValueError:
+                    error_messages.append("El precio debe ser un número válido y entero.")
+
+            # Validación de rooms
+            square_meters = form.cleaned_data.get('square_meters')
+            if square_meters is None or square_meters <= 0:
+                error_messages.append("los metros cuadrados deben ser un número positivo mayor que 0.")
+
+            # Validación de max_people
+            max_people = form.cleaned_data.get('max_people')
+            if max_people is None or max_people <= 0:
+                error_messages.append("El número máximo de personas debe ser un número positivo mayor que 0.")
+            else:
+                rooms = form.cleaned_data.get('rooms')
+                if max_people > rooms:
+                    error_messages.append("El número máximo de personas no puede ser mayor que el número de habitaciones.")
+
+            # Validación de rooms
+            rooms = form.cleaned_data.get('rooms')
+            if rooms is None or rooms <= 0:
+                error_messages.append("El número de habitaciones debe ser un número positivo mayor que 0.")
+            elif rooms < max_people:
+                error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
+
+            selected_features = request.POST.getlist('features')
+
+            
+
+        else:
+            error_messages.append("Todos los campos son obligatorios.")
+
+        # Validación del formset para las imágenes
+        if formset.is_valid():
+            image_count = sum(1 for f in formset if f.cleaned_data.get('image'))
+            if image_count < 4:
+                error_messages.append("Debes cargar al menos 4 imágenes.")
+        else:
+            error_messages.append("Las imágenes no son válidas o no se cargaron correctamente.")
+
+        if error_messages:
+            # Enviar el formulario y el formset con los datos previos (sin reiniciar los campos)
+            return render(request, 'add_renting.html', {
+                'form': form,
+                'formset': formset,
+                'error_messages': error_messages,
+                'available_features': available_features
+            })
+
+        if form.is_valid() and formset.is_valid() and not error_messages:
+            rental = form.save(commit=False)
+            rental.owner = request.user
+            rental.city_associated = request.user.city
+            rental.save()
+
+            rental.features.set(RentalFeature.objects.filter(id__in=selected_features))
+
+            for f in formset:
+                if f.cleaned_data.get('image'):
+                    RentalImage.objects.create(rental=rental, image=f.cleaned_data['image'])
+
+            return redirect('my_market_profile')
+
+    else:
+        form = RentalForm()
+        formset = RentalImageFormSet(queryset=RentalImage.objects.none())
+
+    return render(request, 'add_renting.html', {'form': form, 'formset': formset, 'available_features': available_features, 'error_messages': error_messages,})
+
+
+def renting_details(request, renting_id):
+    # Obtener el producto y su propietario
+    rental = get_object_or_404(Rental, id=renting_id)
+    rating_count = 0
+    stars_sum = 0
+    
+    if rating_count !=0 :
+        average_rating = stars_sum/rating_count
+    else:
+        average_rating = 0.0
+
+    adjusted_rating = average_rating + 0.5
+    
+    context = {
+        'rental': rental,
+    }
+    return render(request, 'renting_details.html', context)
+
+
+@login_required
+def delete_renting(request, renting_id):
+    renting = get_object_or_404(Rental, id=renting_id, owner=request.user)
+    renting.delete()
+    return redirect('my_market_profile')
