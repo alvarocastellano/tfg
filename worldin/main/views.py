@@ -1026,3 +1026,53 @@ def delete_renting(request, renting_id):
     renting = get_object_or_404(Rental, id=renting_id, owner=request.user)
     renting.delete()
     return redirect('my_market_profile')
+
+def market_profile_other_user(request, username):
+    request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
+    profile_user = get_object_or_404(CustomUser, username=username)
+    sell_count = 0
+    buy_count = 0
+    rating_count = 0
+    is_own_profile = profile_user == request.user
+    is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
+    user_followers = profile_user.followers.count()
+    user_following = profile_user.following.count()
+    announce_count = 0
+
+    filter_option = request.GET.get('filter', 'todos')
+
+    user_products = Product.objects.filter(owner=profile_user)
+    user_rentings = Rental.objects.filter(owner=profile_user)
+
+    # Contadores
+    announce_count = len(user_products) + len(user_rentings)
+
+    # Filtrado según el parámetro 'filter'
+    if filter_option == 'articulos':
+        user_rentings = []  # Solo mostrar productos
+    elif filter_option == 'alquileres':
+        user_products = []  # Solo mostrar alquileres
+
+    pending_follow_request = FollowRequest.objects.filter(sender=request.user, receiver=profile_user, status='pending').first()
+
+    follow_button_value = 'unfollow' if is_following else 'follow'
+
+    context = {
+        'profile_user': profile_user,
+        'is_own_profile': is_own_profile,
+        'user_products' : user_products,
+        'user_rentings': user_rentings,
+        'is_following': is_following,
+        'user_followers': user_followers,
+        'user_following': user_following,
+        'follow_button_value': follow_button_value,
+        'current_user': request.user,
+        'pending_follow_request': pending_follow_request,
+        'announce_count' : announce_count,
+        'filter_option': filter_option,
+        'sell_count' : sell_count,
+        'buy_count': buy_count,
+        'rating_count': rating_count,
+    }
+    
+    return render(request, 'market_profile_other_user.html', context)
