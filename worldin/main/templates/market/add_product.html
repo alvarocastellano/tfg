@@ -198,27 +198,24 @@
                 <input type="hidden" name="form-INITIAL_FORMS" value="{{ formset.initial_form_count }}">
                 <div class="form-group">
                     <label for="name">Título: *</label>
-                    <input type="text" class="form-control" id="title" name="title" value="{{ product.title }}">
+                    <input type="text" class="form-control" id="title" name="title" value="{{ form.title.value|default:'' }}">
                 </div>
         
                 <div class="form-group">
                     <label for="description">Descripción: *</label>
-                    <textarea class="form-control" id="description" name="description" rows="3">{{ product.description }}</textarea>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
                 </div>
     
                 <div class="form-group">
                     <label for="price">Precio: *</label>
-                    <input type="number" class="form-control" id="price" name="price" value="{{ product.price }}" step="0.1" min="0.1" max="1000" style="width:30%;">
+                    <input type="number" class="form-control" id="price" name="price" value="{{ form.price.value|default:'' }}" step="0.1" min="0.1" max="1000" style="width:30%;">
                 </div>
 
                 <div class="form-group">
                     <label for="destacar">¿Deseas destacar este producto y venderlo antes?</label>
                     <a href="#"> Haz clic aquí</a>
                 </div>
-        
-                
-
-                <button type="submit" class="btn btn-primary" style="background-color:#786dce; color:white; border-color:white; margin-bottom:4%; font-size:22px;">Publicar</button>
+                <button type="submit" class="btn btn-primary mt-5" style="background-color:#786dce; color:white; border-color:white; margin-bottom:4%; font-size:22px;">Publicar</button>
             </form>
         </div>
     </div>

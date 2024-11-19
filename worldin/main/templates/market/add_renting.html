@@ -220,37 +220,37 @@
                 <input type="hidden" name="form-INITIAL_FORMS" value="{{ formset.initial_form_count }}">
                 <div class="form-group">
                     <label for="name">Título: *</label>
-                    <input type="text" class="form-control" id="title" name="title" value="{{ rental.title }}">
+                    <input type="text" class="form-control" id="title" name="title" value="{{ form.title.value|default:'' }}">
                 </div>
         
                 <div class="form-group">
                     <label for="description">Descripción: *</label>
-                    <textarea class="form-control" id="description" name="description" rows="3">{{ rental.description }}</textarea>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="location">Dirección: *</label>
-                    <input type="text" class="form-control" id="location" name="location" value="{{ rental.location }}">
+                    <input type="text" class="form-control" id="location" name="location" value="{{ form.location.value|default:'' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="location">Metros cuadrados: *</label>
-                    <input type="number" class="form-control" id="square_meters" name="square_meters" value="{{ rental.square_meters }}" style="width:30%;">
+                    <input type="number" class="form-control" id="square_meters" name="square_meters" value="{{ form.square_meters.value|default:'' }}" style="width:30%;">
                 </div>
 
                 <div class="form-group">
                     <label for="rooms">Número de habitaciones: *</label>
-                    <input type="number" class="form-control" id="rooms" name="rooms" value="{{ rental.rooms }}" style="width:30%;">
+                    <input type="number" class="form-control" id="rooms" name="rooms" value="{{ form.rooms.value|default:'' }}" style="width:30%;">
                 </div>
 
                 <div class="form-group">
                     <label for="max_people">Número máximo de personas admitidas: *</label>
-                    <input type="number" class="form-control" id="max_people" name="max_people" value="{{ rental.max_people }}" style="width:30%;">
+                    <input type="number" class="form-control" id="max_people" name="max_people" value="{{ form.max_people.value|default:'' }}" style="width:30%;">
                 </div>
 
                 <div class="form-group">
                     <label for="price">Precio/mes: *</label>
-                    <input type="number" class="form-control" id="price" name="price" value="{{ rental.price }}" style="width:30%;">
+                    <input type="number" class="form-control" id="price" name="price" value="{{ form.price.value|default:'' }}" style="width:30%;">
                 </div>
 
                 <div class="form-group">
@@ -264,11 +264,12 @@
                         {% endfor %}
                     </div>
                 </div>
+                <button type="submit" class="btn btn-primary mt-5" style="background-color:#786dce; color:white; border-color:white; margin-bottom:4%; font-size:22px;">Publicar</button>
+
                 </div>
 
                 
 
-                <button type="submit" class="btn btn-primary" style="background-color:#786dce; color:white; border-color:white; margin-bottom:4%; font-size:22px;">Publicar</button>
             </form>
         </div>
     </div>

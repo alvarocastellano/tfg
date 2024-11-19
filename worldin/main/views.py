@@ -916,6 +916,7 @@ def add_renting(request):
     if request.method == 'POST':
         
         form = RentalForm(request.POST)
+        selected_features = request.POST.getlist('features')
         formset = RentalImageFormSet(request.POST, request.FILES, queryset=RentalImage.objects.none())
 
         # Validaciones
@@ -957,7 +958,6 @@ def add_renting(request):
             elif rooms < max_people:
                 error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
 
-            selected_features = request.POST.getlist('features')
 
             
 
@@ -978,7 +978,8 @@ def add_renting(request):
                 'form': form,
                 'formset': formset,
                 'error_messages': error_messages,
-                'available_features': available_features
+                'available_features': available_features,
+                'selected_features': selected_features
             })
 
         if form.is_valid() and formset.is_valid() and not error_messages:
@@ -1099,8 +1100,6 @@ def edit_renting(request, renting_id):
         renting_rooms = request.POST.get('rooms')
         renting_location = request.POST.get('location')
         renting_city_associated = request.user.city
-
-        ######################################################
         
         if renting_title.isnumeric():
             error_messages.append("El título no puede ser únicamente numérico.")
@@ -1137,9 +1136,6 @@ def edit_renting(request, renting_id):
                 error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
 
             selected_features = request.POST.getlist('features')
-
-        #######################################################
-
 
         # Validar nombre de producto
         if Product.objects.filter(title=renting_title).exclude(id=renting.id).exists():
