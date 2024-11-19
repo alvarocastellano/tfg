@@ -967,8 +967,8 @@ def add_renting(request):
         # Validación del formset para las imágenes
         if formset.is_valid():
             image_count = sum(1 for f in formset if f.cleaned_data.get('image'))
-            if image_count < 4:
-                error_messages.append("Debes cargar al menos 4 imágenes.")
+            if image_count < 1:
+                error_messages.append("Debes cargar al menos 1 imagen.")
         else:
             error_messages.append("Las imágenes no son válidas o no se cargaron correctamente.")
 
@@ -1076,3 +1076,134 @@ def market_profile_other_user(request, username):
     }
     
     return render(request, 'market_profile_other_user.html', context)
+
+def edit_renting(request, renting_id):
+    renting = get_object_or_404(Rental, id=renting_id)
+    error_messages = []
+    images_count = 0
+    available_features= RentalFeature.objects.all()
+
+    if not request.user.city:
+        return redirect('my_market_profile')
+
+    for image in renting.images.all():
+            images_count += 1
+
+    if request.method == 'POST':
+        # Actualizar detalles del producto
+        renting_title = request.POST.get('title')
+        renting_description = request.POST.get('description')
+        renting_price = request.POST.get('price')
+        renting_square_meters = request.POST.get('square_meters')
+        renting_max_people = request.POST.get('max_people')
+        renting_rooms = request.POST.get('rooms')
+        renting_location = request.POST.get('location')
+        renting_city_associated = request.user.city
+
+        ######################################################
+        
+        if renting_title.isnumeric():
+            error_messages.append("El título no puede ser únicamente numérico.")
+
+            # Validación del precio
+        if renting_price is None:
+            error_messages.append("El precio es obligatorio.")
+        else:
+            try:
+                renting_price = int(renting_price)  # Convertimos a entero
+                if renting_price <= 0 or renting_price < 100 or renting_price > 5000:
+                    error_messages.append("El precio debe ser un número entero entre 100 y 5000.")
+            except ValueError:
+                error_messages.append("El precio debe ser un número válido y entero.")
+
+            # Validación de metros cuadrados
+            renting_square_meters = int(renting_square_meters)
+            if renting_square_meters is None or renting_square_meters <= 0:
+                error_messages.append("los metros cuadrados deben ser un número positivo mayor que 0.")
+
+            # Validación de max_people
+            renting_max_people = int(renting_max_people)
+            renting_rooms = int(renting_rooms)
+            if renting_max_people is None or renting_max_people <= 0:
+                error_messages.append("El número máximo de personas debe ser un número positivo mayor que 0.")
+            else:
+                if renting_max_people > renting_rooms:
+                    error_messages.append("El número máximo de personas no puede ser mayor que el número de habitaciones.")
+
+            # Validación de rooms
+            if renting_rooms is None or renting_rooms <= 0:
+                error_messages.append("El número de habitaciones debe ser un número positivo mayor que 0.")
+            elif renting_rooms < renting_max_people:
+                error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
+
+            selected_features = request.POST.getlist('features')
+
+        #######################################################
+
+
+        # Validar nombre de producto
+        if Product.objects.filter(title=renting_title).exclude(id=renting.id).exists():
+            error_messages.append('El nombre del anuncio ya está en uso.')
+
+        # Verificar que los campos obligatorios no estén vacíos
+        if not renting_title or not renting_description or not renting_location or not renting_price or not renting_square_meters or not renting_rooms or not renting_max_people:
+            error_messages.append('Por favor, completa todos los campos obligatorios.')
+
+        # Verificar que el anuncio tenga al menos una imagen
+        if renting.images.count() == 0 and request.FILES.get('renting_image') is None:
+            error_messages.append('El anuncio debe tener al menos una imagen.')
+
+        # Si hay errores, no actualizar el producto
+        if error_messages:
+            return render(request, 'edit_renting.html', {
+                'renting': renting,
+                'error_messages': error_messages,
+                'images_count' : images_count,
+                'available_features': available_features
+            })
+
+        # Si no hay errores, actualizar los detalles del producto
+        renting.title = renting_title
+        renting.description = renting_description
+        renting.price = renting_price
+        renting.location = renting_location
+        renting.square_meters = renting_square_meters
+        renting.rooms = renting_rooms
+        renting.max_people = renting_max_people
+        renting.city_associated = renting_city_associated
+        selected_features = request.POST.getlist('features')
+
+        # Procesar nueva imagen del producto
+        if request.FILES.get('renting_image'):
+            RentalImage.objects.create(rental=renting, image=request.FILES.get('renting_image'))
+
+        # Eliminar imágenes seleccionadas por el usuario
+        if 'eliminar_imagen' in request.POST:
+            images_to_delete = request.POST.getlist('eliminar_imagen')
+            if len(images_to_delete) >= renting.images.count():  # Si se elimina todas las imágenes, no permitimos la acción
+                error_messages.append('El anuncio debe tener al menos una imagen.')
+            else:
+                for image_id in images_to_delete:
+                    image = get_object_or_404(RentalImage, id=image_id)
+                    image.delete()
+
+        # Si hay errores después de eliminar imágenes, no actualizamos el producto
+        if error_messages:
+            return render(request, 'edit_renting.html', {
+                'renting': renting,
+                'error_messages': error_messages,
+                'images_count' : images_count,
+                'available_features': available_features
+            })
+
+        # Guardar cambios en el producto
+        renting.features.set(RentalFeature.objects.filter(id__in=selected_features))
+        renting.save()
+        return redirect('renting_details', renting_id=renting.id)
+
+    return render(request, 'edit_renting.html', {
+        'renting': renting,
+        'error_messages': error_messages,
+        'images_count' : images_count,
+        'available_features': available_features,
+    })

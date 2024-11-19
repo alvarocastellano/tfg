@@ -338,7 +338,7 @@
                                     </div>
                                     <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
                                         <a href="{% url 'renting_details' renting_id=renting.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                        <a href="#" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        <a href="{% url 'edit_renting' renting.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                             <i class="bi bi-pencil-fill"></i>
                                         </a>
                                         <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
@@ -446,7 +446,7 @@
                                             </div>
                                             <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
                                                 <a href="{% url 'renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                                <a href="#" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <a href="{% url 'edit_renting' renting.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
                                                 

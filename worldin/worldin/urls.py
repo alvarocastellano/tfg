@@ -46,6 +46,7 @@ urlpatterns = [
     path('renting_details/<int:renting_id>/', views.renting_details, name='renting_details'),
     path('delete_renting/<int:renting_id>/', views.delete_renting, name='delete_renting'),
     path('market/profile/user/<str:username>/', views.market_profile_other_user, name='market_profile_other_user'),
+    path('edit_renting/<int:renting_id>/', views.edit_renting, name='edit_renting'),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
