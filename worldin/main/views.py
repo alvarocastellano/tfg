@@ -189,6 +189,20 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
 
         # Si existe, continuar con el inicio de sesión
         return super().pre_social_login(request, sociallogin)
+    
+def alertas_completar_perfil(request):
+    complete_profile_alerts = 0    
+    if request.user.birthday is None:
+        complete_profile_alerts += 1
+    if request.user.city == "":
+        complete_profile_alerts += 1
+    if request.user.description == "":
+        complete_profile_alerts += 1
+    if request.user.profile_picture == "":
+        complete_profile_alerts += 1
+    if len(request.user.aficiones.all()) == 0:
+        complete_profile_alerts += 1
+    return complete_profile_alerts
 
 #ACCESO RÁPIDO A VISTA DE MI PERFIL
 @login_required
@@ -414,30 +428,41 @@ def edit_profile(request):
 @login_required
 def profile_settings(request):
     user = request.user
+    error_messages = []
 
     has_pending_requests = user.follow_requests_received.filter(status='pending').exists()
-    
+
     if request.method == 'POST':
         show_age = request.POST.get('show_age') == 'on'
         account_visibility = request.POST.get('account_visibility')
 
         # Comprobar si intenta cambiar a pública con solicitudes pendientes
         if has_pending_requests and account_visibility == 'public' and user.account_visibility == 'private':
-            messages.warning(request, "Para hacer tu cuenta pública, primero debes aceptar o rechazar todas las solicitudes de seguimiento pendientes.")
-            return redirect('profile_settings')
+            error_messages.append("Para hacer tu cuenta pública, primero debes aceptar o rechazar todas las solicitudes de seguimiento pendientes.")
 
-        # Guardar cambios
-        user.show_age = show_age
-        user.account_visibility = account_visibility
-        user.save()
-        return redirect('my_profile')
-    
+        if error_messages:
+            context = {
+                'user': user,
+                'has_pending_requests': has_pending_requests,
+                'error_messages': error_messages,
+            }
+            return render(request, 'profile_settings.html', context)
+        else:
+            # Guardar cambios
+            user.show_age = show_age
+            user.account_visibility = account_visibility
+            user.save()
+            return redirect('my_profile')
+
+    # Manejar solicitudes GET
     context = {
         'user': user,
         'has_pending_requests': has_pending_requests,
+        'error_messages': error_messages,  # No habrá errores en un GET inicial
     }
-    
     return render(request, 'profile_settings.html', context)
+    
+    
 
 @login_required
 def delete_account(request):
@@ -448,11 +473,16 @@ def delete_account(request):
 def search_users(request):
     query = request.GET.get('q')
     users = CustomUser.objects.exclude(username=request.user.username)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if query:
         users = CustomUser.objects.filter(username__icontains=query)
     
-    return render(request, 'search_users.html', {'users': users})
+    return render(request, 'search_users.html', {
+        'users': users, 
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,})
 
 @login_required
 def followers_count(request, username):
@@ -483,6 +513,8 @@ def other_user_profile(request, username):
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     filter_option = request.GET.get('filter', 'todos')
 
@@ -515,6 +547,8 @@ def other_user_profile(request, username):
         'pending_follow_request': pending_follow_request,
         'announce_count' : announce_count,
         'filter_option': filter_option,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
     }
     
     return render(request, 'profile_other_user.html', context)
@@ -524,6 +558,8 @@ def other_user_profile(request, username):
 def followers_and_following(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     profile_user = get_object_or_404(CustomUser, username=username)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     
     # Capturar parámetros de búsqueda y ordenación
     search_query = request.GET.get('search', '')
@@ -568,7 +604,9 @@ def followers_and_following(request, username):
         'following_count': following_count,
         'is_own_profile': is_own_profile,
         'no_followers_results': no_followers_results,
-        'no_following_results': no_following_results, 
+        'no_following_results': no_following_results,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
     }
     
     return render(request, 'followers_and_following.html', context)
@@ -604,15 +642,21 @@ def reject_follow_request(request, request_id):
 
 @login_required
 def follow_requests(request):
+    complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests = request.user.follow_requests_received.filter(status='pending')
-    return render(request, 'follow_requests.html', {'pending_requests': pending_requests})
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    return render(request, 'follow_requests.html', {
+        'pending_requests': pending_requests,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        })
 
 @login_required
 def sidebar(request):
     user = request.user
 
     selected_city = user.selected_city if user.selected_city!="" else user.city
-
 
     complete_profile_alerts = 0    
     if user.birthday is None:
@@ -664,13 +708,48 @@ def update_city(request):
 
 #===========================AQUI COMIENZAN LAS VISTAS DEL MERCADO==========================================
 
+def moneda_oficial(request):
+    money = ""
+    if request.user.city == "Sofia":
+        money = "лв"  # Bulgaria
+    elif request.user.city == "Praga":
+        money = "Kč"  # República Checa
+    elif request.user.city == "Copenhague":
+        money = "kr"  # Dinamarca
+    elif request.user.city == "Budapest":
+        money = "Ft"  # Hungría
+    elif request.user.city == "Varsovia":
+        money = "zł"  # Polonia
+    else:
+        money = "€"  # Países de la zona euro
+    return money
+
+
 def my_market_profile(request):
     announce_count = 0
     rating_count = 0
     sell_count = 0
     buy_count = 0
     stars_sum = 0
+    total_alerts = 0
     range_of_stars = [i for i in range(5)]
+    user = request.user
+
+    complete_profile_alerts = 0    
+    if user.birthday is None:
+        complete_profile_alerts += 1
+    if user.city == "":
+        complete_profile_alerts += 1
+    if user.description == "":
+        complete_profile_alerts += 1
+    if user.profile_picture == "":
+        complete_profile_alerts += 1
+    if len(user.aficiones.all()) == 0:
+        complete_profile_alerts += 1
+
+    pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+
+    total_alerts = pending_requests_count + complete_profile_alerts
 
     # Parámetro para filtrar productos
     filter_option = request.GET.get('filter', 'todos')  # Por defecto, 'todos'
@@ -706,7 +785,10 @@ def my_market_profile(request):
         'average_rating': average_rating,
         'range_of_stars': range_of_stars,
         'adjusted_rating': adjusted_rating,
-        'filter_option': filter_option,  # Pasar el filtro al template
+        'filter_option': filter_option,
+        'complete_profile_alerts' : complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'total_alerts': total_alerts,
     }
     return render(request, 'my_market_profile.html', context)
 
@@ -718,8 +800,12 @@ def my_market_ratings(request):
 @login_required
 def add_product(request):
     error_messages = []
+    money = moneda_oficial(request)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if not request.user.city:
+        messages.error(request, 'No puedes publicar un artículo hasta que tengas una ciudad asignada en tu perfil.')
         return redirect('my_market_profile')
 
     if request.method == 'POST':
@@ -739,8 +825,8 @@ def add_product(request):
             else:
                 try:
                     price = Decimal(price)
-                    if price <= 0 or price < Decimal('0.1') or price > Decimal('1000'):
-                        error_messages.append("El precio debe estar entre 0.1 y 1000.")
+                    if price <= 0 or price < Decimal('0.1'):
+                        error_messages.append("El precio debe ser mayor que 0.1")
                     elif price.quantize(Decimal('.01')) != price:
                         error_messages.append("El precio debe tener como máximo 2 decimales.")
                 except InvalidOperation:
@@ -761,7 +847,10 @@ def add_product(request):
             return render(request, 'add_product.html', {
                 'form': form,
                 'formset': formset,
-                'error_messages': error_messages
+                'error_messages': error_messages,
+                'money': money,
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count': pending_requests_count,
             })
 
         # Si no hay errores, guardar el producto
@@ -769,6 +858,7 @@ def add_product(request):
             product = form.save(commit=False)
             product.owner = request.user
             product.city_associated = request.user.city
+            product.money_associated = money
             product.save()
 
             for f in formset:
@@ -781,7 +871,13 @@ def add_product(request):
         form = ProductForm()
         formset = ProductImageFormSet(queryset=ProductImage.objects.none())
 
-    return render(request, 'add_product.html', {'form': form, 'formset': formset})
+    return render(request, 'add_product.html', {
+        'form': form, 
+        'formset': formset, 
+        'money': money, 
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        })
 
 
 def product_details(request, product_id):
@@ -789,6 +885,8 @@ def product_details(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     rating_count = 0
     stars_sum = 0
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
@@ -799,6 +897,8 @@ def product_details(request, product_id):
     
     context = {
         'product': product,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
     }
     return render(request, 'product_details.html', context)
 
@@ -813,8 +913,11 @@ def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     error_messages = []
     images_count = 0
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if not request.user.city:
+        messages.error(request, 'No puedes editar un artículo hasta que tengas una ciudad asignada en tu perfil.')
         return redirect('my_market_profile')
 
     for image in product.images.all():
@@ -846,6 +949,8 @@ def edit_product(request, product_id):
                 'product': product,
                 'error_messages': error_messages,
                 'images_count' : images_count,
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count': pending_requests_count,
             })
 
         # Si no hay errores, actualizar los detalles del producto
@@ -853,10 +958,17 @@ def edit_product(request, product_id):
         product.description = product_description
         product.price = product_price
         product.city_associated = product_city_associated
+        product.money_associated = moneda_oficial(request)
 
         # Procesar nueva imagen del producto
         if request.FILES.get('product_image'):
             ProductImage.objects.create(product=product, image=request.FILES.get('product_image'))
+
+        if request.FILES.get('product_image2'):
+            ProductImage.objects.create(product=product, image=request.FILES.get('product_image2'))
+
+        if request.FILES.get('product_image3'):
+            ProductImage.objects.create(product=product, image=request.FILES.get('product_image3'))
 
         # Eliminar imágenes seleccionadas por el usuario
         if 'eliminar_imagen' in request.POST:
@@ -874,6 +986,8 @@ def edit_product(request, product_id):
                 'product': product,
                 'error_messages': error_messages,
                 'images_count' : images_count,
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count': pending_requests_count,
             })
 
         # Guardar cambios en el producto
@@ -884,6 +998,8 @@ def edit_product(request, product_id):
         'product': product,
         'error_messages': error_messages,
         'images_count' : images_count,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
     })
 
 
@@ -908,8 +1024,12 @@ def delete_product_image(request, product_id, image_id):
 def add_renting(request):
     available_features= RentalFeature.objects.all()
     error_messages = []
+    money = moneda_oficial(request)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if not request.user.city:
+        messages.error(request, 'No puedes añadir un anuncio hasta que tengas una ciudad asignada en tu perfil.')
         return redirect('my_market_profile')
 
 
@@ -932,8 +1052,8 @@ def add_renting(request):
             else:
                 try:
                     price = int(price)  # Convertimos a entero
-                    if price <= 0 or price < 100 or price > 5000:
-                        error_messages.append("El precio debe ser un número entero entre 100 y 5000.")
+                    if price <= 0 or price < 100:
+                        error_messages.append("El precio debe ser un número entero mayor que 100.")
                 except ValueError:
                     error_messages.append("El precio debe ser un número válido y entero.")
 
@@ -962,7 +1082,7 @@ def add_renting(request):
             
 
         else:
-            error_messages.append("Todos los campos son obligatorios.")
+            error_messages.append("Todos los campos son obligatorios, excepto las características, aunque altamente recomendado.")
 
         # Validación del formset para las imágenes
         if formset.is_valid():
@@ -979,13 +1099,17 @@ def add_renting(request):
                 'formset': formset,
                 'error_messages': error_messages,
                 'available_features': available_features,
-                'selected_features': selected_features
+                'selected_features': selected_features,
+                'money': money,
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count': pending_requests_count,
             })
 
         if form.is_valid() and formset.is_valid() and not error_messages:
             rental = form.save(commit=False)
             rental.owner = request.user
             rental.city_associated = request.user.city
+            rental.money_associated = money
             rental.save()
 
             rental.features.set(RentalFeature.objects.filter(id__in=selected_features))
@@ -1000,7 +1124,15 @@ def add_renting(request):
         form = RentalForm()
         formset = RentalImageFormSet(queryset=RentalImage.objects.none())
 
-    return render(request, 'add_renting.html', {'form': form, 'formset': formset, 'available_features': available_features, 'error_messages': error_messages,})
+    return render(request, 'add_renting.html', {
+        'form': form, 
+        'formset': formset, 
+        'available_features': available_features, 
+        'error_messages': error_messages,
+        'money': money,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        })
 
 
 def renting_details(request, renting_id):
@@ -1008,6 +1140,8 @@ def renting_details(request, renting_id):
     rental = get_object_or_404(Rental, id=renting_id)
     rating_count = 0
     stars_sum = 0
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
@@ -1018,6 +1152,8 @@ def renting_details(request, renting_id):
     
     context = {
         'rental': rental,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
     }
     return render(request, 'renting_details.html', context)
 
@@ -1039,6 +1175,8 @@ def market_profile_other_user(request, username):
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    complete_profile_alerts = alertas_completar_perfil(request)
 
     filter_option = request.GET.get('filter', 'todos')
 
@@ -1074,6 +1212,8 @@ def market_profile_other_user(request, username):
         'sell_count' : sell_count,
         'buy_count': buy_count,
         'rating_count': rating_count,
+        'pending_requests_count': pending_requests_count,
+        'complete_profile_alerts': complete_profile_alerts,
     }
     
     return render(request, 'market_profile_other_user.html', context)
@@ -1083,8 +1223,11 @@ def edit_renting(request, renting_id):
     error_messages = []
     images_count = 0
     available_features= RentalFeature.objects.all()
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if not request.user.city:
+        messages.error(request, 'No puedes editar un anuncio hasta que tengas una ciudad asignada en tu perfil.')
         return redirect('my_market_profile')
 
     for image in renting.images.all():
@@ -1110,8 +1253,8 @@ def edit_renting(request, renting_id):
         else:
             try:
                 renting_price = int(renting_price)  # Convertimos a entero
-                if renting_price <= 0 or renting_price < 100 or renting_price > 5000:
-                    error_messages.append("El precio debe ser un número entero entre 100 y 5000.")
+                if renting_price <= 0 or renting_price < 100:
+                    error_messages.append("El precio debe ser un número entero mayor que 100.")
             except ValueError:
                 error_messages.append("El precio debe ser un número válido y entero.")
 
@@ -1155,7 +1298,9 @@ def edit_renting(request, renting_id):
                 'renting': renting,
                 'error_messages': error_messages,
                 'images_count' : images_count,
-                'available_features': available_features
+                'available_features': available_features,
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count': pending_requests_count,
             })
 
         # Si no hay errores, actualizar los detalles del producto
@@ -1167,11 +1312,20 @@ def edit_renting(request, renting_id):
         renting.rooms = renting_rooms
         renting.max_people = renting_max_people
         renting.city_associated = renting_city_associated
+        renting.money_associated = moneda_oficial(request)
         selected_features = request.POST.getlist('features')
 
         # Procesar nueva imagen del producto
         if request.FILES.get('renting_image'):
             RentalImage.objects.create(rental=renting, image=request.FILES.get('renting_image'))
+        
+        if request.FILES.get('renting_image2'):
+            RentalImage.objects.create(rental=renting, image=request.FILES.get('renting_image2'))
+
+        if request.FILES.get('renting_image3'):
+            RentalImage.objects.create(rental=renting, image=request.FILES.get('renting_image3'))
+
+        
 
         # Eliminar imágenes seleccionadas por el usuario
         if 'eliminar_imagen' in request.POST:
@@ -1189,7 +1343,9 @@ def edit_renting(request, renting_id):
                 'renting': renting,
                 'error_messages': error_messages,
                 'images_count' : images_count,
-                'available_features': available_features
+                'available_features': available_features,
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count': pending_requests_count,
             })
 
         # Guardar cambios en el producto
@@ -1202,4 +1358,6 @@ def edit_renting(request, renting_id):
         'error_messages': error_messages,
         'images_count' : images_count,
         'available_features': available_features,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
     })

@@ -176,13 +176,20 @@
                         {% endif %}
                     </a>
                 </li>
-                <li class="list-group-item-sidebar"><a href="{% url 'my_profile' %}">
-                    {% if request.user.profile_picture %}
-                        <img src="{{ request.user.profile_picture.url }}" class="profile-picture-sidebar" alt="Perfil del cliente">
-                    {% else %}
-                        <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture-sidebar" alt="Perfil del cliente">
-                    {% endif %}
-                    Mi perfil</a>
+                <li class="list-group-item-sidebar">
+                    <a href="{% url 'my_profile' %}">
+                        {% if request.user.profile_picture %}
+                            <img src="{{ request.user.profile_picture.url }}" class="profile-picture-sidebar" alt="Perfil del cliente">
+                        {% else %}
+                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture-sidebar" alt="Perfil del cliente">
+                        {% endif %}
+                        Mi perfil
+                        {% if complete_profile_alerts > 0 %}
+                            <span class="badge rounded-pill bg-danger ms-2">
+                                {{ complete_profile_alerts }}
+                            </span>
+                        {% endif %}
+                    </a>
                 </li>
                 <hr class="custom-hr">
                 <li class="list-group-item-sidebar">

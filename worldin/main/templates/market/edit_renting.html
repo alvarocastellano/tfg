@@ -150,12 +150,15 @@
         <div class="profile-section mb-5">
             <p class="mt-3">
                 {% if renting.city_associated != request.user.city %}
-                    Este artículo está actualmente en el <strong>mercado de {{ renting.city_associated }}</strong><br>
-                    Tras editarlo, cambiará al <strong>mercado de {{ request.user.city }}</strong><br><br>
-                    Para no modificar el mercado donde estás publicando este anuncio, <a href="{% url 'edit_profile' %}">vuelve a seleccionar en tu perfil la ciudad actual asociada a este artículo.</a>
+                    <div id="alertMessage" class="alert alert-warning" style="font-size: 18px;">
+                        Este anuncio está actualmente en el <strong>mercado de {{ renting.city_associated }}.</strong>
+                        Tras editarlo, cambiará al <strong>mercado de {{ request.user.city }}</strong><br>
+                        Ten en cuenta que si ambas ciudades no tienen la misma moneda, esta también cambiará.<br><br>
+                        Para no modificar el mercado donde estás publicandolo, <a href="{% url 'edit_profile' %}">vuelve a seleccionar en tu perfil la ciudad actual asociada a este anuncio.</a>
+                    </div>
                 {% else %}
-                    Este artículo está actualmente en el <strong>mercado de {{ renting.city_associated }}</strong><br>
-                    Para cambiar el mercado donde estás publicando este anuncio, <a href="{% url 'edit_profile' %}">selecciona en tu perfil la ciudad a la que desees asociar a este artículo.</a>
+                    Este anuncio está actualmente en el <strong>mercado de {{ renting.city_associated }}</strong><br>
+                    Para cambiar el mercado donde estás publicando este anuncio, <a href="{% url 'edit_profile' %}">selecciona en tu perfil la ciudad a la que desees asociarlo.</a>
 
                 {% endif %}
             </p>
@@ -227,14 +230,14 @@
                     <div class="form-group mt-3">
                         <h3 for="renting_image">Agregar nueva imagen:</h3>
                         <input type="file" name="renting_image">
-                        <input type="file" name="renting_image" style="margin-top: 10px;">
+                        <input type="file" name="renting_image2" style="margin-top: 10px;">
                     </div>
                 {% elif images_count == 1 %}
                     <div class="form-group mt-3">
                         <h3 for="renting_image">Agregar nueva imagen:</h3>
                         <input type="file" name="renting_image">
-                        <input type="file" name="renting_image" style="margin-top: 10px;">
-                        <input type="file" name="renting_image" style="margin-top: 10px;">
+                        <input type="file" name="renting_image2" style="margin-top: 10px;">
+                        <input type="file" name="renting_image3" style="margin-top: 10px;">
                     </div>
                 {% endif %}
             

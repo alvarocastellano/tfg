@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Publicar anuncio{% endblock %}
+{% block title %}Publicar producto{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -19,6 +19,7 @@
             color: #6a4fb8;
             margin: 0; /* Eliminar el margen */
             padding: 0; /* Eliminar el padding */
+            overflow-x:hidden;
         }
         .profile-container {
             display: flex;
@@ -99,13 +100,15 @@
 
         .image-upload-container {
             display: flex;
-            overflow-x: auto;
             gap: 15px;
             padding: 20px;
+            overflow-x: auto; /* Habilitar scroll horizontal */
+            white-space: nowrap; /* Evitar que los elementos se rompan en línea */
         }
         
         .image-upload-box {
             position: relative;
+            flex: 0 0 auto;
             width: 300px;
             height: 300px;
             border: 2px dashed #6a4fb8;
@@ -114,6 +117,20 @@
             justify-content: center;
             align-items: center;
             cursor: pointer;
+        }
+
+        @media (max-width: 767px) {
+            .image-upload-container {
+                max-width: 100%; /* Limitar el ancho al contenedor padre */
+                overflow-x: auto;
+                padding: 10px;
+            }
+        
+            .image-upload-box {
+                flex: 0 0 auto;
+                width: 250px; /* Tamaño reducido para pantallas pequeñas */
+                height: 250px;
+            }
         }
 
         .image-upload-box img {
@@ -182,7 +199,8 @@
             <form action="{% url 'add_product' %}" method="post" enctype="multipart/form-data" class="profile-section">
                 {% csrf_token %}
                 <div class="form-group mt-5">
-                    <label for="images">Imágenes del producto (al menos 1): *</label>
+                    <h4 for="images"><strong>Imágenes del producto (al menos 1): *</strong></h4>
+                    <p><i class="bi bi-info-circle-fill"></i> Publicar más imágenes dará más seguridad a los futuros compradores.</p>
                     <div class="image-upload-container">
                         {% for form in formset %}
                             <div class="image-upload-box" onclick="document.getElementById('file-input-{{ forloop.counter0 }}').click()">
@@ -197,25 +215,26 @@
                 <input type="hidden" name="form-TOTAL_FORMS" value="{{ formset.total_form_count }}">
                 <input type="hidden" name="form-INITIAL_FORMS" value="{{ formset.initial_form_count }}">
                 <div class="form-group">
-                    <label for="name">Título: *</label>
+                    <h4 for="name"><strong>Título: *</strong></h4>
                     <input type="text" class="form-control" id="title" name="title" value="{{ form.title.value|default:'' }}">
                 </div>
         
                 <div class="form-group">
-                    <label for="description">Descripción: *</label>
+                    <h4 for="description"><strong>Descripción: *</strong></h4>
                     <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
                 </div>
     
                 <div class="form-group">
-                    <label for="price">Precio: *</label>
-                    <input type="number" class="form-control" id="price" name="price" value="{{ form.price.value|default:'' }}" step="0.1" min="0.1" max="1000" style="width:30%;">
+                    <h4 for="price"><strong>Precio: *</strong></h4>
+                    <p><i class="bi bi-info-circle-fill"></i> Al estar publicando este anuncio en el <strong>mercado de {{ request.user.city }}</strong>, la moneda será <strong>{{ money }}</strong></p>
+                    <input type="number" class="form-control" id="price" name="price" value="{{ form.price.value|default:'' }}" step="0.1" min="0.1" style="width:30%;">
                 </div>
 
-                <div class="form-group">
-                    <label for="destacar">¿Deseas destacar este producto y venderlo antes?</label>
-                    <a href="#"> Haz clic aquí</a>
+                <div class="form-group mt-5">
+                    <h4 for="destacar"><strong>¿Deseas vender este producto pronto? <a href="#">Destácalo ahora.</a></strong></h4>
+                    
                 </div>
-                <button type="submit" class="btn btn-primary mt-5" style="background-color:#786dce; color:white; border-color:white; margin-bottom:4%; font-size:22px;">Publicar</button>
+                <button type="submit" class="btn btn-primary mt-5" style="background-color:#786dce; color:white; border-color:white; font-size:22px;">Publicar</button>
             </form>
         </div>
     </div>

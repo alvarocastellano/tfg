@@ -65,6 +65,7 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     city_associated = models.CharField(max_length=200, blank=True)
+    money_associated = models.CharField(max_length=50, blank = True)
 
     def __str__(self):
         return self.title
@@ -95,6 +96,7 @@ class Rental(models.Model):
     max_people = models.PositiveIntegerField()
     city_associated = models.CharField(max_length=150, blank=True)
     features = models.ManyToManyField(RentalFeature, blank=True)
+    money_associated = models.CharField(max_length=50, blank = True)
 
     def __str__(self):
         return self.title

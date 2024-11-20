@@ -188,7 +188,7 @@
                     </div>
                     <h2><strong>{{ product.title }}</strong></h2>
                     <br>
-                    <h1><strong>{{ product.price }}€</strong></h1>
+                    <h1><strong>{{ product.price }}{{ product.money_associated }}</strong></h1>
                     <br>
                     <p>{{ product.description }}</p>
                     {% if product.owner.id != request.user.id %}
