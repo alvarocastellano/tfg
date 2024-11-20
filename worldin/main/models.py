@@ -13,24 +13,15 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     birthday = models.DateField(null=True, blank=True)
     city = models.CharField(max_length=100, blank=True)
+    selected_city = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True)
     erasmus = models.BooleanField(default=False)
-    show_age = models.BooleanField(default=True)  # Nuevo campo para mostrar edad
+    show_age = models.BooleanField(default=True) 
     profile_completed = models.BooleanField(default=False)
-    account_visibility = models.CharField(
-        max_length=10,
-        choices=[
-            ('public', 'Pública'),
-            ('private', 'Privada')
-        ],
-        default='public'
-    )  # Nuevo campo para visibilidad de la cuenta
-
-    # Relación Many-to-Many con el modelo Hobby
+    account_visibility = models.CharField(max_length=10, choices=[('public', 'Pública'), ('private', 'Privada')], default='public')
     aficiones = models.ManyToManyField(Hobby, blank=True)
 
-    # Agrega el argumento related_name para evitar conflictos con los atributos inversos
     groups = models.ManyToManyField(Group, verbose_name='groups', blank=True, related_name='customuser_set')
     user_permissions = models.ManyToManyField(Permission, verbose_name='user permissions', blank=True, related_name='customuser_set')
 
@@ -65,3 +56,55 @@ class FollowRequest(models.Model):
     def __str__(self):
         return f"{self.sender.username} solicita seguir a {self.receiver.username}"
 
+
+
+    
+class Product(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    city_associated = models.CharField(max_length=200, blank=True)
+    money_associated = models.CharField(max_length=50, blank = True)
+
+    def __str__(self):
+        return self.title
+    
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='product_pictures/', blank=False)
+
+    def __str__(self):
+        return f"Image for {self.product.title}"
+    
+    
+class RentalFeature(models.Model):
+    feature = models.CharField(max_length=120, unique=True)
+
+    def __str__(self):
+        return self.feature
+
+
+class Rental(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='rentals')
+    title = models.CharField(max_length=200)
+    location = models.CharField(max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    square_meters = models.PositiveIntegerField()
+    rooms = models.PositiveIntegerField()
+    max_people = models.PositiveIntegerField()
+    city_associated = models.CharField(max_length=150, blank=True)
+    features = models.ManyToManyField(RentalFeature, blank=True)
+    money_associated = models.CharField(max_length=50, blank = True)
+
+    def __str__(self):
+        return self.title
+    
+class RentalImage(models.Model):
+    rental = models.ForeignKey(Rental, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='rental_pictures/', blank=False)
+
+    def __str__(self):
+        return f"Image for {self.rental.title}"
+    

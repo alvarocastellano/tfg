@@ -156,7 +156,7 @@
             <span aria-hidden="true">&times;</span>
           </button>
           <i class="bi bi-trophy-fill"></i>
-          Tu perfil está actualmente <strong>100%.</strong> 
+          Tu perfil está actualmente al <strong>100%.</strong> 
           
         </div>
       {% endif %}
@@ -213,7 +213,11 @@
 
         <div class="col-md-5">
           <div class="form-group">
-            <label for="city">Ciudad:</label>
+            <label for="city">
+              Ciudad: <br>
+              <p style="font-size:16px;">Los anuncios que publiques irán al mercado de la ciudad seleccionada.
+              En caso de no seleccionar ninguna ciudad, no podrás publicar anuncios.</p>
+            </label>
             <input type="text" class="form-control rounded-start" list="ciudades" value="{{ user.city }}" name="city" id="city" placeholder="Buscar ciudad..." style="border-color: #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8;">
                 <datalist id="ciudades" style="max-height: 100px; overflow-y: auto;">
                   <option value="Bruselas">Bélgica</option>

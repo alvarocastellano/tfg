@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from main.models import CustomUser
+from main.models import CustomUser, Product, Rental, ProductImage, RentalImage
 from django.contrib.auth import authenticate
 from django.core.validators import EmailValidator, MinLengthValidator
+from django.forms import modelformset_factory
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(label='Email', validators=[EmailValidator('Invalid email format')])
@@ -12,9 +13,7 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'birthday', 'city', 'description', 'profile_picture']
-    class Meta(UserCreationForm.Meta):
-        model = CustomUser
-        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2','birthday', 'city', 'description', 'profile_picture']
+
 
 class CustomAuthenticationForm(AuthenticationForm):
     class Meta:
@@ -41,3 +40,35 @@ class CustomAuthenticationForm(AuthenticationForm):
             )
 
         return self.cleaned_data
+    
+class CityForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['selected_city']
+    
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['title', 'description', 'price']
+
+class ProductImageForm(forms.ModelForm):
+    delete_image = forms.BooleanField(required=False, label='Eliminar', initial=False)
+
+    class Meta:
+        model = ProductImage
+        fields = ['image', 'delete_image']
+
+ProductImageFormSet = modelformset_factory(ProductImage, form=ProductImageForm, extra= 3)
+
+class RentalForm(forms.ModelForm):
+    class Meta:
+        model = Rental
+        fields = ['title', 'location', 'description', 'price', 'square_meters', 'rooms', 'max_people']
+
+class RentalImageForm(forms.ModelForm):
+    class Meta:
+        model = RentalImage
+        fields = ['image']
+
+RentalImageFormSet = modelformset_factory(RentalImage, form=RentalImageForm, extra=4)
+

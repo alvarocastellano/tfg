@@ -1,0 +1,427 @@
+{% extends "main/sidebar.html" %}
+
+{% block title %}Mi perfil{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+        }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%; /* Ocupar el máximo ancho disponible */
+            padding: 0; /* Sin padding para que ocupe todo el ancho */
+        }
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+        }
+        .imagen-sin-datos {
+            width: 150px;
+            height: auto;
+        }
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 150px;
+                height: 150px; /* Tamaño para pantallas más grandes */
+            }
+            .imagen-sin-datos {
+                width: 200px;
+                height: auto;
+            }
+        }
+        .dropdown-menu {
+            background-color: white;
+        }
+        .profile-section {
+            text-align: center;
+            padding: 20px;
+        }
+        .profile-section p {
+            align-items: center;
+            text-align: center;
+        }
+        hr {
+            border: 1px solid #6a4fb8;
+            margin-left: 5%;
+            margin-right: 5%;
+        }
+        .bi-arrow-left-short {
+            font-size: 2em;
+        }
+        /* Estilos para hacer la vista más responsiva */
+        @media (max-width: 767px) {
+            .profile-top {
+                flex-direction: column;
+                text-align: center;
+            }
+            .usuario-y-nombre {
+                margin-bottom: 15px;
+            }
+        }
+        .links-section {
+            text-align: center;
+            display: flex;
+            gap: 50px; /* Espacio entre enlaces y el separador */
+            padding: 20px;
+        }
+        
+        .link-section a {
+            align-items: center;
+            text-align: center;
+            text-decoration: none; /* Quitar subrayado */
+            color: #007bff; /* Color de los enlaces */
+            font-weight: bold; /* Hacer el texto más destacado */
+            cursor: pointer; /* Cambiar el cursor a mano cuando se pasa por encima */
+            transition: color 0.3s ease; /* Transición suave al cambiar el color */
+        }
+        
+        .link-item:hover {
+            color: #0056b3; /* Color al pasar el ratón por encima */
+        }
+        
+        .separator {
+            width: 1px; /* Grosor del separador */
+            background-color: #ccc; /* Color del separador */
+            height: 20px; /* Altura del separador */
+            margin: 0 10px; /* Espaciado alrededor del separador */
+        }
+
+        .btn-products-link {
+            color: #6a4fb8; /* Color del texto */
+            background-color: white; /* Fondo blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+            pointer-events: none;
+        }
+
+        .btn-ratings-link {
+            color: #6a4fb8; /* Color del texto */
+            background-color: white; /* Fondo blanco */
+            border: 2px solid white; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+        }
+
+        .btn-ratings-link:hover {
+            background-color: #6a4fb8; /* Fondo color cuando el enlace está sobrevolado */
+            color: white; /* Cambiar color del texto al blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+
+        .btn-add-product {
+            color: white; /* Color del texto */
+            background-color: #6a4fb8; /* Fondo blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+        }
+
+        .btn-add-product:hover {
+            background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+            color: #6a4fb8; /* Cambiar color del texto al blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+
+        /* Estilo común para los botones no seleccionados */
+        .btn-custom {
+            background-color: white;
+            color: #6a4fb8;
+            border: 2px solid #6a4fb8;
+        }
+
+        /* Estilo para los botones seleccionados */
+        .btn-custom-selected {
+            background-color: #6a4fb8;
+            color: white;
+            border: 2px solid #6a4fb8;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-dialog {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-text {
+            display: -webkit-box; /* Caja flexible para truncado */
+            -webkit-line-clamp: 3; /* Número máximo de líneas */
+            -webkit-box-orient: vertical; /* Orientación de la caja */
+            overflow: hidden; /* Oculta el texto sobrante */
+            text-overflow: ellipsis; /* Agrega los "..." */
+            white-space: normal; /* Permite varias líneas */
+        }
+        
+        
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container profile-container">
+        <div class="profile-top d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{% url 'world' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"><h3 style="font-size:12px;">Mundo</h3></a>
+            </div>
+            <div>
+                {% if profile_user.profile_picture %}
+                    <img src="{{ profile_user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                {% else %}
+                    <i class="bi bi-person-circle" style="font-size: 120px; color: #a6a0d6;"></i>
+                {% endif %}
+            </div>
+            <div class="usuario-y-nombre text-center">
+                <h2>@{{ profile_user.username }}</h2>
+                <p>{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Anuncios</h5>
+                    <p>{% if announce_count == 0 %} 0 {%else%}{{ announce_count }} {% endif %}</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Ventas</h5>
+                    <p>{% if sell_count == 0 %} 0 {%else%}{{ sell_count }} {% endif %}</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Compras</h5>
+                    <p>{% if buy_count == 0 %} 0 {%else%}{{ buy_count }} {% endif %}</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Valoraciones</h5>
+                    <p>{% if rating_count == 0 %} 0 {%else%}{{ rating_count }} {% endif %}</p>
+                </a>
+            </div>
+        </div>
+        <!-- Botón debajo de la cabecera -->
+        <div class="text-center" style="background-color: #6a4fb8; padding: 10px;">
+            <a href="{% url 'other_user_profile' profile_user.username %}" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                VER PERFIL GENERAL
+            </a>
+        </div>
+
+        <div class="profile-section">
+            {% if profile_user.city %}
+            <h3>
+                <i class="bi bi-geo-fill"></i>{{profile_user.city}}
+            </h3>
+            <p>
+                {% if average_rating and rating_count > 0 %}
+                    Valoración media: {{ average_rating }} 
+                    <span>
+                        {% for i in range_of_stars %}
+                            {% if i < average_rating %}
+                                <i class="bi bi-star-fill"></i>  <!-- Estrella llena -->
+                            {% elif i >= adjusted_rating %}
+                                <i class="bi bi-star-half"></i>  <!-- Estrella media -->
+                            {% else %}
+                                <i class="bi bi-star"></i>  <!-- Estrella vacía -->
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                {% else %}
+                    Valoración media: 0 <i class="bi bi-star"></i> (Sin valoraciones)
+                {% endif %}
+            </p>
+            {% endif %}
+            <p>
+        </div>
+
+        <div class="links-section d-flex justify-content-center align-items-center">
+            <div class="text-center mx-2">
+                <a href="#" class="btn-products-link">ANUNCIOS ACTIVOS</a>
+            </div>
+            <div class="separator"></div>
+            <div class="text-center mx-2">
+                <a href="#" class="btn-ratings-link">VALORACIONES</a>
+            </div>            
+        </div>
+
+        <hr>
+        <div class="profile-section">
+            {% if announce_count < 1 %}
+                <h2>NO HAY ANUNCIOS ACTIVOS</h2>
+                    
+            {% else %}
+                <h1>ANUNCIOS ACTIVOS</h1>
+            {% endif %}
+            {% if announce_count != 0 %}
+                <div class="btn-group" role="group" aria-label="Botones de filtro">
+                    <a href="?filter=todos" class="btn {% if filter_option == 'todos' %}btn-custom-selected{% else %}btn-custom{% endif %}">TODOS</a>
+                    <a href="?filter=articulos" class="btn {% if filter_option == 'articulos' %}btn-custom-selected{% else %}btn-custom{% endif %}">ARTÍCULOS</a>
+                    <a href="?filter=alquileres" class="btn {% if filter_option == 'alquileres' %}btn-custom-selected{% else %}btn-custom{% endif %}">ALQUILERES</a>
+                </div>
+            {% endif %}        
+            {% if filter_option == 'todos' %}
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
+                    {% for product in user_products %}
+                        <div class="col">
+                            <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                    <h5 class="card-title">{{ product.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
+                                    <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
+                                    <p class="card-text text-truncate">{{ product.description }}</p>
+                                </div>
+                                <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                    <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    {% for renting in user_rentings %}
+                        <div class="col">
+                            <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                <img class="card-img-top" src="{{ renting.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                    <h5 class="card-title">{{ renting.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted"><strong>{{ renting.price }}{{ renting.money_associated }}</strong></h6>
+                                    <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ renting.city_associated }}</h6>
+                                    <p class="card-text text-truncate">{{ renting.description }}</p>
+                                </div>
+                                <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                    <a href="{% url 'renting_details' renting_id=renting.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                </div>
+                            </div>
+                        </div>
+                            
+                    {% endfor %}
+                </div>
+            {% elif filter_option == 'articulos' %}
+                    {% if user_products|length == 0 %}
+                        <p class="mt-5"><strong>@{{ profile_user.username }}</strong> no tiene a la venta ningun artículo actualmente.<br>
+                    {% else %}
+                        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
+                            {% for product in user_products %}
+                                <div class="col">
+                                    <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                        <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                        <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                            <h5 class="card-title">{{ product.title }}</h5>
+                                            <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
+                                            <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
+                                            <p class="card-text text-truncate">{{ product.description }}</p>
+                                        </div>
+                                        <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                            <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                        </div>
+                                    </div>
+                                </div>   
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+            {% elif filter_option == 'alquileres' %}
+                        {% if user_rentings|length == 0 %}
+                            <p class="mt-5">
+                                <strong>@{{ profile_user.username }}</strong> no tiene ningún anuncio de alquiler activo actualmente.<br>
+                            </p>
+                        {% else %}
+                            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
+                                
+                                {% for rental in user_rentings %}
+                                    <div class="col">
+                                        <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                            <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                <h5 class="card-title">{{ rental.title }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
+                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
+                                                <p class="card-text text-truncate">{{ rental.description }}</p>
+                                            </div>
+                                            <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                                <a href="{% url 'renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+            </div>
+        </div>
+    <script>
+        function showConfirmationModal(productId) {
+            const form = document.getElementById('deleteForm');
+            form.action = `/delete_product/${productId}/`; // Ajusta la URL según tu configuración
+        
+            document.getElementById('confirmationModal').style.display = 'block';
+        }
+        
+        function closeConfirmationModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        }
+        function showConfirmationModal2(rentingId) {
+            const form = document.getElementById('deleteForm2');
+            form.action = `/delete_renting/${rentingId}/`; // Ajusta la URL según tu configuración
+        
+            document.getElementById('confirmationModal2').style.display = 'block';
+        }
+        
+        function closeConfirmationModal2() {
+            // Oculta el modal
+            document.getElementById('confirmationModal2').style.display = 'none';
+        }
+    </script>
+    
+</body>
+{% endblock %}
