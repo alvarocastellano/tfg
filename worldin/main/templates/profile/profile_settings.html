@@ -105,6 +105,19 @@
           </label>
         </div>
         <hr>
+
+        <div class="form-group">
+          <h3>VER MIS PROPIOS ANUNCIOS EN EL MERCADO</h3>
+          <p>
+              Si esta casilla está marcada, podrás ver los anuncios que tú mismo has publicado en el mercado.<br>
+              Para editarlos o eliminarlos, tendrás que acudir a tu perfil.
+          </p>
+          <label>
+              ¿Deseas ver tus propios anuncios en el mercado? 
+              <input type="checkbox" name="see_own_products" {% if user.see_own_products %}checked{% endif %}>
+          </label>
+        </div>
+        <hr>
         
         <!-- Opción para hacer cuenta pública o privada -->
         <div class="form-group">

@@ -111,8 +111,17 @@
         <div id="sidebar" class="sidebar" style="display: none; z-index: 999;">
             <ul class="list-group-sidebar">
                 <li class="list-group-item-sidebar">
-                    Ciudad actual: <span id="selected-city">{{ request.user.selected_city }}</span><br>
-                    <button id="change-city-btn" class="btn btn-secondary mt-2">Cambiar ciudad</button>
+                    Ciudad actual: 
+                    <span id="selected-city">
+                        {% if request.user.selected_city %}
+                            {{ request.user.selected_city }}
+                            <button id="change-city-btn" class="btn btn-secondary mt-2">Cambiar ciudad</button>
+                        {% else %}
+                            Ninguna
+                            <button id="change-city-btn" class="btn btn-secondary mt-2">Seleccionar ciudad</button>
+                        {% endif %}
+                    </span><br>
+                    
                 
                     <div id="city-form-container" style="display: none;">
                         <form id="city-form" method="post">
@@ -156,11 +165,17 @@
                     </div>
                 </li>
                 <hr class="custom-hr">
-                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-bag-fill"></i> Mercado</a></li>
-                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-calendar-check"></i> Eventos</a></li>
-                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-people-fill"></i> Comunidad</a></li>
-                <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
-                <hr class="custom-hr">
+                {% if request.user.selected_city %}
+                    <li class="list-group-item-sidebar"><a href="{% url 'main_market_products' selected_city=request.user.selected_city %}"><i class="bi bi-bag-fill"></i> Mercado</a></li>
+                    <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-calendar-check"></i> Eventos</a></li>
+                    <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-people-fill"></i> Comunidad</a></li>
+                    <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
+                    <hr class="custom-hr">
+                {% else %}
+                    <li class="list-group-item-sidebar">Selecciona una ciudad para poder acceder a más funcionalidades</li>
+                    <hr class="custom-hr">
+                {% endif %}
+
                 
                 <li class="list-group-item-sidebar"><a href="{% url 'world' %}"><i class="bi bi-globe-americas"></i> Mundo</a></li>
                 <hr class="custom-hr">
@@ -262,6 +277,9 @@
                     // Cierra el menú lateral si es necesario
                     const menu = document.getElementById('sidebar'); // Suponiendo que el ID del menú lateral es 'sidebar'
                     menu.classList.remove('open'); // Cierra el menú lateral si tiene la clase 'open'
+
+                    // Refresca la página para reflejar los cambios
+                    location.reload();
                 } else {
                     alert(data.message); // Muestra el mensaje de error
                 }

@@ -17,6 +17,52 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from django.contrib.messages import get_messages
 from dateutil.relativedelta import relativedelta
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+valid_cities = [
+                "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
+                "Tallin", "Dublin", "Cork", "Atenas", "Madrid", "Sevilla",
+                "Barcelona", "Paris", "Lens", "Marsella", "Zagreb", "Split",
+                "Roma", "Salerno", "Florencia", "Bari", "Luxemburgo", "Budapest",
+                "La Valeta", "Amsterdam", "Roterdam", "Viena", "Varsovia",
+                "Lisboa", "Oporto"
+            ]
+
+# Diccionario con las ciudades, sus países y las imágenes de las banderas
+city_data = {
+        "Bruselas": {"country": "Bélgica", "flag": "belgica.png"},
+        "Sofia": {"country": "Bulgaria", "flag": "bulgaria.png"},
+        "Praga": {"country": "República Checa", "flag": "chequia.png"},
+        "Copenhague": {"country": "Dinamarca", "flag": "dinamarca.png"},
+        "Berlin": {"country": "Alemania", "flag": "alemania.png"},
+        "Munich": {"country": "Alemania", "flag": "alemania.png"},
+        "Tallin": {"country": "Estonia", "flag": "estonia.png"},
+        "Dublin": {"country": "Irlanda", "flag": "irlanda.png"},
+        "Cork": {"country": "Irlanda", "flag": "irlanda.png"},
+        "Atenas": {"country": "Grecia", "flag": "grecia.png"},
+        "Madrid": {"country": "España", "flag": "spain.png"},
+        "Sevilla": {"country": "España", "flag": "spain.png"},
+        "Barcelona": {"country": "España", "flag": "spain.png"},
+        "Paris": {"country": "Francia", "flag": "francia.png"},
+        "Lens": {"country": "Francia", "flag": "francia.png"},
+        "Marsella": {"country": "Francia", "flag": "francia.png"},
+        "Zagreb": {"country": "Croacia", "flag": "croacia.png"},
+        "Split": {"country": "Croacia", "flag": "croacia.png"},
+        "Roma": {"country": "Italia", "flag": "italia.png"},
+        "Salerno": {"country": "Italia", "flag": "italia.png"},
+        "Florencia": {"country": "Italia", "flag": "italia.png"},
+        "Bari": {"country": "Italia", "flag": "italia.png"},
+        "Luxemburgo": {"country": "Luxemburgo", "flag": "luxemburgo.png"},
+        "Budapest": {"country": "Hungría", "flag": "hungria.png"},
+        "La Valeta": {"country": "Malta", "flag": "malta.png"},
+        "Amsterdam": {"country": "Países Bajos", "flag": "holanda.png"},
+        "Roterdam": {"country": "Países Bajos", "flag": "holanda.png"},
+        "Viena": {"country": "Austria", "flag": "austria.png"},
+        "Varsovia": {"country": "Polonia", "flag": "polonia.png"},
+        "Lisboa": {"country": "Portugal", "flag": "portugal.png"},
+        "Oporto": {"country": "Portugal", "flag": "portugal.png"},
+}
 
 def home(request):
     return render(request, 'home.html')
@@ -435,6 +481,7 @@ def profile_settings(request):
     if request.method == 'POST':
         show_age = request.POST.get('show_age') == 'on'
         account_visibility = request.POST.get('account_visibility')
+        see_own_products = request.POST.get('see_own_products') == 'on'
 
         # Comprobar si intenta cambiar a pública con solicitudes pendientes
         if has_pending_requests and account_visibility == 'public' and user.account_visibility == 'private':
@@ -451,6 +498,7 @@ def profile_settings(request):
             # Guardar cambios
             user.show_age = show_age
             user.account_visibility = account_visibility
+            user.see_own_products = see_own_products
             user.save()
             return redirect('my_profile')
 
@@ -679,33 +727,39 @@ def sidebar(request):
         'selected_city': selected_city,
     })
 
-@login_required
+@csrf_exempt  # Si estás usando AJAX en el formulario, necesitas esto. Retíralo si no es necesario.
 def update_city(request):
-    if request.method == 'POST':
-        selected_city = request.POST.get('selected_city')
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            try:
+                # Inicializar selected_city como None
+                selected_city = None
 
-        # Verifica si la ciudad seleccionada está en la lista permitida
-        valid_cities = [
-            "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
-            "Tallin", "Dublin", "Cork", "Atenas", "Madrid", "Sevilla",
-            "Barcelona", "Paris", "Lens", "Marsella", "Zagreb", "Split",
-            "Roma", "Salerno", "Florencia", "Bari", "Luxemburgo", "Budapest",
-            "La Valeta", "Amsterdam", "Roterdam", "Viena", "Varsovia",
-            "Lisboa", "Oporto"
-        ]
+                # Intentar obtener datos como JSON
+                if request.content_type == 'application/json':
+                    try:
+                        data = json.loads(request.body)
+                        selected_city = data.get('selected_city')
+                    except json.JSONDecodeError:
+                        pass
 
-        if selected_city in valid_cities:
-            user = request.user
-            user.selected_city = selected_city
-            user.save()
-            
-            # Retorna una respuesta en formato JSON indicando éxito
-            return JsonResponse({'success': True, 'new_city': selected_city})
-        else:
-            return JsonResponse({'success': False, 'message': 'Ciudad no válida'}, status=400)
+                # Si no es JSON, leer desde request.POST
+                if not selected_city:
+                    selected_city = request.POST.get('selected_city')
 
-    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
-
+                # Validar y actualizar la ciudad
+                if selected_city in valid_cities:
+                    user = request.user
+                    user.selected_city = selected_city
+                    user.save()
+                    return JsonResponse({'success': True, 'new_city': selected_city})
+                else:
+                    return JsonResponse({'success': False, 'message': 'Ciudad no válida'}, status=400)
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': f'Error inesperado: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    else:
+        return JsonResponse({'success': False, 'message': 'Para acceder a todas las funcionalidades deberás '}, status=401)
 #===========================AQUI COMIENZAN LAS VISTAS DEL MERCADO==========================================
 
 def moneda_oficial(request):
@@ -1361,3 +1415,77 @@ def edit_renting(request, renting_id):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
     })
+
+def main_market_products(request, selected_city):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    if selected_city not in valid_cities:
+        return render(request, "market/invalid_city.html",
+        {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
+
+    city_info = city_data.get(selected_city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    # Filtrar los productos asociados a la ciudad seleccionada
+    products = Product.objects.filter(city_associated=selected_city)
+
+    products_count = products.count()
+
+    only_user_products = (
+        products.exists() and 
+        not products.exclude(owner=request.user).exists()
+    )
+
+    context = {
+        'selected_city': selected_city,
+        'country': country,
+        'flag_image': flag_image,
+        'products': products,
+        'products_count': products_count,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'only_user_products': only_user_products,
+    }
+    return render(request, "main_market_products.html", context)
+
+def main_market_rentings(request, selected_city):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    if selected_city not in valid_cities:
+        return render(request, "market/invalid_city.html",
+        {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
+
+    city_info = city_data.get(selected_city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    # Filtrar los productos asociados a la ciudad seleccionada
+    rentings = Rental.objects.filter(city_associated=selected_city)
+    rentings_count = rentings.count()
+
+    # Verificar si solo hay anuncios del usuario en la ciudad
+    only_user_rentings = (
+        rentings.exists() and 
+        not rentings.exclude(owner=request.user).exists()
+    )
+
+    context = {
+        'selected_city': selected_city,
+        'country': country,
+        'flag_image': flag_image,
+        'rentings': rentings,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'rentings_count': rentings_count,
+        'only_user_rentings': only_user_rentings,
+    }
+    return render(request, "main_market_rentings.html", context)

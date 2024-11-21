@@ -20,6 +20,7 @@ class CustomUser(AbstractUser):
     show_age = models.BooleanField(default=True) 
     profile_completed = models.BooleanField(default=False)
     account_visibility = models.CharField(max_length=10, choices=[('public', 'Pública'), ('private', 'Privada')], default='public')
+    see_own_products = models.BooleanField(default=False)
     aficiones = models.ManyToManyField(Hobby, blank=True)
 
     groups = models.ManyToManyField(Group, verbose_name='groups', blank=True, related_name='customuser_set')
