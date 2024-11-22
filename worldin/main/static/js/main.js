@@ -30,6 +30,16 @@ function main() {
         { lat: 48.2082, lng: 16.3738, cities: ['Viena'], country: 'Austria', flag: 'austria.png' },
         { lat: 52.2297, lng: 21.0122, cities: ['Varsovia'], country: 'Polonia', flag: 'polonia.png' },
         { lat: 38.7167, lng: -9.1333, cities: ['Lisboa','Oporto'], country: 'Portugal', flag: 'portugal.png' },
+        { lat: -34.6037, lng: -58.3816, cities: ['Buenos Aires'], country: 'Argentina', flag: 'argentina.png' },
+        { lat: -35.2809, lng: 149.1300, cities: ['Canberra'], country: 'Australia', flag: 'australia.png' },
+        { lat: -15.7801, lng: -47.9292, cities: ['Brasilia'], country: 'Brasil', flag: 'brasil.png' },
+        { lat: 45.4215, lng: -75.6972, cities: ['Ottawa'], country: 'Canadá', flag: 'canada.png' },
+        { lat: -33.4489, lng: -70.6693, cities: ['Santiago'], country: 'Chile', flag: 'chile.png' },
+        { lat: 39.9042, lng: 116.4074, cities: ['Pekín'], country: 'China', flag: 'china.png' },
+        { lat: 38.9072, lng: -77.0369, cities: ['Washington D.C.'], country: 'Estados Unidos', flag: 'estados_unidos.png' },
+        { lat: 28.6139, lng: 77.2090, cities: ['Nueva Delhi'], country: 'India', flag: 'india.png' },
+        { lat: 35.6762, lng: 139.6503, cities: ['Tokio'], country: 'Japón', flag: 'japon.png' },
+        { lat: -34.9011, lng: -56.1645, cities: ['Montevideo'], country: 'Uruguay', flag: 'uruguay.png' },
     ];
 
     const suggestionsDiv = document.getElementById("suggestions");

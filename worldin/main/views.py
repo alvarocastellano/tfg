@@ -26,7 +26,8 @@ valid_cities = [
                 "Barcelona", "Paris", "Lens", "Marsella", "Zagreb", "Split",
                 "Roma", "Salerno", "Florencia", "Bari", "Luxemburgo", "Budapest",
                 "La Valeta", "Amsterdam", "Roterdam", "Viena", "Varsovia",
-                "Lisboa", "Oporto"
+                "Lisboa", "Oporto", "Buenos Aires", "Canberra", "Brasilia", "Ottawa",
+                "Santiago", "Pekín", "Washington D.C.", "Nueva Delhi", "Tokio", "Montevideo"
             ]
 
 # Diccionario con las ciudades, sus países y las imágenes de las banderas
@@ -62,7 +63,17 @@ city_data = {
         "Varsovia": {"country": "Polonia", "flag": "polonia.png"},
         "Lisboa": {"country": "Portugal", "flag": "portugal.png"},
         "Oporto": {"country": "Portugal", "flag": "portugal.png"},
-}
+        "Buenos Aires": {"country": "Argentina", "flag": "argentina.png"},
+        "Canberra": {"country": "Australia", "flag": "australia.png"},
+        "Brasilia": {"country": "Brasil", "flag": "brasil.png"},
+        "Ottawa": {"country": "Canadá", "flag": "canada.png"},
+        "Santiago": {"country": "Chile", "flag": "chile.png"},
+        "Pekín": {"country": "China", "flag": "china.png"},
+        "Washington D.C.": {"country": "Estados Unidos", "flag": "estados_unidos.png"},
+        "Nueva Delhi": {"country": "India", "flag": "india.png"},
+        "Tokio": {"country": "Japón", "flag": "japon.png"},
+        "Montevideo": {"country": "Uruguay", "flag": "uruguay.png"}
+    }
 
 def home(request):
     return render(request, 'home.html')
