@@ -164,6 +164,34 @@
             text-decoration: none;
         }
 
+        .btn-group-toggle .btn {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 10px;
+            border-color:#786dce;
+            color:#786dce;
+          }
+
+          .btn-group-toggle .btn:hover {
+            background-color: #786dce !important; 
+            color: white !important; 
+            border-color: white !important;
+          }
+      
+          .btn-group-toggle .btn.active {
+            background-color: #786dce !important; 
+            color: white !important; 
+            border-color: white !important; 
+          }
+
+          @media (max-width: 768px) {
+            .dropdown-menu {
+                width: 100% !important;  /* Asegura que el menú ocupe todo el ancho disponible */
+                max-width: 100% !important; /* Elimina cualquier límite de ancho */
+            }
+        }
+
 
     </style>
 </head>
@@ -201,18 +229,83 @@
 
         <div class="links-section d-flex justify-content-center align-items-center">
             <div class="text-center mx-2">
-                <a href="#" class="btn-products-link">ZONA DE ALQUILERES</a>
+                <a href="#" class="btn-products-link"><i class="bi bi-house-fill"></i> ZONA DE ALQUILERES</a>
             </div>
             <div class="separator"></div>
             <div class="text-center mx-2">
-                <a href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn-ratings-link">PRODUCTOS</a>
-            </div>
-            
-                        
+                <a href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn-ratings-link"><i class="bi bi-bag-fill"></i> PRODUCTOS</a>
+            </div>        
         </div>
 
         <hr>
+
+        <div class="profile-section d-flex flex-wrap align-items-center gap-3">
+            <!-- Dropdown de filtros -->
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" style="background-color:#6a4fb8;" type="button" id="filterMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-filter-left"></i> Ordenar por
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterMenuButton">
+
+                    <li><a class="dropdown-item" href="?order=newest">Fecha de publicación: Más nuevos</a></li>
+                    <li><a class="dropdown-item" href="?order=oldest">Fecha de publicación: Más antiguos</a></li>
+                    <hr>
+                    <li><a class="dropdown-item" href="?order=cheapest">Precio: De menor a mayor</a></li>
+                    <li><a class="dropdown-item" href="?order=expensive">Precio: De mayor a menor</a></li>
+                    <hr>
+                    <li><a class="dropdown-item" href="?order=min_to_max_square_meters">Metros cuadrados: De menor a mayor</a></li>
+                    <li><a class="dropdown-item" href="?order=max_to_min_square_meters">Metros cuadrados: De mayor a menor</a></li>
+                    <hr>
+                    <li><a class="dropdown-item" href="?order=min_to_max_rooms">Número de habitaciones: De menor a mayor</a></li>
+                    <li><a class="dropdown-item" href="?order=max_to_min_rooms">Número de habitaciones: De mayor a menor</a></li>
+                    <hr>
+                    <li><a class="dropdown-item" href="?order=min_to_max_people">Número de personas admitidas: De menor a mayor</a></li>
+                    <li><a class="dropdown-item" href="?order=max_to_min_people">Número de personas admitidas: De mayor a menor</a></li>
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" style="background-color:#6a4fb8;" type="button" id="featuresMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-funnel-fill"></i> Filtrar por características
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="featuresMenuButton" style="width: 900px;" id="featuresDropdownMenu">
+                    <form method="GET" class="d-flex align-items-center flex-wrap">
+                        <div class="btn-group-toggle" data-toggle="buttons">
+                            {% for feature in all_features %}
+                                <label class="btn btn-outline-primary {% if feature.id|stringformat:"s" in selected_features %} active {% endif %}">
+                                    <input type="checkbox" name="features" value="{{ feature.id }}" autocomplete="off"
+                                        {% if feature.id|stringformat:"s" in selected_features %} checked {% endif %}> {{ feature.feature }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="background-color:#6a4fb8; border-color:white;">Filtrar</button>
+                    </form>
+                </ul>
+            </div>
+        
+            <!-- Botón para reestablecer filtros -->
+            <a href="{% url 'main_market_rentings' selected_city=request.user.selected_city %}" class="btn btn-secondary">
+                Reestablecer filtros y búsquedas
+            </a>
+        
+            <!-- Formulario de búsqueda -->
+            <form method="GET" class="d-flex align-items-center flex-grow-1">
+                <input type="text" name="q" class="form-control me-2" placeholder="Buscar alquiler por su dirección...">
+                <button type="submit" class="btn btn-primary" style="background-color:#6a4fb8; border-color:white;">Buscar</button>
+            </form>
+
+
+        </div>
         <div class="profile-section">
+            {% if no_caracts_message %}
+                <div class="alert alert-warning mt-3">
+                    {{ no_caracts_message }}
+                </div>
+            {% endif %}
+            {% if no_results_message %}
+                <div class="alert alert-warning mt-3">
+                    {{ no_results_message }}
+                </div>
+            {% endif %}
             {% if rentings %}
                 {% if only_user_rentings and not request.user.see_own_products%}
                     <p class="text-center align-items-center">
@@ -234,7 +327,7 @@
                                         <div class="card-body d-flex flex-column" style="flex-grow: 1;">
                                             <h5 class="card-title text-truncate">{{ renting.title }}</h5>
                                             <h6 class="card-subtitle mb-2 text-muted">
-                                                <strong style="color:#6a4fb8;">{{ renting.price }}{{ renting.money_associated }}</strong>
+                                                <strong style="color:#6a4fb8;">{{ renting.price }}{{ renting.money_associated }}/mes</strong>
                                             </h6>
                                             <p class="card-text text-truncate">{{ renting.description }}</p>
                                             <h6 class="card-subtitle mb-2 text-muted">
@@ -264,10 +357,32 @@
                     </div>
                 {% endif %}
             {% else %}
-                <p>No hay anuncios de alquiler disponibles en esta ciudad.</p>
+                <p>No se han encontrado anuncios de alquiler disponibles.</p>
             {% endif %}
             
         </div>
+
+        <script>
+            $(document).ready(function() {
+              // Manejo de botones toggle para checkboxes
+              $('.btn-group-toggle input[type="checkbox"]').change(function() {
+                if ($(this).is(':checked')) {
+                  $(this).parent().addClass('active');
+                } else {
+                  $(this).parent().removeClass('active');
+                }
+              });
+            });
+          </script>
+
+        <script>
+            // Mantener el dropdown abierto al seleccionar una opción
+            document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+                menu.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevenir que el dropdown se cierre al hacer clic dentro del menu
+                });
+            });
+        </script>
     
 </body>
 {% endblock %}

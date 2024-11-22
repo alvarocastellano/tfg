@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Ciudad no encontrada{% endblock %}
+{% block title %}Acceso no permitido{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -52,11 +52,12 @@
         <div class="profile-top d-flex justify-content-between align-items-center">
             
         </div>
-        <img src="{% static 'images/404_error.png' %}" class="profile-picture" alt="Error 404 Not Found">
-        <h1>Ciudad no encontrada</h1>
-        <h3 class="mt-5">La ciudad seleccionada no es válida.</h3>
+        <img src="{% static 'images/say-no.png' %}" class="profile-picture mt-5 mb-5" alt="Error 404 Not Found">
+        <h1>Error 405: No puedes acceder a la página buscada</h1>
+        <h3 class="mt-5">Esta funcionalidad no está permitida para los usuarios que no tienen seleccionada ninguna ciudad.</h3>
         <p>Por favor, elige una ciudad de nuestras ciudades disponibles en el mundo o mediante el menú lateral.</p>
         <a href="{% url 'world' %}"><strong>Volver al mundo</strong></a>
+        <div style="display:none;"> Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com'</a></div>
         
 
         

@@ -39,6 +39,25 @@
     {% endblock header %}
 
     <style>
+        .abrir-cerrar-menu{
+            background-color: #6a4fb8; /* Fondo inicial */
+            border: 2px solid white; /* Bordes blancos */
+            color: white; /* Icono en blanco */
+            transition: all 0.3s ease; /* Suavidad al pasar el cursor */ 
+            position: fixed; 
+            top: 50%;
+            left: 60px; 
+            transform: translateY(-50%); 
+            z-index: 1000; 
+            outline:none; 
+            box-shadow:none;
+            border-radius: 12px;
+        }
+        .abrir-cerrar-menu:hover {
+            background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+            border-color: #6a4fb8; /* Contorno con color #6a4fb8 */
+            color: #6a4fb8;
+        }
         .sidebar {
             position: fixed;
             top: 0;
@@ -48,7 +67,7 @@
             background-color: #6a4fb8; /* Color del menú */
             padding: 12px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
             text-align: center;
             overflow-y: auto;
         }
@@ -66,7 +85,7 @@
             border-color: #6a4fb8;
             padding: 8px 0; /* Reduce el espacio interno de cada li */
         }
-        
+
         .sidebar a {
             padding: 0;
             color: white;
@@ -102,8 +121,7 @@
 <body>
     <div class="container profile-container">
         <!-- Botón para abrir el menú -->
-        <button id="menuToggle" class="btn btn-primary" style="background-color:#6a4fb8; border-color: white; position: fixed; top: 50%; 
-        left: 60px; transform: translateY(-50%); z-index: 1000; outline:none; box-shadow:none;">
+        <button id="menuToggle" class="abrir-cerrar-menu">
             <i class="bi bi-arrow-bar-right" style="font-size:3em;" id="menuIcon"></i>
         </button>
 

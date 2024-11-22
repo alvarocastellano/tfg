@@ -130,7 +130,7 @@
                 {% if product.owner.id == request.user.id %}
                     <a href="{% url 'my_market_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;"><h3 style="font-size:12px;">Mi perfil de mercado</h3></a>
                 {% else %}
-                    <a href="#" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: #6a4fb8;"><h3 style="font-size:12px;">Mercado de productos</h3></a>
+                    <a href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;"><h3 style="font-size:12px;">Mercado de productos</h3></a>
                 {% endif %}
             </div>
             <h3><i class="bi bi-geo-fill"></i>Este anuncio ha sido publicado en el mercado de {{ product.city_associated }}</h3>

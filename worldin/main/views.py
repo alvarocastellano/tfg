@@ -1120,18 +1120,11 @@ def add_renting(request):
             max_people = form.cleaned_data.get('max_people')
             if max_people is None or max_people <= 0:
                 error_messages.append("El número máximo de personas debe ser un número positivo mayor que 0.")
-            else:
-                rooms = form.cleaned_data.get('rooms')
-                if max_people > rooms:
-                    error_messages.append("El número máximo de personas no puede ser mayor que el número de habitaciones.")
 
             # Validación de rooms
             rooms = form.cleaned_data.get('rooms')
             if rooms is None or rooms <= 0:
                 error_messages.append("El número de habitaciones debe ser un número positivo mayor que 0.")
-            elif rooms < max_people:
-                error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
-
 
             
 
@@ -1322,15 +1315,12 @@ def edit_renting(request, renting_id):
             renting_rooms = int(renting_rooms)
             if renting_max_people is None or renting_max_people <= 0:
                 error_messages.append("El número máximo de personas debe ser un número positivo mayor que 0.")
-            else:
-                if renting_max_people > renting_rooms:
-                    error_messages.append("El número máximo de personas no puede ser mayor que el número de habitaciones.")
+            
 
             # Validación de rooms
             if renting_rooms is None or renting_rooms <= 0:
                 error_messages.append("El número de habitaciones debe ser un número positivo mayor que 0.")
-            elif renting_rooms < renting_max_people:
-                error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
+            
 
             selected_features = request.POST.getlist('features')
 
@@ -1419,6 +1409,8 @@ def edit_renting(request, renting_id):
 def main_market_products(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    order = request.GET.get('order', 'newest')
+    search_query = request.GET.get('q', '')
 
     if selected_city not in valid_cities:
         return render(request, "market/invalid_city.html",
@@ -1427,35 +1419,69 @@ def main_market_products(request, selected_city):
             'pending_requests_count': pending_requests_count,
             } )
 
+    if request.user.selected_city == "":
+        return render(request, "market/select_city_before_searching.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )    
+
     city_info = city_data.get(selected_city, {})
     country = city_info.get('country', 'Desconocido')
     flag_image = city_info.get('flag', '')
 
-    # Filtrar los productos asociados a la ciudad seleccionada
     products = Product.objects.filter(city_associated=selected_city)
 
-    products_count = products.count()
+    # Buscador
+    filtered_products = products  # Para mantener todos los productos en caso de búsqueda sin resultados
+    if search_query:
+        filtered_products = products.filter(title__icontains=search_query)
+        if not filtered_products.exists():
+            # Si no hay resultados, mostrar todos los productos pero indicar que no se encontraron resultados específicos
+            no_results_message = f"No se encuentran resultados para la búsqueda: '{search_query}'"
+            filtered_products = products  # Revertimos a todos los productos
+        else:
+            no_results_message = None
+    else:
+        no_results_message = None
+
+    #filtrados
+    if order == 'newest':
+        filtered_products = filtered_products.order_by('-created_at')
+    elif order == 'older':
+        filtered_products = filtered_products.order_by('created_at')
+    elif order == 'cheapest':
+        filtered_products = filtered_products.order_by('price')
+    elif order == 'expensive':
+        filtered_products = filtered_products.order_by('-price')
+
+    products_count = filtered_products.count()
 
     only_user_products = (
-        products.exists() and 
-        not products.exclude(owner=request.user).exists()
+        filtered_products.exists() and 
+        not filtered_products.exclude(owner=request.user).exists()
     )
 
     context = {
         'selected_city': selected_city,
         'country': country,
         'flag_image': flag_image,
-        'products': products,
+        'order': order,
+        'search_query': search_query,
+        'products': filtered_products,
         'products_count': products_count,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'only_user_products': only_user_products,
+        'no_results_message': no_results_message,
     }
     return render(request, "main_market_products.html", context)
 
 def main_market_rentings(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    order = request.GET.get('order', 'newest')
+    search_query = request.GET.get('q', '')
+    selected_features = request.GET.getlist('features')
 
     if selected_city not in valid_cities:
         return render(request, "market/invalid_city.html",
@@ -1464,28 +1490,96 @@ def main_market_rentings(request, selected_city):
             'pending_requests_count': pending_requests_count,
             } )
 
+    if request.user.selected_city == "":
+        return render(request, "market/select_city_before_searching.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
+
     city_info = city_data.get(selected_city, {})
     country = city_info.get('country', 'Desconocido')
     flag_image = city_info.get('flag', '')
 
-    # Filtrar los productos asociados a la ciudad seleccionada
+    # Filtrar los anuncios asociados a la ciudad seleccionada
     rentings = Rental.objects.filter(city_associated=selected_city)
-    rentings_count = rentings.count()
+
+    filtered_rentings = rentings  # Para mantener todos los anuncios en caso de búsqueda sin resultados
+
+    # Filtrar por caracteristicas
+    if selected_features:
+        for feature_id in selected_features:
+            rentings = rentings.filter(features__id=feature_id)
+
+        rentings = rentings.distinct()
+
+        if not rentings.exists():
+            no_caracts_message = "No hay ningún anuncio publicado que cuente con todas las características seleccionadas."
+            filtered_rentings = rentings
+        else:
+            no_caracts_message = None
+    else:
+        no_caracts_message = None
+
+
+    
+
+    #Buscador
+    if search_query:
+        filtered_rentings = rentings.filter(location__icontains=search_query)
+        if not filtered_rentings.exists():
+            # Si no hay resultados, mostrar todos los anuncios pero indicar que no se encontraron resultados específicos
+            no_results_message = f"No se encuentran resultados para la búsqueda: '{search_query}'"
+            filtered_rentings = rentings  # Revertimos a todos los anuncios
+        else:
+            no_results_message = None
+    else:
+        no_results_message = None
+
+    #filtrados
+    if order == 'newest':
+        filtered_rentings = filtered_rentings.order_by('-created_at')
+    elif order == 'older':
+        filtered_rentings = filtered_rentings.order_by('created_at')
+    elif order == 'cheapest':
+        filtered_rentings = filtered_rentings.order_by('price')
+    elif order == 'expensive':
+        filtered_rentings = filtered_rentings.order_by('-price')
+    elif order == 'min_to_max_square_meters':
+        filtered_rentings = filtered_rentings.order_by('square_meters')
+    elif order == 'max_to_min_square_meters':
+        filtered_rentings = filtered_rentings.order_by('-square_meters')
+    elif order == 'min_to_max_rooms':
+        filtered_rentings = filtered_rentings.order_by('rooms')
+    elif order == 'max_to_min_rooms':
+        filtered_rentings = filtered_rentings.order_by('-rooms')
+    elif order == 'min_to_max_people':
+        filtered_rentings = filtered_rentings.order_by('max_people')
+    elif order == 'max_to_min_people':
+        filtered_rentings = filtered_rentings.order_by('-max_people')
+
+    rentings_count = filtered_rentings.count()
 
     # Verificar si solo hay anuncios del usuario en la ciudad
     only_user_rentings = (
-        rentings.exists() and 
-        not rentings.exclude(owner=request.user).exists()
+        filtered_rentings.exists() and 
+        not filtered_rentings.exclude(owner=request.user).exists()
     )
+
+    all_features = RentalFeature.objects.all()
+
 
     context = {
         'selected_city': selected_city,
         'country': country,
         'flag_image': flag_image,
-        'rentings': rentings,
+        'rentings': filtered_rentings,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'rentings_count': rentings_count,
         'only_user_rentings': only_user_rentings,
+        'no_results_message': no_results_message,
+        'all_features': all_features,
+        'selected_features': selected_features,
+        'no_caracts_message': no_caracts_message,
     }
     return render(request, "main_market_rentings.html", context)
