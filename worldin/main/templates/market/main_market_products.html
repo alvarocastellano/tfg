@@ -164,6 +164,44 @@
             text-decoration: none;
         }
 
+        .selected-page {
+            background-color: white !important; /* Sobrescribe Bootstrap */
+            color: #6a4fb8 !important;
+            font-weight: bold;
+            border-color: #6a4fb8;
+        }
+        
+        /* Páginas no seleccionadas */
+        .unselected-page {
+            background-color: #6a4fb8 !important; /* Sobrescribe Bootstrap */
+            color: white !important;
+        }
+        
+        /* Opcional: Cambiar el borde de las páginas */
+        .page-link {
+            border-color: #6a4fb8;
+        }
+
+        .texto {
+            color: #6a4fb8;
+        }
+        
+        /* Sobrescribe el estilo de Bootstrap para el elemento activo */
+        .page-item.active .page-link {
+            background-color: white !important;
+            color: #6a4fb8 !important;
+            font-weight: bold;
+            border-color: #6a4fb8;
+        }
+        
+        /* Hover para páginas no seleccionadas */
+        .unselected-page:hover {
+            background-color: white;
+            color: #6a4fb8;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
 
     </style>
 </head>
@@ -301,6 +339,32 @@
                 <p>No se han encontrado productos disponibles.</p>
             {% endif %}
         </div>
+        <!-- Controles de paginación -->
+        <nav aria-label="Paginación de productos">
+            <ul class="pagination justify-content-center">
+                {% if products.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link texto" href="?page={{ products.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if order %}&order={{ order }}{% endif %}">
+                            Anterior
+                        </a>
+                    </li>
+                {% endif %}
+                {% for num in products.paginator.page_range %}
+                    <li class="page-item {% if products.number == num %}active{% endif %}">
+                        <a class="page-link {% if products.number == num %}selected-page{% else %}unselected-page{% endif %}" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if order %}&order={{ order }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endfor %}
+                {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link texto" href="?page={{ products.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if order %}&order={{ order }}{% endif %}">
+                            Siguiente
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
         
         
     

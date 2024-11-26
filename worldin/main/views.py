@@ -19,6 +19,7 @@ from django.contrib.messages import get_messages
 from dateutil.relativedelta import relativedelta
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 valid_cities = [
                 "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
@@ -1472,13 +1473,25 @@ def main_market_products(request, selected_city):
         not filtered_products.exclude(owner=request.user).exists()
     )
 
+    # Paginación
+    paginator = Paginator(filtered_products, 20)  # 20 productos por página
+    page = request.GET.get('page', 1)
+
+    try:
+        paginated_products = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_products = paginator.page(1)
+    except EmptyPage:
+        paginated_products = paginator.page(paginator.num_pages)
+
+
     context = {
         'selected_city': selected_city,
         'country': country,
         'flag_image': flag_image,
         'order': order,
         'search_query': search_query,
-        'products': filtered_products,
+        'products': paginated_products,
         'products_count': products_count,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
@@ -1514,8 +1527,6 @@ def main_market_rentings(request, selected_city):
     # Filtrar los anuncios asociados a la ciudad seleccionada
     rentings = Rental.objects.filter(city_associated=selected_city)
 
-    filtered_rentings = rentings  # Para mantener todos los anuncios en caso de búsqueda sin resultados
-
     # Filtrar por caracteristicas
     if selected_features:
         for feature_id in selected_features:
@@ -1525,14 +1536,13 @@ def main_market_rentings(request, selected_city):
 
         if not rentings.exists():
             no_caracts_message = "No hay ningún anuncio publicado que cuente con todas las características seleccionadas."
-            filtered_rentings = rentings
+            filtered_rentings = Rental.objects.none()
         else:
             no_caracts_message = None
+            filtered_rentings = rentings
     else:
         no_caracts_message = None
-
-
-    
+        filtered_rentings = rentings
 
     #Buscador
     if search_query:
@@ -1578,12 +1588,23 @@ def main_market_rentings(request, selected_city):
 
     all_features = RentalFeature.objects.all()
 
+        # Paginación
+    paginator = Paginator(filtered_rentings, 20)  # 20 anuncios por página
+    page = request.GET.get('page', 1)
+
+    try:
+        paginated_rentings = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_rentings = paginator.page(1)
+    except EmptyPage:
+        paginated_rentings = paginator.page(paginator.num_pages)
+
 
     context = {
         'selected_city': selected_city,
         'country': country,
         'flag_image': flag_image,
-        'rentings': filtered_rentings,
+        'rentings': paginated_rentings,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'rentings_count': rentings_count,
