@@ -567,14 +567,27 @@ def followers_count(request, username):
 @login_required
 def other_user_profile(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
-    profile_user = get_object_or_404(CustomUser, username=username)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        # Intentar obtener el usuario
+        profile_user = CustomUser.objects.get(username=username)
+        if profile_user == request.user:
+            return redirect('my_profile')
+    except CustomUser.DoesNotExist:
+        # Si no existe, redirigir a la página de error
+        return render(request, 'user_not_found.html', {
+            'pending_requests_count': pending_requests_count,
+            'complete_profile_alerts': complete_profile_alerts,
+        })
+    
     is_own_profile = profile_user == request.user
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
-    complete_profile_alerts = alertas_completar_perfil(request)
-    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    
 
     filter_option = request.GET.get('filter', 'todos')
 
@@ -947,12 +960,19 @@ def add_product(request):
 
 
 def product_details(request, product_id):
-    # Obtener el producto y su propietario
-    product = get_object_or_404(Product, id=product_id)
     rating_count = 0
     stars_sum = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
@@ -970,17 +990,46 @@ def product_details(request, product_id):
 
 @login_required
 def delete_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id, owner=request.user)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        product = Product.objects.get(id=product_id)
+        if product.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     product.delete()
     return redirect('my_market_profile')
 
 @login_required
 def edit_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
     error_messages = []
     images_count = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+
+    if product.owner != request.user:
+        return render(request, "market/edit_your_ads_only.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
 
     if not request.user.city:
         messages.error(request, 'No puedes editar un artículo hasta que tengas una ciudad asignada en tu perfil.')
@@ -1195,12 +1244,19 @@ def add_renting(request):
 
 
 def renting_details(request, renting_id):
-    # Obtener el producto y su propietario
-    rental = get_object_or_404(Rental, id=renting_id)
     rating_count = 0
     stars_sum = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        rental = Rental.objects.get(id=renting_id)
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
@@ -1219,13 +1275,42 @@ def renting_details(request, renting_id):
 
 @login_required
 def delete_renting(request, renting_id):
-    renting = get_object_or_404(Rental, id=renting_id, owner=request.user)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        renting = Rental.objects.get(id=renting_id)
+        if renting.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     renting.delete()
     return redirect('my_market_profile')
 
 def market_profile_other_user(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
-    profile_user = get_object_or_404(CustomUser, username=username)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    complete_profile_alerts = alertas_completar_perfil(request)
+    
+    try:
+        # Intentar obtener el usuario
+        profile_user = CustomUser.objects.get(username=username)
+        if profile_user == request.user:
+            return redirect('my_market_profile')
+    except CustomUser.DoesNotExist:
+        # Si no existe, redirigir a la página de error
+        return render(request, 'user_not_found.html', {
+            'pending_requests_count': pending_requests_count,
+            'complete_profile_alerts': complete_profile_alerts,
+        })
+    
     sell_count = 0
     buy_count = 0
     rating_count = 0
@@ -1234,8 +1319,7 @@ def market_profile_other_user(request, username):
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
-    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
-    complete_profile_alerts = alertas_completar_perfil(request)
+    
 
     filter_option = request.GET.get('filter', 'todos')
 
@@ -1278,12 +1362,26 @@ def market_profile_other_user(request, username):
     return render(request, 'market_profile_other_user.html', context)
 
 def edit_renting(request, renting_id):
-    renting = get_object_or_404(Rental, id=renting_id)
     error_messages = []
     images_count = 0
     available_features= RentalFeature.objects.all()
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        renting = Rental.objects.get(id=renting_id)
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+
+    if renting.owner != request.user:
+        return render(request, "market/edit_your_ads_only.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } ) 
 
     if not request.user.city:
         messages.error(request, 'No puedes editar un anuncio hasta que tengas una ciudad asignada en tu perfil.')
