@@ -1,3 +1,23 @@
+.abrir-cerrar-menu{
+    background-color: #6a4fb8; /* Fondo inicial */
+    border: 2px solid white; /* Bordes blancos */
+    color: white; /* Icono en blanco */
+    transition: all 0.3s ease; /* Suavidad al pasar el cursor */ 
+    position: fixed; 
+    top: 50%;
+    left: 60px; 
+    transform: translateY(-50%); 
+    z-index: 1000; 
+    outline:none; 
+    box-shadow:none;
+}
+.abrir-cerrar-menu:hover {
+    background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+    border-color: #6a4fb8; /* Contorno con color #6a4fb8 */
+    color: #6a4fb8;
+}
+
+
 .sidebar {
     position: fixed;
     top: 0;
@@ -7,7 +27,7 @@
     background-color: #6a4fb8; /* Color del menú */
     padding: 10px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
     text-align: center;
 }
 

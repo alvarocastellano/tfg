@@ -17,6 +17,64 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from django.contrib.messages import get_messages
 from dateutil.relativedelta import relativedelta
+from django.views.decorators.csrf import csrf_exempt
+import json
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+valid_cities = [
+                "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
+                "Tallin", "Dublin", "Cork", "Atenas", "Madrid", "Sevilla",
+                "Barcelona", "Paris", "Lens", "Marsella", "Zagreb", "Split",
+                "Roma", "Salerno", "Florencia", "Bari", "Luxemburgo", "Budapest",
+                "La Valeta", "Amsterdam", "Roterdam", "Viena", "Varsovia",
+                "Lisboa", "Oporto", "Buenos Aires", "Canberra", "Brasilia", "Ottawa",
+                "Santiago", "Pekín", "Washington D.C.", "Nueva Delhi", "Tokio", "Montevideo"
+            ]
+
+# Diccionario con las ciudades, sus países y las imágenes de las banderas
+city_data = {
+        "Bruselas": {"country": "Bélgica", "flag": "belgica.png"},
+        "Sofia": {"country": "Bulgaria", "flag": "bulgaria.png"},
+        "Praga": {"country": "República Checa", "flag": "chequia.png"},
+        "Copenhague": {"country": "Dinamarca", "flag": "dinamarca.png"},
+        "Berlin": {"country": "Alemania", "flag": "alemania.png"},
+        "Munich": {"country": "Alemania", "flag": "alemania.png"},
+        "Tallin": {"country": "Estonia", "flag": "estonia.png"},
+        "Dublin": {"country": "Irlanda", "flag": "irlanda.png"},
+        "Cork": {"country": "Irlanda", "flag": "irlanda.png"},
+        "Atenas": {"country": "Grecia", "flag": "grecia.png"},
+        "Madrid": {"country": "España", "flag": "spain.png"},
+        "Sevilla": {"country": "España", "flag": "spain.png"},
+        "Barcelona": {"country": "España", "flag": "spain.png"},
+        "Paris": {"country": "Francia", "flag": "francia.png"},
+        "Lens": {"country": "Francia", "flag": "francia.png"},
+        "Marsella": {"country": "Francia", "flag": "francia.png"},
+        "Zagreb": {"country": "Croacia", "flag": "croacia.png"},
+        "Split": {"country": "Croacia", "flag": "croacia.png"},
+        "Roma": {"country": "Italia", "flag": "italia.png"},
+        "Salerno": {"country": "Italia", "flag": "italia.png"},
+        "Florencia": {"country": "Italia", "flag": "italia.png"},
+        "Bari": {"country": "Italia", "flag": "italia.png"},
+        "Luxemburgo": {"country": "Luxemburgo", "flag": "luxemburgo.png"},
+        "Budapest": {"country": "Hungría", "flag": "hungria.png"},
+        "La Valeta": {"country": "Malta", "flag": "malta.png"},
+        "Amsterdam": {"country": "Países Bajos", "flag": "holanda.png"},
+        "Roterdam": {"country": "Países Bajos", "flag": "holanda.png"},
+        "Viena": {"country": "Austria", "flag": "austria.png"},
+        "Varsovia": {"country": "Polonia", "flag": "polonia.png"},
+        "Lisboa": {"country": "Portugal", "flag": "portugal.png"},
+        "Oporto": {"country": "Portugal", "flag": "portugal.png"},
+        "Buenos Aires": {"country": "Argentina", "flag": "argentina.png"},
+        "Canberra": {"country": "Australia", "flag": "australia.png"},
+        "Brasilia": {"country": "Brasil", "flag": "brasil.png"},
+        "Ottawa": {"country": "Canadá", "flag": "canada.png"},
+        "Santiago": {"country": "Chile", "flag": "chile.png"},
+        "Pekín": {"country": "China", "flag": "china.png"},
+        "Washington D.C.": {"country": "Estados Unidos", "flag": "estados_unidos.png"},
+        "Nueva Delhi": {"country": "India", "flag": "india.png"},
+        "Tokio": {"country": "Japón", "flag": "japon.png"},
+        "Montevideo": {"country": "Uruguay", "flag": "uruguay.png"}
+    }
 
 def home(request):
     return render(request, 'home.html')
@@ -435,6 +493,7 @@ def profile_settings(request):
     if request.method == 'POST':
         show_age = request.POST.get('show_age') == 'on'
         account_visibility = request.POST.get('account_visibility')
+        see_own_products = request.POST.get('see_own_products') == 'on'
 
         # Comprobar si intenta cambiar a pública con solicitudes pendientes
         if has_pending_requests and account_visibility == 'public' and user.account_visibility == 'private':
@@ -451,6 +510,7 @@ def profile_settings(request):
             # Guardar cambios
             user.show_age = show_age
             user.account_visibility = account_visibility
+            user.see_own_products = see_own_products
             user.save()
             return redirect('my_profile')
 
@@ -507,14 +567,27 @@ def followers_count(request, username):
 @login_required
 def other_user_profile(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
-    profile_user = get_object_or_404(CustomUser, username=username)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        # Intentar obtener el usuario
+        profile_user = CustomUser.objects.get(username=username)
+        if profile_user == request.user:
+            return redirect('my_profile')
+    except CustomUser.DoesNotExist:
+        # Si no existe, redirigir a la página de error
+        return render(request, 'user_not_found.html', {
+            'pending_requests_count': pending_requests_count,
+            'complete_profile_alerts': complete_profile_alerts,
+        })
+    
     is_own_profile = profile_user == request.user
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
-    complete_profile_alerts = alertas_completar_perfil(request)
-    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    
 
     filter_option = request.GET.get('filter', 'todos')
 
@@ -679,33 +752,39 @@ def sidebar(request):
         'selected_city': selected_city,
     })
 
-@login_required
+@csrf_exempt  # Si estás usando AJAX en el formulario, necesitas esto. Retíralo si no es necesario.
 def update_city(request):
-    if request.method == 'POST':
-        selected_city = request.POST.get('selected_city')
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            try:
+                # Inicializar selected_city como None
+                selected_city = None
 
-        # Verifica si la ciudad seleccionada está en la lista permitida
-        valid_cities = [
-            "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
-            "Tallin", "Dublin", "Cork", "Atenas", "Madrid", "Sevilla",
-            "Barcelona", "Paris", "Lens", "Marsella", "Zagreb", "Split",
-            "Roma", "Salerno", "Florencia", "Bari", "Luxemburgo", "Budapest",
-            "La Valeta", "Amsterdam", "Roterdam", "Viena", "Varsovia",
-            "Lisboa", "Oporto"
-        ]
+                # Intentar obtener datos como JSON
+                if request.content_type == 'application/json':
+                    try:
+                        data = json.loads(request.body)
+                        selected_city = data.get('selected_city')
+                    except json.JSONDecodeError:
+                        pass
 
-        if selected_city in valid_cities:
-            user = request.user
-            user.selected_city = selected_city
-            user.save()
-            
-            # Retorna una respuesta en formato JSON indicando éxito
-            return JsonResponse({'success': True, 'new_city': selected_city})
-        else:
-            return JsonResponse({'success': False, 'message': 'Ciudad no válida'}, status=400)
+                # Si no es JSON, leer desde request.POST
+                if not selected_city:
+                    selected_city = request.POST.get('selected_city')
 
-    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
-
+                # Validar y actualizar la ciudad
+                if selected_city in valid_cities:
+                    user = request.user
+                    user.selected_city = selected_city
+                    user.save()
+                    return JsonResponse({'success': True, 'new_city': selected_city})
+                else:
+                    return JsonResponse({'success': False, 'message': 'Ciudad no válida'}, status=400)
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': f'Error inesperado: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    else:
+        return JsonResponse({'success': False, 'message': 'Para acceder a todas las funcionalidades deberás '}, status=401)
 #===========================AQUI COMIENZAN LAS VISTAS DEL MERCADO==========================================
 
 def moneda_oficial(request):
@@ -881,12 +960,19 @@ def add_product(request):
 
 
 def product_details(request, product_id):
-    # Obtener el producto y su propietario
-    product = get_object_or_404(Product, id=product_id)
     rating_count = 0
     stars_sum = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
@@ -904,17 +990,46 @@ def product_details(request, product_id):
 
 @login_required
 def delete_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id, owner=request.user)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        product = Product.objects.get(id=product_id)
+        if product.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     product.delete()
     return redirect('my_market_profile')
 
 @login_required
 def edit_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
     error_messages = []
     images_count = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+
+    if product.owner != request.user:
+        return render(request, "market/edit_your_ads_only.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
 
     if not request.user.city:
         messages.error(request, 'No puedes editar un artículo hasta que tengas una ciudad asignada en tu perfil.')
@@ -1066,18 +1181,11 @@ def add_renting(request):
             max_people = form.cleaned_data.get('max_people')
             if max_people is None or max_people <= 0:
                 error_messages.append("El número máximo de personas debe ser un número positivo mayor que 0.")
-            else:
-                rooms = form.cleaned_data.get('rooms')
-                if max_people > rooms:
-                    error_messages.append("El número máximo de personas no puede ser mayor que el número de habitaciones.")
 
             # Validación de rooms
             rooms = form.cleaned_data.get('rooms')
             if rooms is None or rooms <= 0:
                 error_messages.append("El número de habitaciones debe ser un número positivo mayor que 0.")
-            elif rooms < max_people:
-                error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
-
 
             
 
@@ -1136,12 +1244,19 @@ def add_renting(request):
 
 
 def renting_details(request, renting_id):
-    # Obtener el producto y su propietario
-    rental = get_object_or_404(Rental, id=renting_id)
     rating_count = 0
     stars_sum = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        rental = Rental.objects.get(id=renting_id)
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
@@ -1160,13 +1275,42 @@ def renting_details(request, renting_id):
 
 @login_required
 def delete_renting(request, renting_id):
-    renting = get_object_or_404(Rental, id=renting_id, owner=request.user)
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        renting = Rental.objects.get(id=renting_id)
+        if renting.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
     renting.delete()
     return redirect('my_market_profile')
 
 def market_profile_other_user(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
-    profile_user = get_object_or_404(CustomUser, username=username)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    complete_profile_alerts = alertas_completar_perfil(request)
+    
+    try:
+        # Intentar obtener el usuario
+        profile_user = CustomUser.objects.get(username=username)
+        if profile_user == request.user:
+            return redirect('my_market_profile')
+    except CustomUser.DoesNotExist:
+        # Si no existe, redirigir a la página de error
+        return render(request, 'user_not_found.html', {
+            'pending_requests_count': pending_requests_count,
+            'complete_profile_alerts': complete_profile_alerts,
+        })
+    
     sell_count = 0
     buy_count = 0
     rating_count = 0
@@ -1175,8 +1319,7 @@ def market_profile_other_user(request, username):
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
-    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
-    complete_profile_alerts = alertas_completar_perfil(request)
+    
 
     filter_option = request.GET.get('filter', 'todos')
 
@@ -1219,12 +1362,26 @@ def market_profile_other_user(request, username):
     return render(request, 'market_profile_other_user.html', context)
 
 def edit_renting(request, renting_id):
-    renting = get_object_or_404(Rental, id=renting_id)
     error_messages = []
     images_count = 0
     available_features= RentalFeature.objects.all()
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    try:
+        renting = Rental.objects.get(id=renting_id)
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirige a la plantilla invalid_id
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+
+    if renting.owner != request.user:
+        return render(request, "market/edit_your_ads_only.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } ) 
 
     if not request.user.city:
         messages.error(request, 'No puedes editar un anuncio hasta que tengas una ciudad asignada en tu perfil.')
@@ -1268,15 +1425,12 @@ def edit_renting(request, renting_id):
             renting_rooms = int(renting_rooms)
             if renting_max_people is None or renting_max_people <= 0:
                 error_messages.append("El número máximo de personas debe ser un número positivo mayor que 0.")
-            else:
-                if renting_max_people > renting_rooms:
-                    error_messages.append("El número máximo de personas no puede ser mayor que el número de habitaciones.")
+            
 
             # Validación de rooms
             if renting_rooms is None or renting_rooms <= 0:
                 error_messages.append("El número de habitaciones debe ser un número positivo mayor que 0.")
-            elif renting_rooms < renting_max_people:
-                error_messages.append("El número de habitaciones no puede ser menor que el número máximo de personas.")
+            
 
             selected_features = request.POST.getlist('features')
 
@@ -1361,3 +1515,201 @@ def edit_renting(request, renting_id):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
     })
+
+def main_market_products(request, selected_city):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    order = request.GET.get('order', 'newest')
+    search_query = request.GET.get('q', '')
+
+    if selected_city not in valid_cities:
+        return render(request, "market/invalid_city.html",
+        {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
+
+    if request.user.selected_city == "":
+        return render(request, "market/select_city_before_searching.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )    
+
+    city_info = city_data.get(selected_city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    products = Product.objects.filter(city_associated=selected_city)
+
+    # Buscador
+    filtered_products = products  # Para mantener todos los productos en caso de búsqueda sin resultados
+    if search_query:
+        filtered_products = products.filter(title__icontains=search_query)
+        if not filtered_products.exists():
+            # Si no hay resultados, mostrar todos los productos pero indicar que no se encontraron resultados específicos
+            no_results_message = f"No se encuentran resultados para la búsqueda: '{search_query}'"
+            filtered_products = products  # Revertimos a todos los productos
+        else:
+            no_results_message = None
+    else:
+        no_results_message = None
+
+    #filtrados
+    if order == 'newest':
+        filtered_products = filtered_products.order_by('-created_at')
+    elif order == 'older':
+        filtered_products = filtered_products.order_by('created_at')
+    elif order == 'cheapest':
+        filtered_products = filtered_products.order_by('price')
+    elif order == 'expensive':
+        filtered_products = filtered_products.order_by('-price')
+
+    products_count = filtered_products.count()
+
+    only_user_products = (
+        filtered_products.exists() and 
+        not filtered_products.exclude(owner=request.user).exists()
+    )
+
+    # Paginación
+    paginator = Paginator(filtered_products, 20)  # 20 productos por página
+    page = request.GET.get('page', 1)
+
+    try:
+        paginated_products = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_products = paginator.page(1)
+    except EmptyPage:
+        paginated_products = paginator.page(paginator.num_pages)
+
+
+    context = {
+        'selected_city': selected_city,
+        'country': country,
+        'flag_image': flag_image,
+        'order': order,
+        'search_query': search_query,
+        'products': paginated_products,
+        'products_count': products_count,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'only_user_products': only_user_products,
+        'no_results_message': no_results_message,
+    }
+    return render(request, "main_market_products.html", context)
+
+def main_market_rentings(request, selected_city):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    order = request.GET.get('order', 'newest')
+    search_query = request.GET.get('q', '')
+    selected_features = request.GET.getlist('features')
+
+    if selected_city not in valid_cities:
+        return render(request, "market/invalid_city.html",
+        {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
+
+    if request.user.selected_city == "":
+        return render(request, "market/select_city_before_searching.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count,
+            } )
+
+    city_info = city_data.get(selected_city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    # Filtrar los anuncios asociados a la ciudad seleccionada
+    rentings = Rental.objects.filter(city_associated=selected_city)
+
+    # Filtrar por caracteristicas
+    if selected_features:
+        for feature_id in selected_features:
+            rentings = rentings.filter(features__id=feature_id)
+
+        rentings = rentings.distinct()
+
+        if not rentings.exists():
+            no_caracts_message = "No hay ningún anuncio publicado que cuente con todas las características seleccionadas."
+            filtered_rentings = Rental.objects.none()
+        else:
+            no_caracts_message = None
+            filtered_rentings = rentings
+    else:
+        no_caracts_message = None
+        filtered_rentings = rentings
+
+    #Buscador
+    if search_query:
+        filtered_rentings = rentings.filter(location__icontains=search_query)
+        if not filtered_rentings.exists():
+            # Si no hay resultados, mostrar todos los anuncios pero indicar que no se encontraron resultados específicos
+            no_results_message = f"No se encuentran resultados para la búsqueda: '{search_query}'"
+            filtered_rentings = rentings  # Revertimos a todos los anuncios
+        else:
+            no_results_message = None
+    else:
+        no_results_message = None
+
+    #filtrados
+    if order == 'newest':
+        filtered_rentings = filtered_rentings.order_by('-created_at')
+    elif order == 'older':
+        filtered_rentings = filtered_rentings.order_by('created_at')
+    elif order == 'cheapest':
+        filtered_rentings = filtered_rentings.order_by('price')
+    elif order == 'expensive':
+        filtered_rentings = filtered_rentings.order_by('-price')
+    elif order == 'min_to_max_square_meters':
+        filtered_rentings = filtered_rentings.order_by('square_meters')
+    elif order == 'max_to_min_square_meters':
+        filtered_rentings = filtered_rentings.order_by('-square_meters')
+    elif order == 'min_to_max_rooms':
+        filtered_rentings = filtered_rentings.order_by('rooms')
+    elif order == 'max_to_min_rooms':
+        filtered_rentings = filtered_rentings.order_by('-rooms')
+    elif order == 'min_to_max_people':
+        filtered_rentings = filtered_rentings.order_by('max_people')
+    elif order == 'max_to_min_people':
+        filtered_rentings = filtered_rentings.order_by('-max_people')
+
+    rentings_count = filtered_rentings.count()
+
+    # Verificar si solo hay anuncios del usuario en la ciudad
+    only_user_rentings = (
+        filtered_rentings.exists() and 
+        not filtered_rentings.exclude(owner=request.user).exists()
+    )
+
+    all_features = RentalFeature.objects.all()
+
+        # Paginación
+    paginator = Paginator(filtered_rentings, 20)  # 20 anuncios por página
+    page = request.GET.get('page', 1)
+
+    try:
+        paginated_rentings = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_rentings = paginator.page(1)
+    except EmptyPage:
+        paginated_rentings = paginator.page(paginator.num_pages)
+
+
+    context = {
+        'selected_city': selected_city,
+        'country': country,
+        'flag_image': flag_image,
+        'rentings': paginated_rentings,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'rentings_count': rentings_count,
+        'only_user_rentings': only_user_rentings,
+        'no_results_message': no_results_message,
+        'all_features': all_features,
+        'selected_features': selected_features,
+        'no_caracts_message': no_caracts_message,
+    }
+    return render(request, "main_market_rentings.html", context)

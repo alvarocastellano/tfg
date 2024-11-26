@@ -120,6 +120,15 @@
             color: white;
             border: 2px solid #6a4fb8;
         }
+
+        .card-text {
+            display: -webkit-box; /* Caja flexible para truncado */
+            -webkit-line-clamp: 3; /* Número máximo de líneas */
+            -webkit-box-orient: vertical; /* Orientación de la caja */
+            overflow: hidden; /* Oculta el texto sobrante */
+            text-overflow: ellipsis; /* Agrega los "..." */
+            white-space: normal; /* Permite varias líneas */
+        }
     </style>
 </head>
 
@@ -239,12 +248,12 @@
                             <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
                                 <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                 <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                    <h5 class="card-title">{{ product.title }}</h5>
+                                    <h5 class="card-title text-truncate">{{ product.title }}</h5>
                                     <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
                                     <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
-                                    <p class="card-text">{{ product.description }}</p>
+                                    <p class="card-text text-truncate">{{ product.description }}</p>
                                 </div>
-                                <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                <div class="card-footer justify-content-center">
                                     <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>                                  
                                 </div>
                             </div>
@@ -256,12 +265,12 @@
                                 <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
                                     <img class="card-img-top" src="{{ renting.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                     <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                        <h5 class="card-title">{{ renting.title }}</h5>
+                                        <h5 class="card-title text-truncate">{{ renting.title }}</h5>
                                         <h6 class="card-subtitle mb-2 text-muted"><strong>{{ renting.price }}{{ renting.money_associated }}</strong></h6>
                                         <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ renting.city_associated }}</h6>
-                                        <p class="card-text">{{ renting.description }}</p>
+                                        <p class="card-text text-truncate">{{ renting.description }}</p>
                                     </div>
-                                    <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                    <div class="card-footer justify-content-center">
                                         <a href="{% url 'renting_details' renting_id=renting.id %}" class="btn-add-product me-2">Ver detalles</a>
                                     </div>
                                 </div>
@@ -280,12 +289,12 @@
                                     <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
                                         <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                         <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                            <h5 class="card-title">{{ product.title }}</h5>
+                                            <h5 class="card-title text-truncate">{{ product.title }}</h5>
                                             <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
                                             <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
-                                            <p class="card-text">{{ product.description }}</p>
+                                            <p class="card-text text-truncate">{{ product.description }}</p>
                                         </div>
-                                        <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                        <div class="card-footer justify-content-center">
                                             <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
                                         </div>
                                     </div>
@@ -306,12 +315,12 @@
                                         <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
                                             <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                             <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                                <h5 class="card-title">{{ rental.title }}</h5>
+                                                <h5 class="card-title text-truncate">{{ rental.title }}</h5>
                                                 <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
                                                 <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
-                                                <p class="card-text">{{ rental.description }}</p>
+                                                <p class="card-text text-truncate">{{ rental.description }}</p>
                                             </div>
-                                            <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                            <div class="card-footer justify-content-center">
                                                 <a href="{% url 'renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
                                             </div>
                                         </div>
@@ -328,7 +337,7 @@
         <div class="profile-section">
             <h3>PERFIL PRIVADO</h3>
             <p>Para ver información de este usuario, solicita seguirle.</p>
-            <img src="{% static 'images/purple_lock.png' %}" class="imagen-sin-datos" style="margin-bottom:15px;" alt="Perfil privado"><br>
+            <img src="{% static 'images/lock.png' %}" class="imagen-sin-datos" style="margin-bottom:15px;" alt="Perfil privado"><br>
 
         </div>
             
