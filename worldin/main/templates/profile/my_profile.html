@@ -99,6 +99,34 @@
             text-decoration: none;
         }
 
+        .btn-highlight-product {
+            color: white; /* Color del texto */
+            background-color: #ffd700; /* Fondo blanco */
+            border: 2px solid #ffd700; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+        }
+
+        .btn-highlight-product:hover {
+            background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+            color: #ffd700; /* Cambiar color del texto al blanco */
+            border: 2px solid ; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+
+        .btn-danger:hover {
+            background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+            color: red; /* Cambiar color del texto al blanco */
+            border: 2px solid ; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+
         /* Estilo común para los botones no seleccionados */
         .btn-custom {
             background-color: white;
@@ -121,6 +149,13 @@
             text-overflow: ellipsis; /* Agrega los "..." */
             white-space: normal; /* Permite varias líneas */
         }
+
+        .badge-highlighted {
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 0.25rem;
+        }
+        
         
     </style>
 </head>
@@ -286,106 +321,12 @@
             {% endif %}
             {% if announce_count != 0 %}
                 <div class="btn-group" role="group" aria-label="Botones de filtro">
-                    <a href="?filter=todos" class="btn {% if filter_option == 'todos' %}btn-custom-selected{% else %}btn-custom{% endif %}">TODOS</a>
                     <a href="?filter=articulos" class="btn {% if filter_option == 'articulos' %}btn-custom-selected{% else %}btn-custom{% endif %}">ARTÍCULOS</a>
                     <a href="?filter=alquileres" class="btn {% if filter_option == 'alquileres' %}btn-custom-selected{% else %}btn-custom{% endif %}">ALQUILERES</a>
                 </div>
             {% endif %}        
-            {% if filter_option == 'todos' %}
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
-                    {% for product in user_products %}
-                        <div class="col">
-                            <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                    <h5 class="card-title">{{ product.title }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
-                                    <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
-                                    <p class="card-text text-truncate">{{ product.description }}</p>
-                                </div>
-                                <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
-                                    <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                    <a href="{% url 'edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
-                                            style="width: 40px; height: 40px;" 
-                                            onclick="showConfirmationModal({{ product.id }});">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </button>
-                                    <div id="confirmationModal" class="modal" tabindex="-1" style="display: none;">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Confirmar Eliminación</h5>
-                                                        <button type="button" class="btn-close" onclick="closeConfirmationModal()"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <p>¿Estás seguro de que deseas borrar este producto? Esta acción no se puede deshacer.</p>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <form id="deleteForm" method="POST" action="{% url 'delete_product' product.id %}">
-                                                            {% csrf_token %}
-                                                            <button type="submit" class="btn btn-danger">Sí, borrar</button>
-                                                        </form>
-                                                        <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal()">Cancelar</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    
-                        {% for renting in user_rentings %}
-                            <div class="col">
-                                <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                    <img class="card-img-top" src="{{ renting.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                    <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                        <h5 class="card-title">{{ renting.title }}</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted"><strong>{{ renting.price }}{{ renting.money_associated }}</strong></h6>
-                                        <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ renting.city_associated }}</h6>
-                                        <p class="card-text text-truncate">{{ renting.description }}</p>
-                                    </div>
-                                    <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
-                                        <a href="{% url 'renting_details' renting_id=renting.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                        <a href="{% url 'edit_renting' renting.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                            <i class="bi bi-pencil-fill"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
-                                                    style="width: 40px; height: 40px;" 
-                                                    onclick="showConfirmationModal2({{ renting.id }});">
-                                                <i class="bi bi-trash3-fill"></i>
-                                        </button>
-                                    
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="confirmationModal2" class="modal" tabindex="-1" style="display: none;">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Confirmar Eliminación</h5>
-                                            <button type="button" class="btn-close" onclick="closeConfirmationModal2()"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>¿Estás seguro de que deseas borrar este anuncio de alquiler? Esta acción no se puede deshacer.</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal2()">Cancelar</button>
-                                            <form id="deleteForm2" method="POST" action="{% url 'delete_renting' renting.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger">Sí, borrar</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                        {% endfor %}
-                    </div>
-            {% elif filter_option == 'articulos' %}
+            
+            {% if filter_option == 'articulos' %}
                     {% if user_products|length == 0 %}
                         <p class="mt-5">No tienes a la venta ningun artículo.<br>
                         <a style = "text-decoration:none;" href="{% url 'add_product' %}"><strong>Publica un artículo nuevo ahora</strong></a></p>
@@ -394,6 +335,11 @@
                             {% for product in user_products %}
                                 <div class="col">
                                     <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                        {% if product.highlighted %}
+                                            <div id="highlighted-badge-{{ product.id }}" class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                <div id="countdown-product-{{ product.id }}" data-id="{{ product.id }}" data-expiry="{{ product.highlighted_until|date:"Y-m-d H:i:s" }}" class="text-muted mt-1"></div>
+                                            </div>
+                                        {% endif %}
                                         <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                         <div class="card-body d-flex flex-column" style="flex-grow: 1;">
                                             <h5 class="card-title">{{ product.title }}</h5>
@@ -403,6 +349,11 @@
                                         </div>
                                         <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
                                             <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                            {% if  not product.highlighted or not product.highlighted_until %}
+                                                <a href="{% url 'highlight_product' product_id=product.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-star-fill"></i>
+                                                </a>
+                                            {% endif %}
                                             <a href="{% url 'edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
@@ -451,6 +402,11 @@
                                 {% for rental in user_rentings %}
                                     <div class="col">
                                         <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                            {% if rental.highlighted %}
+                                                <div id="highlighted-badge-{{ rental.id }}" class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                    <div id="countdown-renting-{{ rental.id }}" data-id="{{ rental.id }}" data-expiry="{{ rental.highlighted_until|date:"Y-m-d H:i:s" }}" class="text-muted mt-1"></div>
+                                                </div>
+                                            {% endif %}
                                             <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                             <div class="card-body d-flex flex-column" style="flex-grow: 1;">
                                                 <h5 class="card-title">{{ rental.title }}</h5>
@@ -460,6 +416,12 @@
                                             </div>
                                             <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
                                                 <a href="{% url 'renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                {% if  not rental.highlighted or not rental.highlighted_until %}
+                                                    <a href="{% url 'highlight_renting' renting_id=rental.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-star-fill"></i>
+                                                    </a>
+                                                {% endif %}
+                                                
                                                 <a href="{% url 'edit_renting' rental.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
@@ -524,6 +486,121 @@
             document.getElementById('confirmationModal2').style.display = 'none';
         }
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const countdownElements = document.querySelectorAll('[id^="countdown-product-"]');
     
+            countdownElements.forEach(countdownElement => {
+                const productId = countdownElement.getAttribute('data-id');
+                const expiryDate = new Date(countdownElement.getAttribute('data-expiry')).getTime();
+                const interval = setInterval(function() {
+                    const now = new Date().getTime();
+                    const timeLeft = expiryDate - now;
+        
+                    if (timeLeft > 0) {
+                        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+                        countdownElement.innerHTML = `<span style="color:black; font-size:14px;"><strong>PRODUCTO DESTACADO</strong></span><br>Quedan ${days} días y ${hours}:${minutes}:${seconds}`;
+    
+                        const badgeElement = document.getElementById(`highlighted-badge-${productId}`);
+                        if (badgeElement) {
+                            badgeElement.classList.remove('bg-danger');
+                            badgeElement.classList.add('bg-warning');
+                            badgeElement.classList.add('text-dark');
+                        }
+                    } else {
+                        countdownElement.textContent = 'Destacado expirado';
+                        clearInterval(interval);
+    
+                        const badgeElement = document.getElementById(`highlighted-badge-${productId}`);
+                        if (badgeElement) {
+                            badgeElement.classList.remove('bg-warning', 'text-dark');
+                            badgeElement.classList.add('bg-danger');
+                            badgeElement.classList.add('text-white');
+                        }
+    
+                        // Solicitud AJAX para actualizar el estado del producto
+                        fetch(`/update_product_highlight_status/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ id: productId })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                console.log('Estado de destacado actualizado para el producto');
+                            } else {
+                                console.error('Error al actualizar el estado:', data.message);
+                            }
+                        })
+                        .catch(error => console.error('Error en la solicitud:', error));
+                    }
+                }, 1000);
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const countdownElements = document.querySelectorAll('[id^="countdown-renting-"]');
+    
+            countdownElements.forEach(countdownElement => {
+                const rentingId = countdownElement.getAttribute('data-id');
+                const expiryDate = new Date(countdownElement.getAttribute('data-expiry')).getTime();
+                const interval = setInterval(function() {
+                    const now = new Date().getTime();
+                    const timeLeft = expiryDate - now;
+        
+                    if (timeLeft > 0) {
+                        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+                        countdownElement.innerHTML = `<span style="color:black; font-size:14px;"><strong>ALQUILER DESTACADO</strong></span><br>Quedan ${days} días y ${hours}:${minutes}:${seconds}`;
+    
+                        const badgeElement = document.getElementById(`highlighted-badge-${rentingId}`);
+                        if (badgeElement) {
+                            badgeElement.classList.remove('bg-danger');
+                            badgeElement.classList.add('bg-warning');
+                            badgeElement.classList.add('text-dark');
+                        }
+                    } else {
+                        countdownElement.textContent = 'Destacado expirado';
+                        clearInterval(interval);
+    
+                        const badgeElement = document.getElementById(`highlighted-badge-${rentingId}`);
+                        if (badgeElement) {
+                            badgeElement.classList.remove('bg-warning', 'text-dark');
+                            badgeElement.classList.add('bg-danger');
+                            badgeElement.classList.add('text-white');
+                        }
+    
+                        // Solicitud AJAX para actualizar el estado del alquiler
+                        fetch(`/update_renting_highlight_status/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ id: rentingId })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                console.log('Estado de destacado actualizado para el alquiler');
+                            } else {
+                                console.error('Error al actualizar el estado:', data.message);
+                            }
+                        })
+                        .catch(error => console.error('Error en la solicitud:', error));
+                    }
+                }, 1000);
+            });
+        });
+    </script>
 </body>
 {% endblock %}

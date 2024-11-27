@@ -20,6 +20,13 @@ from dateutil.relativedelta import relativedelta
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import stripe
+from django.conf import settings
+from stripe.error import SignatureVerificationError
+import logging
+import requests
+from django.utils.timezone import now, timedelta
+from django.views.decorators.http import require_POST
 
 valid_cities = [
                 "Bruselas", "Sofia", "Praga", "Copenhague", "Berlin", "Munich",
@@ -269,10 +276,15 @@ def profile(request):
     complete_profile_alerts = 0
     announce_count = 0
 
-    filter_option = request.GET.get('filter', 'todos')
+    filter_option = request.GET.get('filter', 'articulos')
 
     user_products = Product.objects.filter(owner=request.user)
     user_rentings = Rental.objects.filter(owner=request.user)
+
+    # Ordenar los productos y los anuncios de renting
+    user_products = user_products.order_by('-highlighted', '-created_at')
+    user_rentings = user_rentings.order_by('-highlighted', '-created_at')
+
 
     # Contadores
     announce_count = len(user_products) + len(user_rentings)
@@ -589,10 +601,14 @@ def other_user_profile(request, username):
     announce_count = 0
     
 
-    filter_option = request.GET.get('filter', 'todos')
+    filter_option = request.GET.get('filter', 'articulos')
 
     user_products = Product.objects.filter(owner=profile_user)
     user_rentings = Rental.objects.filter(owner=profile_user)
+
+    # Ordenar los productos y los anuncios de renting
+    user_products = user_products.order_by('-highlighted', '-created_at')
+    user_rentings = user_rentings.order_by('-highlighted', '-created_at')
 
     # Contadores
     announce_count = len(user_products) + len(user_rentings)
@@ -799,9 +815,68 @@ def moneda_oficial(request):
         money = "Ft"  # Hungría
     elif request.user.city == "Varsovia":
         money = "zł"  # Polonia
+    elif request.user.city == "Buenos Aires":
+        money = "$"  # Peso argentino
+    elif request.user.city == "Canberra":
+        money = "$"  # Dólar australiano
+    elif request.user.city == "Brasilia":
+        money = "R$"  # Real brasileño
+    elif request.user.city == "Ottawa":
+        money = "$"  # Dólar canadiense
+    elif request.user.city == "Santiago":
+        money = "$"  # Peso chileno
+    elif request.user.city == "Pekín":
+        money = "¥"  # Yuan renminbi chino
+    elif request.user.city == "Washington D.C.":
+        money = "$"  # Dólar estadounidense
+    elif request.user.city == "Nueva Delhi":
+        money = "₹"  # Rupia india
+    elif request.user.city == "Tokio":
+        money = "¥"  # Yen japonés
+    elif request.user.city == "Montevideo":
+        money = "$"  # Peso uruguayo
     else:
         money = "€"  # Países de la zona euro
     return money
+
+
+def currency(request):
+    currency = ""
+    if request.user.city == "Sofia":
+        currency = "BGN"  # Lev búlgaro
+    elif request.user.city == "Praga":
+        currency = "CZK"  # Corona checa
+    elif request.user.city == "Copenhague":
+        currency = "DKK"  # Corona danesa
+    elif request.user.city == "Budapest":
+        currency = "HUF"  # Florín húngaro
+    elif request.user.city == "Varsovia":
+        currency = "PLN"  # Zloty polaco
+    elif request.user.city == "Buenos Aires":
+        currency = "ARS"  # Peso argentino
+    elif request.user.city == "Canberra":
+        currency = "AUD"  # Dólar australiano
+    elif request.user.city == "Brasilia":
+        currency = "BRL"  # Real brasileño
+    elif request.user.city == "Ottawa":
+        currency = "CAD"  # Dólar canadiense
+    elif request.user.city == "Santiago":
+        currency = "CLP"  # Peso chileno
+    elif request.user.city == "Pekín":
+        currency = "CNY"  # Yuan renminbi chino
+    elif request.user.city == "Washington D.C.":
+        currency = "USD"  # Dólar estadounidense
+    elif request.user.city == "Nueva Delhi":
+        currency = "INR"  # Rupia india
+    elif request.user.city == "Tokio":
+        currency = "JPY"  # Yen japonés
+    elif request.user.city == "Montevideo":
+        currency = "UYU"  # Peso uruguayo
+    else:
+        currency = "EUR"  # Euro para la zona euro
+    return currency
+
+
 
 
 def my_market_profile(request):
@@ -831,7 +906,7 @@ def my_market_profile(request):
     total_alerts = pending_requests_count + complete_profile_alerts
 
     # Parámetro para filtrar productos
-    filter_option = request.GET.get('filter', 'todos')  # Por defecto, 'todos'
+    filter_option = request.GET.get('filter', 'articulos')  # Por defecto, 'todos'
 
     if rating_count != 0:
         average_rating = stars_sum / rating_count
@@ -842,6 +917,10 @@ def my_market_profile(request):
 
     user_products = Product.objects.filter(owner=request.user)
     user_rentings = Rental.objects.filter(owner=request.user)
+
+    # Ordenar los productos y los anuncios de renting
+    user_products = user_products.order_by('-highlighted', '-created_at')
+    user_rentings = user_rentings.order_by('-highlighted', '-created_at')
 
     announce_count = len(user_products) + len(user_rentings)
 
@@ -944,7 +1023,7 @@ def add_product(request):
                 if f.cleaned_data.get('image'):
                     ProductImage.objects.create(product=product, image=f.cleaned_data['image'])
 
-            return redirect('my_market_profile')
+            return redirect('highlight_product', product_id=product.id)
 
     else:
         form = ProductForm()
@@ -958,6 +1037,13 @@ def add_product(request):
         'pending_requests_count': pending_requests_count,
         })
 
+def highlight_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    return render(request, 'highlight_product.html', {'product': product})
+
+def highlight_renting(request, renting_id):
+    renting = get_object_or_404(Rental, id=renting_id)
+    return render(request, 'highlight_renting.html', {'renting': renting})
 
 def product_details(request, product_id):
     rating_count = 0
@@ -1226,7 +1312,7 @@ def add_renting(request):
                 if f.cleaned_data.get('image'):
                     RentalImage.objects.create(rental=rental, image=f.cleaned_data['image'])
 
-            return redirect('my_market_profile')
+            return redirect('highlight_renting',  renting_id=rental.id )
 
     else:
         form = RentalForm()
@@ -1321,10 +1407,14 @@ def market_profile_other_user(request, username):
     announce_count = 0
     
 
-    filter_option = request.GET.get('filter', 'todos')
+    filter_option = request.GET.get('filter', 'articulos')
 
     user_products = Product.objects.filter(owner=profile_user)
     user_rentings = Rental.objects.filter(owner=profile_user)
+
+    # Ordenar los productos y los anuncios de renting
+    user_products = user_products.order_by('-highlighted', '-created_at')
+    user_rentings = user_rentings.order_by('-highlighted', '-created_at')
 
     # Contadores
     announce_count = len(user_products) + len(user_rentings)
@@ -1519,7 +1609,7 @@ def edit_renting(request, renting_id):
 def main_market_products(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
-    order = request.GET.get('order', 'newest')
+    order = request.GET.get('order', None)
     search_query = request.GET.get('q', '')
 
     if selected_city not in valid_cities:
@@ -1540,6 +1630,8 @@ def main_market_products(request, selected_city):
     flag_image = city_info.get('flag', '')
 
     products = Product.objects.filter(city_associated=selected_city)
+
+    products = products.order_by('-highlighted', '-created_at')
 
     # Buscador
     filtered_products = products  # Para mantener todos los productos en caso de búsqueda sin resultados
@@ -1601,7 +1693,7 @@ def main_market_products(request, selected_city):
 def main_market_rentings(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
-    order = request.GET.get('order', 'newest')
+    order = request.GET.get('order', None)
     search_query = request.GET.get('q', '')
     selected_features = request.GET.getlist('features')
 
@@ -1624,6 +1716,8 @@ def main_market_rentings(request, selected_city):
 
     # Filtrar los anuncios asociados a la ciudad seleccionada
     rentings = Rental.objects.filter(city_associated=selected_city)
+
+    rentings = rentings.order_by('-highlighted', '-created_at')
 
     # Filtrar por caracteristicas
     if selected_features:
@@ -1713,3 +1807,219 @@ def main_market_rentings(request, selected_city):
         'no_caracts_message': no_caracts_message,
     }
     return render(request, "main_market_rentings.html", context)
+
+def get_exchange_rate(to_currency):
+    """
+    Obtiene la tasa de cambio de EUR a la moneda especificada.
+    Usa una API externa para obtener las tasas.
+    """
+    try:
+        # Reemplaza con tu clave de API y endpoint (por ejemplo, Fixer.io o ExchangeRate-API)
+        API_URL = "https://api.exchangerate-api.com/v4/latest/EUR"
+        response = requests.get(API_URL)
+        data = response.json()
+
+        # Extrae la tasa de cambio
+        return data['rates'].get(to_currency, None)
+    except Exception as e:
+        print(f"Error al obtener la tasa de cambio: {e}")
+        return None  # Retorna None si ocurre un error
+
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def create_checkout_session_renting(request, renting_id):
+    renting = get_object_or_404(Rental, id=renting_id)
+    user_currency = currency(request)
+
+    # Obtén la tasa de cambio
+    exchange_rate = get_exchange_rate(user_currency)
+
+    if exchange_rate is None:
+        # Define un valor predeterminado si la API falla (asumiendo tasa 1:1)
+        exchange_rate = 1
+
+    # Convierte el precio base en euros (5.99 EUR) a la moneda destino
+    base_price_eur = 599  # Precio en centavos de euro
+    converted_price = int(base_price_eur * exchange_rate)
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[
+            {
+                'price_data': {
+                    'currency': user_currency,
+                    'product_data': {
+                        'name': "Destacar el anuncio: " + renting.title,
+                    },
+                    'unit_amount': converted_price,
+                },
+                'quantity': 1,
+            },
+        ],
+        metadata={
+            'renting_id': renting_id,
+        },
+        mode='payment',
+        success_url=request.build_absolute_uri('/payment-success/'),
+        cancel_url=request.build_absolute_uri('/payment-cancel/'),
+    )
+    return redirect(session.url, code=303)
+
+def create_checkout_session_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    user_currency = currency(request)
+
+    # Obtén la tasa de cambio
+    exchange_rate = get_exchange_rate(user_currency)
+
+    if exchange_rate is None:
+        # Define un valor predeterminado si la API falla (asumiendo tasa 1:1)
+        exchange_rate = 1
+
+    # Convierte el precio base en euros (5.99 EUR) a la moneda destino
+    base_price_eur = 399  # Precio en centavos de euro
+    converted_price = int(base_price_eur * exchange_rate)
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[
+            {
+                'price_data': {
+                    'currency': user_currency,
+                    'product_data': {
+                        'name': "Destacar el producto: " + product.title,
+                    },
+                    'unit_amount': converted_price,
+                },
+                'quantity': 1,
+            },
+        ],
+        metadata={
+            'product_id': product_id,
+        },
+        mode='payment',
+        success_url=request.build_absolute_uri('/payment-success/'),
+        cancel_url=request.build_absolute_uri('/payment-cancel/'),
+    )
+    return redirect(session.url, code=303)
+
+
+@csrf_exempt
+def stripe_webhook_renting(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
+    logger = logging.getLogger(__name__)
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError:
+        return HttpResponse(status=400)
+    except SignatureVerificationError:
+        return HttpResponse(status=400)
+
+    # Procesar el evento
+    if event['type'] == 'checkout.session.completed':
+        logger.info(f"Webhook received: {event}")
+        session = event['data']['object']
+        logger.info(f"Metadata: {session.get('metadata', {})}")
+        metadata = session.get('metadata', {})
+        renting_id = metadata.get('renting_id')
+
+        if renting_id:
+            try:
+                renting = Rental.objects.get(id=renting_id)
+                renting.highlighted = True
+                renting.highlighted_until = now() + timedelta(days=31)
+                renting.save()
+            except Rental.DoesNotExist:
+                pass  # Manejo de error opcional
+
+    return HttpResponse(status=200)
+
+@csrf_exempt
+def stripe_webhook_product(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
+    logger = logging.getLogger(__name__)
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError:
+        return HttpResponse(status=400)
+    except SignatureVerificationError:
+        return HttpResponse(status=400)
+
+    # Procesar el evento
+    if event['type'] == 'checkout.session.completed':
+        logger.info(f"Webhook received: {event}")
+        session = event['data']['object']
+        logger.info(f"Metadata: {session.get('metadata', {})}")
+        metadata = session.get('metadata', {})
+        product_id = metadata.get('product_id')
+
+        if product_id:
+            try:
+                product = Product.objects.get(id=product_id)
+                product.highlighted = True
+                product.highlighted_until = now() + timedelta(days=31)
+                product.save()
+            except Product.DoesNotExist:
+                pass  # Manejo de error opcional
+
+    return HttpResponse(status=200)
+
+def payment_success(request):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    return render(request, 'payment_success.html', {
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count})
+
+def payment_cancel(request):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    return render(request, 'payment_cancel.html', {
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count
+        })
+
+@csrf_exempt
+@require_POST
+def update_product_highlight_status(request):
+    try:
+        data = json.loads(request.body)
+        object_id = data.get('id')
+
+        product = Product.objects.get(id=object_id)
+        product.highlighted = False
+        product.highlighted_until = None
+        product.save()
+        return JsonResponse({'status': 'success', 'message': 'Estado de destacado actualizado para el producto'})
+    except Product.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Producto no encontrado'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Error en los datos de entrada'}, status=400)
+    
+@csrf_exempt
+@require_POST
+def update_renting_highlight_status(request):
+    try:
+        data = json.loads(request.body)
+        object_id = data.get('id')
+
+        renting = Rental.objects.get(id=object_id)
+        renting.highlighted = False
+        renting.highlighted_until = None
+        renting.save()
+        return JsonResponse({'status': 'success', 'message': 'Estado de destacado actualizado para el alquiler'})
+    except Rental.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Alquiler no encontrado'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Error en los datos de entrada'}, status=400)

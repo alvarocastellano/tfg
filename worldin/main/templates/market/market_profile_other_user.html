@@ -200,6 +200,12 @@
             text-overflow: ellipsis; /* Agrega los "..." */
             white-space: normal; /* Permite varias líneas */
         }
+
+        .badge-highlighted {
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 0.25rem;
+        }
         
         
 
@@ -303,49 +309,12 @@
                 {% endif %}
                 {% if announce_count != 0 %}
                     <div class="btn-group" role="group" aria-label="Botones de filtro">
-                        <a href="?filter=todos" class="btn {% if filter_option == 'todos' %}btn-custom-selected{% else %}btn-custom{% endif %}">TODOS</a>
                         <a href="?filter=articulos" class="btn {% if filter_option == 'articulos' %}btn-custom-selected{% else %}btn-custom{% endif %}">ARTÍCULOS</a>
                         <a href="?filter=alquileres" class="btn {% if filter_option == 'alquileres' %}btn-custom-selected{% else %}btn-custom{% endif %}">ALQUILERES</a>
                     </div>
                 {% endif %}        
-                {% if filter_option == 'todos' %}
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
-                        {% for product in user_products %}
-                            <div class="col">
-                                <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                    <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                    <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                        <h5 class="card-title">{{ product.title }}</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
-                                        <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
-                                        <p class="card-text text-truncate">{{ product.description }}</p>
-                                    </div>
-                                    <div class="card-footer justify-content-center">
-                                        <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                        
-                        {% for renting in user_rentings %}
-                            <div class="col">
-                                <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                    <img class="card-img-top" src="{{ renting.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                    <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                        <h5 class="card-title text-truncate">{{ renting.title }}</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted"><strong>{{ renting.price }}{{ renting.money_associated }}</strong></h6>
-                                        <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ renting.city_associated }}</h6>
-                                        <p class="card-text text-truncate">{{ renting.description }}</p>
-                                    </div>
-                                    <div class="card-footer justify-content-center">
-                                        <a href="{% url 'renting_details' renting_id=renting.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                    </div>
-                                </div>
-                            </div>
-                                
-                        {% endfor %}
-                    </div>
-                {% elif filter_option == 'articulos' %}
+                
+                {% if filter_option == 'articulos' %}
                         {% if user_products|length == 0 %}
                             <p class="mt-5"><strong>@{{ profile_user.username }}</strong> no tiene a la venta ningun artículo actualmente.<br>
                         {% else %}
@@ -353,6 +322,11 @@
                                 {% for product in user_products %}
                                     <div class="col">
                                         <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                            {% if product.highlighted %}
+                                                <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                    PRODUCTO DESTACADO 
+                                                </div>
+                                            {% endif %}
                                             <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                             <div class="card-body d-flex flex-column" style="flex-grow: 1;">
                                                 <h5 class="card-title">{{ product.title }}</h5>
@@ -379,6 +353,11 @@
                                     {% for rental in user_rentings %}
                                         <div class="col">
                                             <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                                {% if rental.highlighted %}
+                                                    <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                        ALQUILER DESTACADO 
+                                                    </div>
+                                                {% endif %}
                                                 <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                                 <div class="card-body d-flex flex-column" style="flex-grow: 1;">
                                                     <h5 class="card-title">{{ rental.title }}</h5>

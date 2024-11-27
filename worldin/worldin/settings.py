@@ -13,6 +13,10 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
+STRIPE_SECRET_KEY = 'sk_test_51QOx27ENztMUMranSbK8UhBwddamJyLTSB78Yn9iP0lAm4e5hBuS8jKMbCNCVW6CaGWOI73I8GagLLEypARTtgVU004JVP0t5O'
+STRIPE_TEST_PUBLISHABLE_KEY = 'pk_test_51QOx27ENztMUMranmtmQc3zDNsin6haDWD9aYdR2RvgLSBoJLeeGLUxq9BQzd5ix4x5FFkp8cFyWIal8bubHtiOU00cbesioIN'
+STRIPE_ENDPOINT_SECRET = 'whsec_5cd0eb8a8a437d434c9f628131213a54d896ccf23fa10423b5d16f7c2e2027b5'
+STRIPE_API_KEY = STRIPE_SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

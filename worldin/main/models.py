@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
-
+from django.utils.timezone import now
 # Modelo para representar una afición
 class Hobby(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -58,8 +58,6 @@ class FollowRequest(models.Model):
         return f"{self.sender.username} solicita seguir a {self.receiver.username}"
 
 
-
-    
 class Product(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
     title = models.CharField(max_length=200)
@@ -67,10 +65,24 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     city_associated = models.CharField(max_length=200, blank=True)
     money_associated = models.CharField(max_length=50, blank = True)
+    highlighted = models.BooleanField(default=False)
+    highlighted_until = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
+    
+    def is_highlighted(self):
+        """Verifica si el producto aún está destacado."""
+        if self.highlighted and self.highlighted_until:
+            return now() < self.highlighted_until
+        return False
+    
+    def highlighted_days_left(self):
+        """Calcula los días restantes para la destacación del producto."""
+        if self.highlighted_until and now() < self.highlighted_until:
+            return (self.highlighted_until - now()).days
+        return 0
     
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
@@ -99,10 +111,24 @@ class Rental(models.Model):
     city_associated = models.CharField(max_length=150, blank=True)
     features = models.ManyToManyField(RentalFeature, blank=True)
     money_associated = models.CharField(max_length=50, blank = True)
+    highlighted = models.BooleanField(default=False)
+    highlighted_until = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
+    
+    def is_highlighted(self):
+        """Verifica si el alquiler aún está destacado."""
+        if self.highlighted and self.highlighted_until:
+            return now() < self.highlighted_until
+        return False
+    
+    def highlighted_days_left(self):
+        """Calcula los días restantes para la destacación del alquiler."""
+        if self.highlighted_until and now() < self.highlighted_until:
+            return (self.highlighted_until - now()).days
+        return 0
     
 class RentalImage(models.Model):
     rental = models.ForeignKey(Rental, related_name='images', on_delete=models.CASCADE)
