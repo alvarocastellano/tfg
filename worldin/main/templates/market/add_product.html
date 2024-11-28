@@ -229,11 +229,6 @@
                     <p><i class="bi bi-info-circle-fill"></i> Al estar publicando este anuncio en el <strong>mercado de {{ request.user.city }}</strong>, la moneda será <strong>{{ money }}</strong></p>
                     <input type="number" class="form-control" id="price" name="price" value="{{ form.price.value|default:'' }}" step="0.1" min="0.1" style="width:30%;">
                 </div>
-
-                <div class="form-group mt-5">
-                    <h4 for="destacar"><strong>¿Deseas vender este producto pronto? <a href="#">Destácalo ahora.</a></strong></h4>
-                    
-                </div>
                 <button type="submit" class="btn btn-primary mt-5" style="background-color:#786dce; color:white; border-color:white; font-size:22px;">Publicar</button>
             </form>
         </div>

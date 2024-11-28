@@ -230,6 +230,12 @@
             transition: 0.3s;
         }
 
+        .badge-highlighted {
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 0.25rem;
+        }
+
 
     </style>
 </head>
@@ -239,7 +245,9 @@
     <div class="container profile-container">
         <div class="profile-top d-flex justify-content-between align-items-center">
             <div>
-                <a href="{% url 'world' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"><h3 style="font-size:12px;">Mundo</h3></a>
+                <button onclick="goBack()" class="btn btn-secondary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
+                    <h3 style="font-size:12px;">Volver</h3>
+                </button>
             </div>
 
             <div class="text-center">
@@ -358,7 +366,12 @@
                                 <div class="col d-flex justify-content-center">
                                     <div class="card d-flex flex-column" 
                                          style="width: 20rem; height: 30rem; border-color:#6a4fb8; border-width:2px; margin: 10px;">
-                                        <img class="card-img-top" 
+                                         {% if renting.highlighted %}
+                                         <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                             ALQUILER DESTACADO 
+                                         </div>
+                                        {% endif %}
+                                         <img class="card-img-top" 
                                              src="{{ renting.images.first.image.url }}" 
                                              alt="Imagen de producto" 
                                              style="object-fit: cover; height: 200px;">
@@ -448,6 +461,12 @@
                 });
             });
         </script>
+        <script>
+            function goBack() {
+                window.history.back();
+            }
+        </script>
+        
     
 </body>
 {% endblock %}

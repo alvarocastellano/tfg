@@ -127,11 +127,9 @@
     <div class="container-fluid profile-container">
         <div class="profile-top d-flex justify-content-between align-items-center">
             <div>
-                {% if product.owner.id == request.user.id %}
-                    <a href="{% url 'my_market_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;"><h3 style="font-size:12px;">Mi perfil de mercado</h3></a>
-                {% else %}
-                    <a href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;"><h3 style="font-size:12px;">Mercado de productos</h3></a>
-                {% endif %}
+                <button onclick="goBack()" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
+                    <h3 style="font-size:12px;">Volver</h3>
+                </button>
             </div>
             <h3><i class="bi bi-geo-fill"></i>Este anuncio ha sido publicado en el mercado de {{ product.city_associated }}</h3>
             
@@ -162,30 +160,36 @@
             </div>
 
             <!-- Detalles del producto (derecha) -->
-            <div class="col-md-7">
+            <div class="col-md-7 mb-5">
                 <div class="product-details" style="border-color:#6a4fb8; padding: 10px; margin:5px;">
-                    <div id="carouselExampleIndicators" class="carousel slide">
-                        <ol class="carousel-indicators">
-                            {% for image in product.images.all %}
-                                <li data-bs-target="#carouselExampleIndicators" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}"></li>
-                            {% endfor %}
-                        </ol>
-                        <div class="carousel-inner">
-                            {% for image in product.images.all %}
-                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                    <img src="{{ image.image.url }}" alt="Imagen de producto" class="d-block mx-auto">
-                                </div>
-                            {% endfor %}
+                    {% if product.images.count > 1 %}
+                        <div id="carouselExampleIndicators" class="carousel slide">
+                            <ol class="carousel-indicators">
+                                {% for image in product.images.all %}
+                                    <li data-bs-target="#carouselExampleIndicators" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}"></li>
+                                {% endfor %}
+                            </ol>
+                            <div class="carousel-inner">
+                                {% for image in product.images.all %}
+                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                        <img src="{{ image.image.url }}" alt="Imagen de producto" class="d-block mx-auto">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </a>
+                            <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </a>
                         </div>
-                        <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </a>
-                        <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </a>
-                    </div>
+                    {% else %}
+                        <div class="product-image" style="text-align: center; padding: 10px; margin: 5px;">
+                            <img src="{{ product.images.first.image.url }}" alt="Imagen de producto" class="img-fluid mx-auto" style="max-width: 60%; height: auto;">
+                        </div>
+                    {% endif %}
                     <h2><strong>{{ product.title }}</strong></h2>
                     <br>
                     <h1><strong>{{ product.price }}{{ product.money_associated }}</strong></h1>
@@ -198,6 +202,13 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+    
 
 </body>
 {% endblock %}

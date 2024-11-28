@@ -49,6 +49,16 @@ urlpatterns = [
     path('edit_renting/<int:renting_id>/', views.edit_renting, name='edit_renting'),
     path('market/products/city=<str:selected_city>/', views.main_market_products, name="main_market_products"),
     path('market/rentings/city=<str:selected_city>/', views.main_market_rentings, name="main_market_rentings"),
+    path('highlight_product/<int:product_id>/', views.highlight_product, name='highlight_product'),
+    path('highlight_renting/<int:renting_id>/', views.highlight_renting, name='highlight_renting'),
+    path('create-checkout-session-renting/<int:renting_id>/', views.create_checkout_session_renting, name='create_checkout_session_renting'),
+    path('create-checkout-session-product/<int:product_id>/', views.create_checkout_session_product, name='create_checkout_session_product'),
+    path('payment-success-product/', views.payment_success_product, name='payment_success_product'),
+    path('payment-success-renting/', views.payment_success_renting, name='payment_success_renting'),
+    path('payment-cancel/', views.payment_cancel, name='payment_cancel'),
+    path('update_product_highlight_status/', views.update_product_highlight_status, name='update_product_highlight_status'),
+    path('update_renting_highlight_status/', views.update_renting_highlight_status, name='update_renting_highlight_status'),
+
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
