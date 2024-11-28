@@ -53,10 +53,9 @@ urlpatterns = [
     path('highlight_renting/<int:renting_id>/', views.highlight_renting, name='highlight_renting'),
     path('create-checkout-session-renting/<int:renting_id>/', views.create_checkout_session_renting, name='create_checkout_session_renting'),
     path('create-checkout-session-product/<int:product_id>/', views.create_checkout_session_product, name='create_checkout_session_product'),
-    path('payment-success/', views.payment_success, name='payment_success'),
+    path('payment-success-product/', views.payment_success_product, name='payment_success_product'),
+    path('payment-success-renting/', views.payment_success_renting, name='payment_success_renting'),
     path('payment-cancel/', views.payment_cancel, name='payment_cancel'),
-    path('stripe-webhook-renting/', views.stripe_webhook_renting, name='stripe_webhook_renting'),
-    path('stripe-webhook-product/', views.stripe_webhook_product, name='stripe_webhook_product'),
     path('update_product_highlight_status/', views.update_product_highlight_status, name='update_product_highlight_status'),
     path('update_renting_highlight_status/', views.update_renting_highlight_status, name='update_renting_highlight_status'),
 

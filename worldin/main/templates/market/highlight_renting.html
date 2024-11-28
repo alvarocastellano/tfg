@@ -67,6 +67,18 @@
             flex-direction: column;
             text-align: center;
         }
+
+        .profile-picture {
+            width: 200px;
+            height: 200px; /* Tamaño para pantallas más grandes */
+        }
+
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 400px;
+                height: 400px; /* Tamaño para pantallas más grandes */
+            }
+        }
     </style>
 </head>
 
@@ -80,15 +92,16 @@
         
 
         <div class="profile-section mb-5">
-            <div class="form-group mt-5">
-                    <h4 for="price"><strong>¿Deseas destacar el anuncio: {{ renting.title }}?</strong></h4>
-                    <p><i class="bi bi-info-circle-fill"></i> Destaca este anuncio <strong>durante 30 días</strong> y obtiene más visualizaciones, lo que te llevará a poder encontrar inquilinos mucho antes.</p>
+            <div class="form-group">
+                <img src="{% static 'images/highlight.png' %}" class="profile-picture mb-5" alt="Destacar anuncio">
+                <h4 for="price"><strong>¿Deseas destacar el anuncio: {{ renting.title }}?</strong></h4>
+                <p><i class="bi bi-info-circle-fill"></i> Destaca este anuncio <strong>durante 30 días</strong> y obtiene más visualizaciones, lo que te llevará a poder encontrar inquilinos mucho antes.</p>
                     
-                    <a href="{% url 'create_checkout_session_renting' renting_id=renting.id %}" class="btn btn-primary mt-5 mb-3" style="background-color:#786dce; color:white; border-color:white; font-size:22px;">
-                        Proceder al pago
-                    </a>
+                <a href="{% url 'create_checkout_session_renting' renting_id=renting.id %}" class="btn btn-primary mb-3" style="background-color:#786dce; color:white; border-color:white; font-size:22px;">
+                    Proceder al pago
+                </a>
 
-                    <a href="{% url 'my_market_profile' %}">Saltar y no destacar anuncio</a>
+                <a href="{% url 'my_market_profile' %}">Saltar y no destacar anuncio</a>
                                         
             </div>
         </div>

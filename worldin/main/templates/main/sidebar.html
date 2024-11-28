@@ -210,15 +210,16 @@
                 <li class="list-group-item-sidebar"><a href="{% url 'search_users' %}"><i class="bi bi-person-fill-add"></i> Buscar usuarios</a></li>
                 
                 <hr class="custom-hr">
-                
-                <li class="list-group-item-sidebar">
-                    <a href="{% url 'follow_requests' %}">
-                        Solicitudes de seguimiento
-                        {% if pending_requests_count > 0 %}
-                            <span class="badge bg-danger ms-2">{{ pending_requests_count }}</span>
-                        {% endif %}
-                    </a>
-                </li>
+                {% if request.user.account_visibility == 'private' %}
+                    <li class="list-group-item-sidebar">
+                        <a href="{% url 'follow_requests' %}">
+                            Solicitudes de seguimiento
+                            {% if pending_requests_count > 0 %}
+                                <span class="badge bg-danger ms-2">{{ pending_requests_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endif %}
                 <li class="list-group-item-sidebar">
                     <a href="{% url 'my_profile' %}">
                         {% if request.user.profile_picture %}

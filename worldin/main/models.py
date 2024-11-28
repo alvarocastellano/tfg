@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils.timezone import now
+from datetime import timedelta
+
 # Modelo para representar una afición
 class Hobby(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -67,6 +69,7 @@ class Product(models.Model):
     money_associated = models.CharField(max_length=50, blank = True)
     highlighted = models.BooleanField(default=False)
     highlighted_until = models.DateTimeField(null=True, blank=True)
+    highlighted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -83,6 +86,20 @@ class Product(models.Model):
         if self.highlighted_until and now() < self.highlighted_until:
             return (self.highlighted_until - now()).days
         return 0
+    
+    def set_highlighted(self, days=31):
+        """Activa el destacado del producto y ajusta la fecha correspondiente."""
+        self.highlighted = True
+        self.highlighted_until = now() + timedelta(days=days)
+        self.highlighted_at = now()
+        self.save()
+
+    def unset_highlighted(self):
+        """Desactiva el destacado del producto y elimina la fecha correspondiente."""
+        self.highlighted = False
+        self.highlighted_until = None
+        self.highlighted_at = None
+        self.save()
     
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
@@ -113,6 +130,7 @@ class Rental(models.Model):
     money_associated = models.CharField(max_length=50, blank = True)
     highlighted = models.BooleanField(default=False)
     highlighted_until = models.DateTimeField(null=True, blank=True)
+    highlighted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -129,6 +147,20 @@ class Rental(models.Model):
         if self.highlighted_until and now() < self.highlighted_until:
             return (self.highlighted_until - now()).days
         return 0
+    
+    def set_highlighted(self, days=31):
+        """Activa el destacado del alquiler y ajusta las fechas correspondientes."""
+        self.highlighted = True
+        self.highlighted_until = now() + timedelta(days=days)
+        self.highlighted_at = now()
+        self.save()
+
+    def unset_highlighted(self):
+        """Desactiva el destacado del alquiler y elimina las fechas correspondientes."""
+        self.highlighted = False
+        self.highlighted_until = None
+        self.highlighted_at = None
+        self.save()
     
 class RentalImage(models.Model):
     rental = models.ForeignKey(Rental, related_name='images', on_delete=models.CASCADE)
