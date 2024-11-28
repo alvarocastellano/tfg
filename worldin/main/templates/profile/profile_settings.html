@@ -75,16 +75,25 @@
 
   <div class="profile-container">
 
-    <div class="profile-bottom d-flex align-items-center justify-content-center" style="padding:5%;"> <!-- Centrar vertical y horizontalmente -->
-        <h1>CONFIGURACIÓN DE LA CUENTA</h1>
+    <div class="profile-bottom d-flex align-items-center justify-content-center mt-5"> <!-- Centrar vertical y horizontalmente -->
+        <h1><strong>CONFIGURACIÓN DE LA CUENTA</strong></h1>
     </div>
+    <div class="d-flex align-items-center justify-content-center"> <!-- Centrar vertical y horizontalmente -->
+      <p><i class="bi bi-exclamation-circle-fill"></i> Asegúrate de guardar los cambios antes de salir.</p>
+    </div>
+    
 
     <div class="container mt-4">
-      {% if has_pending_requests %}
-        <div id="alertMessage" class="alert alert-warning" style="display: none; font-size: 20px;">
-          Para hacer tu cuenta pública, primero debes aceptar o rechazar todas las solicitudes de seguimiento pendientes.
-        </div>
-      {% endif %}
+      {% if error_messages %}
+            {% for message in error_messages %}
+                <div id="alertMessage" class="alert alert-danger" style="font-size: 18px;">
+                    {{ message }}
+                    <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
       <form method="POST" action="{% url 'profile_settings' %}">
         {% csrf_token %}
         
@@ -97,6 +106,19 @@
             </p>
           <label>
             ¿Deseas mostrar tu edad en el perfil? <input type="checkbox" name="show_age" {% if user.show_age %}checked{% endif %}>
+          </label>
+        </div>
+        <hr>
+
+        <div class="form-group">
+          <h3>VER MIS PROPIOS ANUNCIOS EN EL MERCADO</h3>
+          <p>
+              Si esta casilla está marcada, podrás ver los anuncios que tú mismo has publicado en el mercado.<br>
+              Para editarlos o eliminarlos, tendrás que acudir a tu perfil.
+          </p>
+          <label>
+              ¿Deseas ver tus propios anuncios en el mercado? 
+              <input type="checkbox" name="see_own_products" {% if user.see_own_products %}checked{% endif %}>
           </label>
         </div>
         <hr>

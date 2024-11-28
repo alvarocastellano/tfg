@@ -24,12 +24,22 @@ function main() {
         { lat: 45.8150, lng: 15.9819, cities: ['Zagreb','Split'], country: 'Croacia', flag: 'croacia.png' },
         { lat: 41.9028, lng: 12.4964, cities: ['Roma','Salerno','Florencia','Bari'], country: 'Italia', flag: 'italia.png' },
         { lat: 49.6116, lng: 6.1319, cities: ['Luxemburgo'], country: 'Luxemburgo', flag: 'luxemburgo.png' },
-        { lat: 47.4979, lng: 19.0402, cities: ['Budapest'], country: 'Hungria', flag: 'hungria.png' },
+        { lat: 47.4979, lng: 19.0402, cities: ['Budapest'], country: 'Hungría', flag: 'hungria.png' },
         { lat: 35.8989, lng: 14.5146, cities: ['La Valeta'], country: 'Malta', flag: 'malta.png' },
-        { lat: 52.3676, lng: 4.9041, cities: ['Amsterdam','Roterdam'], country: 'Paises Bajos', flag: 'holanda.png' },
+        { lat: 52.3676, lng: 4.9041, cities: ['Amsterdam','Roterdam'], country: 'Países Bajos', flag: 'holanda.png' },
         { lat: 48.2082, lng: 16.3738, cities: ['Viena'], country: 'Austria', flag: 'austria.png' },
         { lat: 52.2297, lng: 21.0122, cities: ['Varsovia'], country: 'Polonia', flag: 'polonia.png' },
         { lat: 38.7167, lng: -9.1333, cities: ['Lisboa','Oporto'], country: 'Portugal', flag: 'portugal.png' },
+        { lat: -34.6037, lng: -58.3816, cities: ['Buenos Aires'], country: 'Argentina', flag: 'argentina.png' },
+        { lat: -35.2809, lng: 149.1300, cities: ['Canberra'], country: 'Australia', flag: 'australia.png' },
+        { lat: -15.7801, lng: -47.9292, cities: ['Brasilia'], country: 'Brasil', flag: 'brasil.png' },
+        { lat: 45.4215, lng: -75.6972, cities: ['Ottawa'], country: 'Canadá', flag: 'canada.png' },
+        { lat: -33.4489, lng: -70.6693, cities: ['Santiago'], country: 'Chile', flag: 'chile.png' },
+        { lat: 39.9042, lng: 116.4074, cities: ['Pekín'], country: 'China', flag: 'china.png' },
+        { lat: 38.9072, lng: -77.0369, cities: ['Washington D.C.'], country: 'Estados Unidos', flag: 'estados_unidos.png' },
+        { lat: 28.6139, lng: 77.2090, cities: ['Nueva Delhi'], country: 'India', flag: 'india.png' },
+        { lat: 35.6762, lng: 139.6503, cities: ['Tokio'], country: 'Japón', flag: 'japon.png' },
+        { lat: -34.9011, lng: -56.1645, cities: ['Montevideo'], country: 'Uruguay', flag: 'uruguay.png' },
     ];
 
     const suggestionsDiv = document.getElementById("suggestions");
@@ -80,24 +90,63 @@ function main() {
         );
 
         if (marker) {
-            // Encontrar la ciudad exacta dentro del marcador
+            // Encontrar la ciudad exacta dentro del marker
             const city = marker.cities.find(city => city.toLowerCase() === searchValue) || marker.cities[0];
             
-            // Asigna los valores al modal mostrando solo la ciudad buscada
-            document.getElementById("cityModalLabel").innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center;">
-                    <span style="margin-right: 10px;">${city}, ${marker.country}</span>
-                    <img src="/static/images/${marker.flag}" alt="${marker.country} flag" style="width: 30px; height: auto;">
-                </div>
-            `;
+            fetch(updateCityURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ selected_city: city })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.json().then(errorData => { throw new Error(errorData.message || 'Error desconocido'); });
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    // Muestra el modal con los datos de la ciudad
+                    document.getElementById("cityModalLabel").innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center;">
+                            <span style="margin-right: 10px;">${city}, ${marker.country}</span>
+                            <img src="/static/images/${marker.flag}" alt="${marker.country} flag" style="width: 30px; height: auto;">
+                        </div>
+                    `;
 
-    
-            // Mostrar el modal
-            $('#cityModal').modal('show');
+                    // Actualizar el enlace de Mercado
+                    const marketButton = document.getElementById("marketButton");
+                    marketButton.href = `/market/products/city=${city}`;
+
+                    $('#cityModal').modal('show');
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError(error.message);
+            });
         } else {
             alert("La ciudad buscada no está en Worldin");
         }
     });
+
+    // Función para mostrar el mensaje de error
+    function showError(message) {
+        const errorMessageContainer = document.getElementById('errorMessageContainer');
+        const errorText = document.getElementById('errorText');
+        
+        // Coloca el mensaje de error en el contenedor
+        errorText.innerHTML = message;
+        
+        // Muestra el contenedor
+        errorMessageContainer.style.display = 'block';
+    }
     
     
 
@@ -276,16 +325,46 @@ function main() {
             if (intersects.length > 0) {
                 const marker = intersects[0].object;
                 const { cities, country, flag } = marker.userData;
-                
-                document.getElementById("cityModalLabel").innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center;">
-                    <span style="margin-right: 10px;">${cities[0]}, ${country}</span>
-                    <img src="/static/images/${flag}" alt="${country} flag" style="width: 30px; height: auto;">
-                </div>
-            `;
-                
-                // Muestra el modal con los datos del marcador
-                $('#cityModal').modal('show');
+                const city = cities[0]; // Selecciona la primera ciudad del marcador
+
+                // Actualiza la ciudad seleccionada en el servidor
+                fetch(updateCityURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ selected_city: city })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(errorData => { throw new Error(errorData.message || 'Error desconocido'); });
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Muestra el modal con los datos del marcador
+                        document.getElementById("cityModalLabel").innerHTML = `
+                            <div style="display: flex; align-items: center; justify-content: center;">
+                                <span style="margin-right: 10px;">${city}, ${country}</span>
+                                <img src="/static/images/${flag}" alt="${country} flag" style="width: 30px; height: auto;">
+                            </div>
+                        `;
+                        // Actualizar el enlace de Mercado
+                        const marketButton = document.getElementById("marketButton");
+                        marketButton.href = `/market/products/city=${city}`;
+                        // Muestra el modal
+                        $('#cityModal').modal('show');
+                    } else {
+                        showError(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError(error.message);
+                });
             } else {
                 console.log("No marker intersection detected.");
             }

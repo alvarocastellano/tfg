@@ -13,9 +13,15 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
+STRIPE_SECRET_KEY = 'sk_test_51QOx27ENztMUMranSbK8UhBwddamJyLTSB78Yn9iP0lAm4e5hBuS8jKMbCNCVW6CaGWOI73I8GagLLEypARTtgVU004JVP0t5O'
+STRIPE_TEST_PUBLISHABLE_KEY = 'pk_test_51QOx27ENztMUMranmtmQc3zDNsin6haDWD9aYdR2RvgLSBoJLeeGLUxq9BQzd5ix4x5FFkp8cFyWIal8bubHtiOU00cbesioIN'
+STRIPE_ENDPOINT_SECRET = 'whsec_5cd0eb8a8a437d434c9f628131213a54d896ccf23fa10423b5d16f7c2e2027b5'
+STRIPE_API_KEY = STRIPE_SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+BASE_DIR2 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/world/'
@@ -113,10 +119,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'registration'),
             os.path.join(BASE_DIR, 'main', 'templates', 'profile'),
             os.path.join(BASE_DIR, 'main', 'templates', 'world'),
-            os.path.join(BASE_DIR, 'main', 'templates', 'community'),
-            os.path.join(BASE_DIR, 'main', 'templates', 'events'),
             os.path.join(BASE_DIR, 'main', 'templates', 'market'),
-            os.path.join(BASE_DIR, 'main', 'templates', 'turism'),
 
             ],
         'APP_DIRS': True,
@@ -192,13 +195,15 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'main', 'static'),
 ]
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR2, 'media')
 
 
 

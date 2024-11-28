@@ -190,114 +190,247 @@
         .modal-title img {
             margin-left: 8px; /* Espaciado entre el texto y la imagen */
         }
+
+        #logo-dialog {
+            position: fixed;
+            bottom: 5%;
+            right: 5%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            z-index: 1000;
+        }
         
+        #dialog-box {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            margin-top: 10px;
+            border-radius: 8px;
+            max-width: 250px;
+            animation: fadeInDialog 1s ease-in-out;
+        }
         
+        @keyframes fadeInDialog {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
         
+        #next-dialog {
+            background: none;
+            border: none;
+            font-size: 25px;
+            cursor: pointer;
+        }
+
+        .alert-container {
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1050;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .alert {
+            background-color: #f8d7da; /* Color de fondo rojo claro */
+            color: #721c24; /* Color de texto */
+            border-color: #f5c6cb; /* Borde */
+        }
+
+        .alert .btn-close {
+            color: #721c24; /* Color de la cruz de cierre */
+        }
+
+        .alert-container .alert {
+            padding: 15px;
+            font-size: 16px;
+        }
+                
     </style>
+</head>
     
     <body>
 
         <canvas id='globe'></canvas>
-        <!-- Botones flotantes -->
+        
         {% if user.is_authenticated %}
         
-        <div class="button-container">
-            <!-- Botón MI PERFIL -->
-            <div class="text-center">
-                <a href="{% url 'my_profile' %}" class="btn btn-primary fixed-button-profile">
-                    {% if total_alerts > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:18px;">
-                            {{ total_alerts }}
-                        </span>
-                    {% endif %}
-                    <i class="bi bi-person-fill"></i>
-                    <p class="button-text">Mi perfil</p>
-                </a>
-                
-            </div>
-        
-            <!-- Botón BUSCAR USUARIOS -->
-            <div class="text-center">
-                <a href="{% url 'search_users' %}" class="btn btn-primary fixed-button-search">
-                    <i class="bi bi-person-fill-add"></i>
-                    <p class="button-text">Buscar<br> usuarios</p>
-                </a>
-                
-            </div>
-        </div>    
-
-    {% else %}
-    <div class="alert alert-danger align-items-center" role="alert" style="position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%);">
-        Para acceder a las demás funcionalidades es necesario estar logueado. <a href="{% url 'login' %}">Inicia sesión ahora.</a>
-    </div>
-
-    {% endif %}
-
-    <!-- City Search Input -->
-    <div class="input-group mb-3" style="width:auto; position: fixed; top: 3%; left: 50%; transform: translateX(-50%); z-index: 9999;">
-        <input type="text" id="citySearch" class="form-control" placeholder="Buscar ciudad">
-        <div class="input-group-append">
-            <button class="btn btn-primary" id="searchBtn" type="button">Buscar</button>
-        </div>
-    </div>
-    <div id="suggestions" class="suggestions" style="position: fixed; top: 45px; left: 50%; transform: translateX(-50%); z-index: 9999; background-color: white; border: 1px solid #ccc; display: none;"></div>
-
-
-    <!-- Modal for City Information -->
-    <div class="modal fade" id="cityModal" tabindex="-1" aria-labelledby="cityModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content" style="background-color: #6a4fb8;">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="cityModalLabel" style="color:white;"></h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" style="color:white;">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+            <div class="button-container">
+                <!-- Botón MI PERFIL -->
+                <div class="text-center">
+                    <a href="{% url 'my_profile' %}" class="btn btn-primary fixed-button-profile">
+                        {% if total_alerts > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:18px;">
+                                {{ total_alerts }}
+                            </span>
+                        {% endif %}
+                        <i class="bi bi-person-fill"></i>
+                        <p class="button-text">Mi perfil</p>
+                    </a>
+                    
                 </div>
-                <div class="modal-body">
-                    <div class="city-buttons">
-                        <a href="#" class="btn btn-info">
-                            <i class="bi bi-bag-fill"></i>
-                            <div>Mercado</div>
-                        </a>
-                        <a href="#" class="btn btn-info">
-                            <i class="bi bi-calendar-check"></i>
-                            <div>Eventos</div>
-                        </a>
-                        <a href="#" class="btn btn-info">
-                            <i class="bi bi-people-fill"></i>
-                            <div>Comunidad</div>
-                        </a>
-                        <a href="#" class="btn btn-info">
-                            <i class="bi bi-geo-fill"></i>
-                            <div>Turismo</div>
-                        </a>
+            
+                <!-- Botón BUSCAR USUARIOS -->
+                <div class="text-center">
+                    <a href="{% url 'search_users' %}" class="btn btn-primary fixed-button-search">
+                        <i class="bi bi-person-fill-add"></i>
+                        <p class="button-text">Buscar<br> usuarios</p>
+                    </a>
+                    
+                </div>
+            </div>
+
+
+            
+
+        {% else %}
+            <div id="errorMessageContainer" class="alert-container" style="display: none;">
+                <div id="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Acción no permitida</strong> <br> <span id="errorText"></span> <a href="{% url 'login' %}">iniciar sesión</a>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+            <div id="logo-dialog" style="position: fixed; bottom: 5%; right: 5%; display: flex; flex-direction: column; align-items: flex-end;">
+                <img src="{% static 'images/logo_worldin_morado_sinfondo.png' %}" alt="foto" style="width:40%; max-width:250px; cursor: pointer;">
+                <div id="dialog-box" style="background-color: rgba(0, 0, 0, 0.7); color: white; padding: 10px 20px; margin-top: 10px; border-radius: 8px; max-width: 250px;">
+                    <p id="dialog-content" style="font-size:20px;">Bienvenid@ a Worldin, estás accediendo como un usuario anónimo sin funcionalidades disponibles, solo para echar un vistazo...</p>
+                    <div id="arrow-container" style="margin-top: 10px; text-align: right;">
+                        <button id="next-dialog" style="background: none; border: none; font-size: 3em; color: #6a4fb8; cursor: pointer;"><i class="bi bi-arrow-right-circle-fill"></i></button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- City Search Input -->
+        <div class="input-group mb-3" style="width:auto; position: fixed; top: 3%; left: 50%; transform: translateX(-50%); z-index: 9999;">
+            <input type="text" id="citySearch" class="form-control" placeholder="Buscar ciudad">
+            <div class="input-group-append">
+                <button class="btn btn-primary" id="searchBtn" type="button">Buscar</button>
+            </div>
+        </div>
+        <div id="suggestions" class="suggestions" style="position: fixed; top: 45px; left: 50%; transform: translateX(-50%); z-index: 9999; background-color: white; border: 1px solid #ccc; display: none;"></div>
+
+
+        <!-- Modal for City Information -->
+        <div class="modal fade" id="cityModal" tabindex="-1" aria-labelledby="cityModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background-color: #6a4fb8;">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cityModalLabel" style="color:white;"></h5>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" style="color:white;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="city-buttons">
+                            {% if request.user.selected_city %}
+                                <a id="marketButton" href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn btn-info">
+                                    <i class="bi bi-bag-fill"></i>
+                                    <div>Mercado</div>
+                                </a>
+                                <a href="#" class="btn btn-info">
+                                    <i class="bi bi-calendar-check"></i>
+                                    <div>Eventos</div>
+                                </a>
+                                <a href="#" class="btn btn-info">
+                                    <i class="bi bi-people-fill"></i>
+                                    <div>Comunidad</div>
+                                </a>
+                                <a href="#" class="btn btn-info">
+                                    <i class="bi bi-geo-fill"></i>
+                                    <div>Turismo</div>
+                                </a>
+                            {% else %}
+                                <a href="#" class="btn btn-info" disabled>
+                                    <i class="bi bi-bag-fill"></i>
+                                    <div>Mercado</div>
+                                </a>
+                                <a href="#" class="btn btn-info" disabled>
+                                    <i class="bi bi-calendar-check"></i>
+                                    <div>Eventos</div>
+                                </a>
+                                <a href="#" class="btn btn-info" disabled>
+                                    <i class="bi bi-people-fill"></i>
+                                    <div>Comunidad</div>
+                                </a>
+                                <a href="#" class="btn btn-info" disabled>
+                                    <i class="bi bi-geo-fill"></i>
+                                    <div>Turismo</div>
+                                </a>
+                            {% endif %} 
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
 
 
     
 
-    <!-- Spinner de carga -->
-    <div class="text-center">
-        <div id="spinner" class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
-            <span class="sr-only">Cargando...</span>
+        <!-- Spinner de carga -->
+        <div class="text-center">
+            <div id="spinner" class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+                <span class="sr-only">Cargando...</span>
+            </div>
         </div>
-    </div>
 
-    <script src="{% static 'js/three.js' %}"></script>
-    <script type="module" src="{% static 'js/main.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://threejs.org/examples/jsm/controls/OrbitControls.js"></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                if (document.getElementById("logo-dialog")) {
+                    const dialogBox = document.getElementById("dialog-box");
+                    const dialogContent = document.getElementById("dialog-content");
+                    const nextDialogButton = document.getElementById("next-dialog");
+                    const loginLink = document.getElementById("login-link");
+            
+                    const dialogues = [
+                        "Bienvenid@ a Worldin, estás accediendo como un usuario anónimo sin funcionalidades disponibles, solo para echar un vistazo...",
+                        "Crea un usuario y accede a cientos de ciudades de todo el mundo...",
+                        "Conecta también con otros usuarios, chatea con ellos, compra y vende sin parar, apúntate a miles de eventos, descubre cientos de ciudades y mucho más...",
+                        "¿A qué estás esperando? <br> <a href='{% url 'login' %}' style='color: #6a4fb8; text-decoration: none; font-weight: bold;'>¡Accede ahora!</a>"
+                    ];
+            
+                    let currentDialog = 0;
+            
+                    // Función para mostrar el siguiente diálogo
+                    function showNextDialog() {
+                        if (currentDialog < dialogues.length) {
+                            dialogContent.innerHTML = dialogues[currentDialog];
+                            currentDialog++;
+            
+                            if (currentDialog === dialogues.length) {
+                                loginLink.style.display = 'block'; // Mostrar el enlace de login al final
+                            }
+                        }
+                    }
+            
+                    // Mostrar el primer diálogo
+                    showNextDialog();
+            
+                    // Añadir evento al botón de la flecha
+                    nextDialogButton.addEventListener("click", showNextDialog);
+                }
+            });
+            
+        </script>        
+
+        <script>
+            const csrfToken = '{{ csrf_token }}';
+            const updateCityURL = "{% url 'update_city' %}";
+            var isAuthenticated = {% if user.is_authenticated %} true {% else %} false {% endif %};
+        </script>
+        <script src="{% static 'js/three.js' %}"></script>
+        <script type="module" src="{% static 'js/main.js' %}"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script src="https://threejs.org/examples/jsm/controls/OrbitControls.js"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
     
 
     
-</body>
+    </body>
 
 {% endblock %}

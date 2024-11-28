@@ -115,7 +115,9 @@
 <body>
     <div class="container profile-container">
         <div class="profile-top d-flex justify-content-between align-items-center">
-            <a href="{% url 'world' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+            <button onclick="goBack()" class="btn btn-secondary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
+                <h3 style="font-size:12px;">Volver</h3>
+            </button>
             <h1>Buscar Usuarios</h1>
         </div>
         <form method="GET">
@@ -172,5 +174,11 @@
             {% endfor %}
         </ul>
     </div>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+    
 </body>
 {% endblock %}

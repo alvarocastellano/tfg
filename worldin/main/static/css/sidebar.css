@@ -1,3 +1,23 @@
+.abrir-cerrar-menu{
+    background-color: #6a4fb8; /* Fondo inicial */
+    border: 2px solid white; /* Bordes blancos */
+    color: white; /* Icono en blanco */
+    transition: all 0.3s ease; /* Suavidad al pasar el cursor */ 
+    position: fixed; 
+    top: 50%;
+    left: 60px; 
+    transform: translateY(-50%); 
+    z-index: 1000; 
+    outline:none; 
+    box-shadow:none;
+}
+.abrir-cerrar-menu:hover {
+    background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+    border-color: #6a4fb8; /* Contorno con color #6a4fb8 */
+    color: #6a4fb8;
+}
+
+
 .sidebar {
     position: fixed;
     top: 0;
@@ -5,10 +25,10 @@
     width: 250px;
     height: 100%;
     background-color: #6a4fb8; /* Color del menú */
-    padding: 15px;
+    padding: 10px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-    transition: transform 0.3s ease;
-    text-align:center;
+    transition: all 0.3s ease;
+    text-align: center;
 }
 
 .sidebar ul {
@@ -16,26 +36,27 @@
 }
 
 .sidebar ul li {
-    font-size: 18px;
+    font-size: 12px; /* Tamaño de letra más pequeño */
     list-style: none;
-    margin-bottom: 10px;
+    margin-bottom: 4px; /* Espacio menor entre los elementos */
     color: white;
     background-color: #6a4fb8;
     border-color: #6a4fb8;
+    padding: 5px 0; /* Reduce el espacio interno de cada li */
 }
 
 .sidebar a {
     padding: 0;
-    color:white;
+    color: white;
     text-decoration: none;
 }
 
-.sidebar a:hover{
-    color:#b9b9b9;
+.sidebar a:hover {
+    color: #b9b9b9;
 }
 
-.sidebar .list-group-item-sidebar{
-    margin:30px;
+.sidebar .list-group-item-sidebar {
+    margin: 5px 0; /* Ajusta el margen de cada item */
 }
 
 .profile-picture-sidebar {
@@ -46,10 +67,10 @@
     margin-right: 10px;
 }
 
-.hr{
+.hr {
     border: none; /* Elimina el borde por defecto */
     height: 2px; /* Ajusta el grosor de la línea */
     background-color: white; /* Cambia el color de la línea a blanco */
-    margin: 10px 0;
-    background-color:white;
+    margin: 5px 0;
+    background-color: white;
 }

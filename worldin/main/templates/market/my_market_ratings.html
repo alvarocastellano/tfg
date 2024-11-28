@@ -1,0 +1,298 @@
+{% extends "main/sidebar.html" %}
+
+{% block title %}Mi perfil{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+        }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%; /* Ocupar el máximo ancho disponible */
+            padding: 0; /* Sin padding para que ocupe todo el ancho */
+        }
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+        }
+        .imagen-sin-datos {
+            width: 150px;
+            height: auto;
+        }
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 150px;
+                height: 150px; /* Tamaño para pantallas más grandes */
+            }
+            .imagen-sin-datos {
+                width: 200px;
+                height: auto;
+            }
+        }
+        .dropdown-menu {
+            background-color: white;
+        }
+        .profile-section {
+            text-align: center;
+            padding: 20px;
+        }
+        .profile-section p {
+            align-items: center;
+            text-align: center;
+        }
+        hr {
+            border: 1px solid #6a4fb8;
+            margin-left: 5%;
+            margin-right: 5%;
+        }
+        .bi-arrow-left-short {
+            font-size: 2em;
+        }
+        /* Estilos para hacer la vista más responsiva */
+        @media (max-width: 767px) {
+            .profile-top {
+                flex-direction: column;
+                text-align: center;
+            }
+            .usuario-y-nombre {
+                margin-bottom: 15px;
+            }
+        }
+        .links-section {
+            text-align: center;
+            display: flex;
+            gap: 50px; /* Espacio entre enlaces y el separador */
+            padding: 20px;
+        }
+        
+        .link-section a {
+            align-items: center;
+            text-align: center;
+            text-decoration: none; /* Quitar subrayado */
+            color: #007bff; /* Color de los enlaces */
+            font-weight: bold; /* Hacer el texto más destacado */
+            cursor: pointer; /* Cambiar el cursor a mano cuando se pasa por encima */
+            transition: color 0.3s ease; /* Transición suave al cambiar el color */
+        }
+        
+        .link-item:hover {
+            color: #0056b3; /* Color al pasar el ratón por encima */
+        }
+        
+        .separator {
+            width: 1px; /* Grosor del separador */
+            background-color: #ccc; /* Color del separador */
+            height: 20px; /* Altura del separador */
+            margin: 0 10px; /* Espaciado alrededor del separador */
+        }
+
+        .btn-ratings-link {
+            color: #6a4fb8; /* Color del texto */
+            background-color: white; /* Fondo blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+            pointer-events: none;
+        }
+
+        .btn-products-link {
+            color: #6a4fb8; /* Color del texto */
+            background-color: white; /* Fondo blanco */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+        }
+
+        .btn-products-link:hover {
+            background-color: #6a4fb8; /* Fondo color cuando el enlace está sobrevolado */
+            color: white; /* Cambiar color del texto al blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container profile-container">
+        <div class="profile-top d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{% url 'world' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+            </div>
+            <div>
+                {% if request.user.profile_picture %}
+                    <img src="{{ request.user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                {% else %}
+                    <i class="bi bi-person-circle" style="font-size: 120px; color: #a6a0d6;"></i>
+                {% endif %}
+            </div>
+            <div class="usuario-y-nombre text-center">
+                <h2>@{{ user.username }}</h2>
+                <p>{{ user.first_name }} {{ user.last_name }}</p>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Artículos</h5>
+                    <p>0</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Ventas</h5>
+                    <p>0</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Compras</h5>
+                    <p>0</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Valoraciones</h5>
+                    <p>0</p>
+                </a>
+            </div>
+            <div class="dropdown">
+                <button class="btn dropdown-toggle position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-list" style="color:white; font-size: 2.5em;"></i>
+                    
+                    <!-- Círculo de notificación para solicitudes pendientes -->
+                    {% if total_alerts > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:18px;">
+                            {{ total_alerts }}
+                        </span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'edit_profile' %}">
+                            Editar perfil
+                            {% if complete_profile_alerts > 0 %}
+                                <span class="badge bg-danger ms-2">{{ complete_profile_alerts }}</span>
+                            {% endif %}
+                        </a></li> 
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'profile_settings' %}">Configuración</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    
+                    <!-- Opción de solicitudes de seguimiento si la cuenta es privada -->
+                    {% if request.user.account_visibility == 'private' %}
+                        <li><a class="dropdown-item" href="{% url 'follow_requests' %}">
+                            Solicitudes de seguimiento
+                            {% if pending_requests_count > 0 %}
+                                <span class="badge bg-danger ms-2">{{ pending_requests_count }}</span>
+                            {% endif %}
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                    {% endif %}
+                    
+                    <li>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+            
+        </div>
+        <!-- Botón debajo de la cabecera -->
+        <div class="text-center" style="background-color: #6a4fb8; padding: 10px;">
+            <a href="{% url 'my_profile' %}" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                VER PERFIL GENERAL
+            </a>
+        </div>
+
+        <div class="profile-section">
+            {% if user.city %}
+            <p>
+                <i class="bi bi-geo-fill"></i>{{user.city}}
+            </p>
+            <p>
+                {% if user.average_rating and user.rating_count > 0 %}
+                    Valoración media: {{ user.average_rating }}
+                {% else %}
+                    Valoración media: 0 (Sin valoraciones)
+                {% endif %}
+            </p>
+            {% else %}
+            <p>Añade una ciudad de residencia en tu perfil para poder usar el perfil de mercado.</p>
+            {% endif %}
+            <p>
+        </div>
+
+        <div class="links-section d-flex justify-content-center align-items-center">
+            <div class="text-center mx-4">
+                <a href="{% url 'my_market_profile' %}" class="btn-products-link">ANUNCIOS ACTIVOS</a>
+            </div>
+            <div class="separator"></div>
+            <div class="text-center mx-4">
+                <a href="#" class="btn-ratings-link">VALORACIONES</a>
+            </div>            
+        </div>
+
+        <hr>
+        <div class="profile-section">
+            <h3>Aún no hay valoraciones...</h3>
+        </div>
+    </div>
+
+    <!-- Script actualizado para evitar interferencia con el logout -->
+    <script>
+        // Solo aplica a los formularios de seguimiento
+        document.querySelectorAll('.follow-form').forEach(form => {
+            form.onsubmit = function(e) {
+                e.preventDefault(); // Previene el envío normal del formulario
+                const actionUrl = form.action;
+    
+                fetch(actionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualiza el texto del botón o haz cualquier otra acción
+                        alert('¡Acción realizada con éxito!');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            };
+        });
+    </script>
+
+</body>
+{% endblock %}
