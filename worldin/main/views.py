@@ -461,20 +461,6 @@ def edit_profile(request):
         erasmus = request.POST.get('erasmus', False)
         user.erasmus = erasmus
 
-        # Procesar la eliminación de seguidores
-        if 'remove_follower' in request.POST:
-            follower_id = request.POST.get('follower_id')
-            if follower_id:
-                try:
-                    follower = CustomUser.objects.get(id=follower_id)
-                    # Verificar que el usuario logueado tiene al seguidor en su lista de seguidores
-                    if follower in user.followers.all():
-                        user.followers.remove(follower)
-                    else:
-                        error_messages.append('El usuario no es un seguidor.')
-                except CustomUser.DoesNotExist:
-                    error_messages.append('El seguidor no existe.')
-
         # Verificar si el perfil está completo
         profile_is_now_complete = (
             user.birthday and user.city and user.description and user.profile_picture and user.aficiones.exists()
@@ -539,9 +525,7 @@ def profile_settings(request):
         'has_pending_requests': has_pending_requests,
         'error_messages': error_messages,  # No habrá errores en un GET inicial
     }
-    return render(request, 'profile_settings.html', context)
-    
-    
+    return render(request, 'profile_settings.html', context)    
 
 @login_required
 def delete_account(request):
@@ -549,6 +533,7 @@ def delete_account(request):
     user.delete()  # Borra el usuario
     return redirect('home')  # Redirige a una página adecuada después de borrar
 
+@login_required
 def search_users(request):
     query = request.GET.get('q')
     users = CustomUser.objects.exclude(username=request.user.username)
