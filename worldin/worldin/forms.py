@@ -1,9 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from main.models import CustomUser, Product, Rental, ProductImage, RentalImage
+from main.models import CustomUser
 from django.contrib.auth import authenticate
 from django.core.validators import EmailValidator, MinLengthValidator
-from django.forms import modelformset_factory
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(label='Email', validators=[EmailValidator('Invalid email format')])
@@ -46,29 +45,5 @@ class CityForm(forms.ModelForm):
         model = CustomUser
         fields = ['selected_city']
     
-class ProductForm(forms.ModelForm):
-    class Meta:
-        model = Product
-        fields = ['title', 'description', 'price']
 
-class ProductImageForm(forms.ModelForm):
-    delete_image = forms.BooleanField(required=False, label='Eliminar', initial=False)
-
-    class Meta:
-        model = ProductImage
-        fields = ['image', 'delete_image']
-
-ProductImageFormSet = modelformset_factory(ProductImage, form=ProductImageForm, extra= 3)
-
-class RentalForm(forms.ModelForm):
-    class Meta:
-        model = Rental
-        fields = ['title', 'location', 'description', 'price', 'square_meters', 'rooms', 'max_people']
-
-class RentalImageForm(forms.ModelForm):
-    class Meta:
-        model = RentalImage
-        fields = ['image']
-
-RentalImageFormSet = modelformset_factory(RentalImage, form=RentalImageForm, extra=4)
 

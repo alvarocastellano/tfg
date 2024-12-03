@@ -97,11 +97,11 @@
                     <h4 for="price"><strong>¿Deseas destacar el anuncio: {{ product.title }}?</strong></h4>
                     <p class="mt-3"><i class="bi bi-info-circle-fill"></i> Destaca este producto <strong>durante 30 días</strong> y obtiene más visualizaciones, lo que te llevará a poder venderlo mucho antes.</p>
                     
-                    <a href="{% url 'create_checkout_session_product' product_id=product.id %}" class="btn btn-primary mb-3" style="background-color:#786dce; color:white; border-color:white; font-size:22px;">
+                    <a href="{% url 'market:create_checkout_session_product' product_id=product.id %}" class="btn btn-primary mb-3" style="background-color:#786dce; color:white; border-color:white; font-size:22px;">
                         Proceder al pago
                     </a>
 
-                    <a href="{% url 'my_market_profile' %}">Saltar y no destacar anuncio</a>
+                    <a href="{% url 'market:my_market_profile' %}">Saltar y no destacar anuncio</a>
                                         
             </div>
         </div>

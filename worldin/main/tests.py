@@ -1,10 +1,11 @@
 import json
-from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import reverse
-from .models import Follow, FollowRequest, Hobby, CustomUser, Product, Rental
+from .models import Follow, FollowRequest, Hobby, CustomUser
+from main.market.models import Product, Rental
 from datetime import date, datetime, timedelta
-from .views import moneda_oficial, currency
+
+
 
 class TestUsuarioRegistro(TestCase):
     def setUp(self):
@@ -116,6 +117,11 @@ class StaticTemplatesViewTests(TestCase):
         response = self.client.get(reverse('password_reset'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'password_reset.html')
+
+    def test_my_market_ratings_view(self):
+        response = self.client.get(reverse('market:my_market_ratings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'my_market_ratings.html')
 
 class WorldPageViewTests(TestCase):
     def setUp(self):
@@ -825,8 +831,6 @@ class FollowRequestsTest(TestCase):
 class SidebarViewTestCase(TestCase):
     pass
 
-
-################################################ AQUÍ COMIENZA LA FUNCIONALIDAD DE MERCADO ##########################################
 class UpdateCityTestCase(TestCase):
 
     def setUp(self):
@@ -889,88 +893,3 @@ class UpdateCityTestCase(TestCase):
         # Verificar que la respuesta es un error 405
         self.assertEqual(response.status_code, 405)
         self.assertJSONEqual(str(response.content, 'utf8'), {'success': False, 'message': 'Método no permitido'})
-
-
-class MonedaOficialYCurrencyTestCase(TestCase):
-
-    def setUp(self):
-        # Crear un usuario de prueba
-        self.user = CustomUser.objects.create_user(
-            username='usuario1',
-            email='usuario1@example.com',
-            password='password123',
-        )
-        self.client.login(username='usuario1', password='password123')
-    
-    def test_moneda_oficial(self):
-        # Probar varias ciudades y verificar la moneda oficial
-        test_cases = [
-            ('Sofia', 'лв'),  # Bulgaria
-            ('Praga', 'Kč'),  # República Checa
-            ('Copenhague', 'kr'),  # Dinamarca
-            ('Budapest', 'Ft'),  # Hungría
-            ('Varsovia', 'zł'),  # Polonia
-            ('Buenos Aires', '$'),  # Peso argentino
-            ('Canberra', '$'),  # Dólar australiano
-            ('Brasilia', 'R$'),  # Real brasileño
-            ('Ottawa', '$'),  # Dólar canadiense
-            ('Santiago', '$'),  # Peso chileno
-            ('Pekín', '¥'),  # Yuan renminbi chino
-            ('Washington D.C.', '$'),  # Dólar estadounidense
-            ('Nueva Delhi', '₹'),  # Rupia india
-            ('Tokio', '¥'),  # Yen japonés
-            ('Montevideo', '$'),  # Peso uruguayo
-            ('Madrid', '€')  # Zona euro
-        ]
-
-        for city, expected_money in test_cases:
-            with self.subTest(city=city):
-                self.user.city = city
-                self.user.save()
-
-                # Crear un objeto request manualmente
-                request = HttpRequest()
-                request.user = self.user  # Asignar el usuario autenticado al request
-                
-                # Llamar a la función con el request correcto
-                response = moneda_oficial(request)
-                
-                # Comprobar si la respuesta coincide con la moneda esperada
-                self.assertEqual(response, expected_money)
-
-    def test_currency(self):
-        # Probar varias ciudades y verificar la moneda en formato de código
-        test_cases = [
-            ('Sofia', 'BGN'),  # Lev búlgaro
-            ('Praga', 'CZK'),  # Corona checa
-            ('Copenhague', 'DKK'),  # Corona danesa
-            ('Budapest', 'HUF'),  # Florín húngaro
-            ('Varsovia', 'PLN'),  # Zloty polaco
-            ('Buenos Aires', 'ARS'),  # Peso argentino
-            ('Canberra', 'AUD'),  # Dólar australiano
-            ('Brasilia', 'BRL'),  # Real brasileño
-            ('Ottawa', 'CAD'),  # Dólar canadiense
-            ('Santiago', 'CLP'),  # Peso chileno
-            ('Pekín', 'CNY'),  # Yuan renminbi chino
-            ('Washington D.C.', 'USD'),  # Dólar estadounidense
-            ('Nueva Delhi', 'INR'),  # Rupia india
-            ('Tokio', 'JPY'),  # Yen japonés
-            ('Montevideo', 'UYU'),  # Peso uruguayo
-            ('Madrid', 'EUR')  # Euro para la zona euro
-        ]
-
-        for city, expected_currency in test_cases:
-            with self.subTest(city=city):
-                self.user.city = city
-                self.user.save()
-
-                # Crear un objeto request manualmente
-                request = HttpRequest()
-                request.user = self.user  # Asignar el usuario autenticado al request
-                
-                # Llamar a la función con el request correcto
-                response = currency(request)
-                
-                # Comprobar si la respuesta coincide con la moneda esperada
-                self.assertEqual(response, expected_currency)
-
