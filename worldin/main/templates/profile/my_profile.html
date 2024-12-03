@@ -179,7 +179,7 @@
                 <p>{{ user.first_name }} {{ user.last_name }}</p>
             </div>
             <div class="text-center">
-                <a href="{% url 'my_market_profile' %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                <a href="{% url 'market:my_market_profile' %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Anuncios</h5>
                     <p>{% if announce_count == 0 %} 0 {%else%}{{ announce_count }} {% endif %}</p>
                 </a>
@@ -242,7 +242,7 @@
         </div>
         <!-- Botón debajo de la cabecera -->
         <div class="text-center" style="background-color: #6a4fb8; padding: 10px;">
-            <a href="{% url 'my_market_profile' %}" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+            <a href="{% url 'market:my_market_profile' %}" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
                 <i class="bi bi-shop"></i>
                 PERFIL DE MERCADO
             </a>
@@ -310,7 +310,7 @@
                     </a>                
                 {% elif request.user.city and user_products|length < 1 and user_rentings|length < 1%}
                     <div class="mt-3 mb-5">
-                        <a href="{% url 'my_market_profile' %}">
+                        <a href="{% url 'market:my_market_profile' %}">
                             Publica nuevos anuncios desde el perfil de mercado.
                         </a>
                     </div>
@@ -329,7 +329,7 @@
             {% if filter_option == 'articulos' %}
                     {% if user_products|length == 0 %}
                         <p class="mt-5">No tienes a la venta ningun artículo.<br>
-                        <a style = "text-decoration:none;" href="{% url 'add_product' %}"><strong>Publica un artículo nuevo ahora</strong></a></p>
+                        <a style = "text-decoration:none;" href="{% url 'market:add_product' %}"><strong>Publica un artículo nuevo ahora</strong></a></p>
                     {% else %}
                         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
                             {% for product in user_products %}
@@ -348,13 +348,13 @@
                                             <p class="card-text text-truncate">{{ product.description }}</p>
                                         </div>
                                         <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
-                                            <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                            <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
                                             {% if  not product.highlighted or not product.highlighted_until %}
-                                                <a href="{% url 'highlight_product' product_id=product.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <a href="{% url 'market:highlight_product' product_id=product.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                     <i class="bi bi-star-fill"></i>
                                                 </a>
                                             {% endif %}
-                                            <a href="{% url 'edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                            <a href="{% url 'market:edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
                                             <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
@@ -377,7 +377,7 @@
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal()">Cancelar</button>
-                                                <form id="deleteForm" method="POST" action="{% url 'delete_product' product.id %}">
+                                                <form id="deleteForm" method="POST" action="{% url 'market:delete_product' product.id %}">
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn btn-danger">Sí, borrar</button>
                                                 </form>
@@ -393,7 +393,7 @@
                         {% if user_rentings|length == 0 %}
                             <p class="mt-5">
                                 No tienes ningún anuncio de alquiler activo actualmente.<br>
-                                <a style="text-decoration:none;" href="{% url 'add_renting' %}"><strong>Publica un nuevo anuncio de alquiler ahora</strong></a>
+                                <a style="text-decoration:none;" href="{% url 'market:add_renting' %}"><strong>Publica un nuevo anuncio de alquiler ahora</strong></a>
                             
                             </p>
                         {% else %}
@@ -415,14 +415,14 @@
                                                 <p class="card-text text-truncate">{{ rental.description }}</p>
                                             </div>
                                             <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
-                                                <a href="{% url 'renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
                                                 {% if  not rental.highlighted or not rental.highlighted_until %}
-                                                    <a href="{% url 'highlight_renting' renting_id=rental.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                    <a href="{% url 'market:highlight_renting' renting_id=rental.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                         <i class="bi bi-star-fill"></i>
                                                     </a>
                                                 {% endif %}
                                                 
-                                                <a href="{% url 'edit_renting' rental.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <a href="{% url 'market:edit_renting' rental.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
                                                 
@@ -447,7 +447,7 @@
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal2()">Cancelar</button>
-                                                    <form id="deleteForm2" method="POST" action="{% url 'delete_renting' rental.id %}">
+                                                    <form id="deleteForm2" method="POST" action="{% url 'market:delete_renting' rental.id %}">
                                                         {% csrf_token %}
                                                         <button type="submit" class="btn btn-danger">Sí, borrar</button>
                                                     </form>
@@ -466,7 +466,7 @@
     <script>
         function showConfirmationModal(productId) {
             const form = document.getElementById('deleteForm');
-            form.action = `/delete_product/${productId}/`; // Ajusta la URL según tu configuración
+            form.action = `/marketplace/delete_product/${productId}/`; // Ajusta la URL según tu configuración
         
             document.getElementById('confirmationModal').style.display = 'block';
         }
@@ -476,7 +476,7 @@
         }
         function showConfirmationModal2(rentingId) {
             const form = document.getElementById('deleteForm2');
-            form.action = `/delete_renting/${rentingId}/`; // Ajusta la URL según tu configuración
+            form.action = `/marketplace/delete_renting/${rentingId}/`; // Ajusta la URL según tu configuración
         
             document.getElementById('confirmationModal2').style.display = 'block';
         }

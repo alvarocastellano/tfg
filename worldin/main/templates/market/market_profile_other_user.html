@@ -337,7 +337,7 @@
                                                 <p class="card-text text-truncate">{{ product.description }}</p>
                                             </div>
                                             <div class="card-footer justify-content-center">
-                                                <a href="{% url 'product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
                                             </div>
                                         </div>
                                     </div>   
@@ -368,7 +368,7 @@
                                                     <p class="card-text text-truncate">{{ rental.description }}</p>
                                                 </div>
                                                 <div class="card-footer justify-content-center">
-                                                    <a href="{% url 'renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                    <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -389,29 +389,6 @@
             </div>
                 
         {% endif %}
-        <script>
-            function showConfirmationModal(productId) {
-                const form = document.getElementById('deleteForm');
-                form.action = `/delete_product/${productId}/`; // Ajusta la URL según tu configuración
-                
-                document.getElementById('confirmationModal').style.display = 'block';
-            }
-                
-            function closeConfirmationModal() {
-                document.getElementById('confirmationModal').style.display = 'none';
-            }
-            function showConfirmationModal2(rentingId) {
-                const form = document.getElementById('deleteForm2');
-                form.action = `/delete_renting/${rentingId}/`; // Ajusta la URL según tu configuración
-                
-                document.getElementById('confirmationModal2').style.display = 'block';
-            }
-                
-            function closeConfirmationModal2() {
-                // Oculta el modal
-                document.getElementById('confirmationModal2').style.display = 'none';
-            }
-        </script>
         <script>
             function goBack() {
                 window.history.back();

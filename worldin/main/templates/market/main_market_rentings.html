@@ -261,7 +261,7 @@
             </div>
             
             <div>
-                <a href="{% url 'my_market_profile' %}">
+                <a href="{% url 'market:my_market_profile' %}">
                     {% if request.user.profile_picture %}
                         <img src="{{ request.user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                     {% else %}
@@ -279,7 +279,7 @@
             </div>
             <div class="separator"></div>
             <div class="text-center mx-2">
-                <a href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn-ratings-link"><i class="bi bi-bag-fill"></i> PRODUCTOS</a>
+                <a href="{% url 'market:main_market_products' selected_city=request.user.selected_city %}" class="btn-ratings-link"><i class="bi bi-bag-fill"></i> PRODUCTOS</a>
             </div>        
         </div>
 
@@ -329,7 +329,7 @@
             </div>
         
             <!-- Botón para reestablecer filtros -->
-            <a href="{% url 'main_market_rentings' selected_city=request.user.selected_city %}" class="btn btn-secondary">
+            <a href="{% url 'market:main_market_rentings' selected_city=request.user.selected_city %}" class="btn btn-secondary">
                 Reestablecer filtros y búsquedas
             </a>
         
@@ -398,7 +398,7 @@
                                             </h6>
                                         </div>
                                         <div class="card-footer justify-content-center">
-                                            <a href="{% url 'renting_details' renting_id=renting.id %}" 
+                                            <a href="{% url 'market:renting_details' renting_id=renting.id %}" 
                                                class="btn-add-product me-2">Ver detalles</a>
                                         </div>
                                     </div>

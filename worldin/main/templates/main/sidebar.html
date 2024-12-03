@@ -194,7 +194,7 @@
                 </li>
                 <hr class="custom-hr">
                 {% if request.user.selected_city %}
-                    <li class="list-group-item-sidebar"><a href="{% url 'main_market_products' selected_city=request.user.selected_city %}"><i class="bi bi-bag-fill"></i> Mercado</a></li>
+                    <li class="list-group-item-sidebar"><a href="{% url 'market:main_market_products' selected_city=request.user.selected_city %}"><i class="bi bi-bag-fill"></i> Mercado</a></li>
                     <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-calendar-check"></i> Eventos</a></li>
                     <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-people-fill"></i> Comunidad</a></li>
                     <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
