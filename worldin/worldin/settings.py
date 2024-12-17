@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main.market.apps.MarketConfig',
+    'main.community.apps.CommunityConfig',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -121,6 +122,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'profile'),
             os.path.join(BASE_DIR, 'main', 'templates', 'world'),
             os.path.join(BASE_DIR, 'main', 'templates', 'market'),
+            os.path.join(BASE_DIR, 'main', 'templates', 'community'),
 
             ],
         'APP_DIRS': True,
