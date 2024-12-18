@@ -31,7 +31,7 @@
             padding: 20px;
         }
         .chats-container {
-            background-color: #6a4fb8; /* Color de fondo para la lista de chats */
+            background-color: rgb(241, 241, 241); /* Color de fondo para la lista de chats */
             height: 100%; /* Ajustar altura para toda la pantalla */
             padding: 15px;
             overflow-y: auto; /* Scroll si el contenido excede el tamaño */
@@ -44,7 +44,7 @@
             background-color: #ffffff;
         }
         .network-container img {
-            max-width: 100%;
+            max-width: 60%;
             height: auto;
         }
         .btn-products-link {
@@ -64,6 +64,24 @@
             border: 2px solid white;
             border-radius: 25px; /* Bordes redondeados */
             text-decoration: none;
+        }
+
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 50px;
+            height: 50px;
+        }
+
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 100px;
+                height: 100px;
+            }
+            .imagen-sin-datos {
+                width: 200px;
+                height: auto;
+            }
         }
     </style>
 </head>
@@ -96,13 +114,37 @@
         <div class="row" style="height: 100vh;">
             <!-- Lista de chats (30%) -->
             <div class="col-md-4 chats-container">
+                <a href="{% url 'community:chat_requests' %}">
+                    <h4><strong>Solicitudes de chat pendientes</strong></h4>
+                </a>
+                <hr>
                 <h4><strong>Tus chats</strong></h4>
                 <ul class="list-group">
                     {% for chat in private_chats %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @{{ chat.user2 }}
-                            <span class="badge badge-primary badge-pill">{{ chat.unread_count }}</span>
-                        </li>
+                        {% if request.user == chat.user1 or request.user == chat.user2 %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center mb-1">
+                                {% if request.user != chat.user2 %}
+                                    <a href="{% url 'community:chat_detail' username=chat.user2 %}">
+                                        {% if chat.user2.profile_picture %}
+                                            <img src="{{ chat.user2.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                        {% else %}
+                                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                                        {% endif %}
+                                        @{{ chat.user2 }}
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'community:chat_detail' username=chat.user1 %}">
+                                        {% if chat.user1.profile_picture %}
+                                            <img src="{{ chat.user1.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                        {% else %}
+                                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                                        {% endif %}
+                                        @{{ chat.user1 }}
+                                    </a>
+                                {% endif %}
+                                <span class="badge badge-primary badge-pill">{{ chat.unread_count }}</span>
+                            </li>
+                        {% endif %}
                     {% empty %}
                         <li class="list-group-item text-muted">No tienes chats disponibles.</li>
                     {% endfor %}

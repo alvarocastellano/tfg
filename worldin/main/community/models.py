@@ -5,6 +5,7 @@ from django.db import models
 class Chat(models.Model):
     user1 = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='chats_user1', on_delete=models.CASCADE)
     user2 = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='chats_user2', on_delete=models.CASCADE)
+    initial_message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -19,10 +20,25 @@ class ChatRequest(models.Model):
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='chat_requests_received', on_delete=models.CASCADE)
     initial_message = models.TextField(blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_accepted = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('sender', 'receiver')  # Una sola solicitud entre dos usuarios a la vez
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('pending', 'Pendiente'),
+            ('accepted', 'Aceptada'),
+            ('rejected', 'Rechazada')
+        ],
+        default='pending'
+    )
 
     def __str__(self):
         return f"Chat request from {self.sender.username} to {self.receiver.username}"
+    
+class Message(models.Model):
+    chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender.username} at {self.timestamp}"
+

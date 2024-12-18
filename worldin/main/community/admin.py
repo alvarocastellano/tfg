@@ -9,5 +9,5 @@ class IndividualChatAdmin(admin.ModelAdmin):
 
 @admin.register(ChatRequest)
 class ChatRequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sender', 'receiver')  # Personaliza los campos que quieras ver en el listado.
+    list_display = ('id', 'sender', 'receiver', 'status')  # Personaliza los campos que quieras ver en el listado.
     search_fields = ('id', 'sender')  # Campos para búsqueda.
