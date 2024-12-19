@@ -249,10 +249,24 @@
                             <span>{{ chat.created_at|date:"H:i, d M Y" }}</span>
                         </div>
                         {% for message in messages %}
+                            {% if message.product %}
                             <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
+                                <div class="card" style="width: 18rem;">
+                                    <div class="card-title"> A @{{ message.sender.username}} le interesa el siguiente producto:</div>
+                                    <img class="card-img-top" src="{{ message.product.images.first.image.url }}" alt="Imagen del producto">
+                                    <div class="card-body">
+                                    <h5 class="card-title">{{ message.product.title }}</h5>
+                                    </div>
+                                </div>
                                 <p>{{ message.content }}</p>
                                 <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
                             </div>
+                            {% else %}
+                                <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
+                                    <p>{{ message.content }}</p>
+                                    <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
+                                </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 

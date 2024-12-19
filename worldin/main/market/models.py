@@ -14,6 +14,22 @@ class Product(models.Model):
     highlighted_until = models.DateTimeField(null=True, blank=True)
     highlighted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('on_sale', 'En venta'),
+            ('booked', 'Reservado'),
+            ('sold', 'Vendido')
+        ],
+        default='on_sale'
+    )
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='purchased_products'
+    )
 
     def __str__(self):
         return self.title
@@ -75,6 +91,23 @@ class Rental(models.Model):
     highlighted_until = models.DateTimeField(null=True, blank=True)
     highlighted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('on_sale', 'Anuncio activo'),
+            ('booked', 'Reservado'),
+            ('sold', 'Ya alquilado')
+        ],
+        default='on_sale'
+    )
+    
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='purchased_rentings'
+    )
 
     def __str__(self):
         return self.title

@@ -161,6 +161,20 @@
 
             <!-- Detalles del producto (derecha) -->
             <div class="col-md-7 mb-5">
+                {% if success_messages %}
+                    <div class="alert alert-success" style="font-size:18px;" role="alert">
+                    {% for message in success_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                {% if error_messages %}
+                    <div class="alert alert-danger" style="font-size:18px;" role="alert">
+                    {% for message in error_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
                 <div class="product-details" style="border-color:#6a4fb8; padding: 10px; margin:5px;">
                     {% if product.images.count > 1 %}
                         <div id="carouselExampleIndicators" class="carousel slide">
@@ -195,8 +209,33 @@
                     <h1><strong>{{ product.price }}{{ product.money_associated }}</strong></h1>
                     <br>
                     <p>{{ product.description }}</p>
+                    <!-- Modal para mensaje -->
+                    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                            <h5 class="modal-title" id="contactModalLabel">Enviar mensaje a @{{ product.owner.username }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="POST" action="{% url 'market:send_message' product.id %}">
+                            {% csrf_token %}
+                            <div class="modal-body">
+                                <div class="form-group">
+                                <textarea name="initial_message" class="form-control" rows="4" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Enviar</button>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
+                    </div>
                     {% if product.owner.id != request.user.id %}
-                        <a href="#" class="btn btn-primary contact-button">Contactar con @{{ product.owner.username }}</a>
+                        <a href="#" class="btn btn-primary contact-button" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            Contactar con @{{ product.owner.username }}
+                        </a>
                     {% endif %}
                 </div>
             </div>

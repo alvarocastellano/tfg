@@ -60,7 +60,7 @@
             align-items: center;
             text-align: center;
         }
-        hr {
+        hr-separator {
             border: 1px solid #6a4fb8;
             margin-left: 5%;
             margin-right: 5%;
@@ -297,7 +297,7 @@
 
         </div>
 
-        <hr>
+        <hr class="hr-separator">
         <div class="profile-section">
             {% if announce_count < 1 %}
                 <h2>NO HAY ANUNCIOS ACTIVOS</h2>
@@ -342,6 +342,9 @@
                                         {% endif %}
                                         <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
                                         <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                            {% if product.status == 'booked' %}
+                                                <span class="badge bg-danger text-white mb-2">RESERVADO</span>
+                                            {% endif %}
                                             <h5 class="card-title">{{ product.title }}</h5>
                                             <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
                                             <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
@@ -354,14 +357,39 @@
                                                     <i class="bi bi-star-fill"></i>
                                                 </a>
                                             {% endif %}
-                                            <a href="{% url 'market:edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
-                                                    style="width: 40px; height: 40px;" 
-                                                    onclick="showConfirmationModal({{ product.id }});">
-                                                <i class="bi bi-trash3-fill"></i>
-                                            </button>
+                                            
+                                            <div class="dropup">
+                                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ product.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ product.id }}">
+                                                    <li>
+                                                        <a href="{% url 'market:edit_product' product_id=product.id%}" class="dropdown-item">
+                                                            <i class="bi bi-pencil-fill"> Editar</i>
+                                                        </a>
+                                                    </li>
+                                                    <hr>
+                                                    <li>
+                                                        {% if product.status == 'booked' %}
+                                                            <a class="dropdown-item" href="{% url 'market:unbook_product' product.id %}"><i class="bi bi-bookmark-dash-fill"></i> Eliminar reserva</a>
+                                                        {% else %}
+                                                            <a class="dropdown-item" href="{% url 'market:book_product' product.id %}"><i class="bi bi-bookmark-fill"></i> Reservar</a>
+                                                        {% endif %}
+                                                    </li>
+                                                    <hr>
+                                                    <li>
+                                                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#sellModal{{ product.id }}"><i class="fa-solid fa-handshake"></i> Vender</button>
+                                                    </li>
+                                                    <hr>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item" 
+                                                                style="width: 40px; height: 40px;" 
+                                                                onclick="showConfirmationModal({{ product.id }});">
+                                                            <i class="bi bi-trash3-fill"> Eliminar</i>
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -380,6 +408,31 @@
                                                 <form id="deleteForm" method="POST" action="{% url 'market:delete_product' product.id %}">
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn btn-danger">Sí, borrar</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal fade" id="sellModal{{ product.id }}" tabindex="-1" aria-labelledby="sellModalLabel{{ product.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="sellModalLabel{{ product.id }}">Seleccionar Comprador</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form method="POST" action="{% url 'market:sell_product' product.id %}">
+                                                    {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label for="buyerSelect{{ product.id }}" class="form-label">Selecciona un comprador:</label>
+                                                        <select class="form-select" id="buyerSelect{{ product.id }}" name="buyer_id" required>
+                                                            {% for message in product.messages.all %}
+                                                                <option value="{{ message.sender.id }}">{{ message.sender.username }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary">Confirmar Venta</button>
                                                 </form>
                                             </div>
                                         </div>

@@ -136,14 +136,33 @@
             {% for chat_request in pending_requests %}
                 <li class="list-group-item received-request">
                     <div class="user-info">
+                        
                         {% if chat_request.sender.profile_picture %}
                             <img src="{{ chat_request.sender.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                         {% else %}
                             <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
                         {% endif %}
                         <a href="{% url 'other_user_profile' chat_request.sender.username %}"><strong>@{{ chat_request.sender.username }}</strong></a>
-                        <span><strong>quiere comenzar un chat contigo:</strong> {{ chat_request.initial_message }}</span>
-                    </div>
+                        <span><strong>quiere comenzar un chat contigo 
+                            {% if chat_request.product %}
+                                    por interés en el siguiente producto:</strong>
+                            {% else %} 
+                                    con el siguiente mensaje:</strong> {{ chat_request.initial_message }}
+                            {% endif %}
+                        </span>
+                    
+                    {% if chat_request.product %}
+                        <div class="card" style="width: 18rem;">
+                            <img class="card-img-top" src="{{ chat_request.product.images.first.image.url }}" alt="Imagen del producto">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ chat_request.product.title }}</h5>
+                            </div>
+                        </div>
+                        <br>
+                        <strong>- Mensaje enviado: </strong>
+                            {{ chat_request.initial_message }}
+                    {% endif %}
+                    <br>
                     <div class="action-buttons">
                         <form action="{% url 'community:accept_chat_request' chat_request.id %}" method="POST">
                             {% csrf_token %}
@@ -154,6 +173,7 @@
                             <button type="submit" class="btn btn-danger">Rechazar</button>
                         </form>
                     </div>
+                </div>
                 </li>
                 <hr class="dropdown-divider">
             {% endfor %}
@@ -176,8 +196,21 @@
                             <a href="{% url 'other_user_profile' request.receiver.username %}">
                                 @{{ request.receiver.username }}
                             </a>
-                            con el siguiente mensaje:</strong> {{ request.initial_message }}.
+                            {% if request.product %}
+                                por interés en el siguiente producto:
+                            {% else %} 
+                                con el siguiente mensaje: {{ request.initial_message }}
+                            {% endif %}
+                            </strong>
                         </div>
+                        {% if request.product %}
+                            <div class="card" style="width: 18rem;">
+                                <img class="card-img-top" src="{{ request.product.images.first.image.url }}" alt="Imagen del producto">
+                                <div class="card-body text-center">
+                                <h5 class="card-title">{{ request.product.title }}</h5>
+                                </div>
+                            </div>
+                        {% endif %}
                         <br>
                         <div> 
                             <strong>- Estado de la solicitud: </strong>
@@ -189,6 +222,13 @@
                             {% endif %}
                         </div>
                         <br>
+                        {% if request.product %}
+                        <div>
+                            <strong>- Mensaje enviado: </strong>
+                            {{ request.initial_message }}
+                        </div>
+                        <br>
+                        {% endif %}
                         <div style="font-size:14px;">
                             {{ request.created_at }}
                         </div>

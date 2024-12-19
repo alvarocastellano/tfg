@@ -1,7 +1,7 @@
 from decimal import Decimal, InvalidOperation
 from django.shortcuts import  render
 from .forms import  ProductForm, RentalForm, ProductImageFormSet, RentalImageFormSet
-from django.shortcuts import  render, redirect, get_object_or_404
+from django.shortcuts import  render, redirect, get_object_or_404, reverse
 from main.models import CustomUser, Follow, FollowRequest
 from .models import Product, Rental, ProductImage, RentalImage, RentalFeature
 from django.contrib.auth.decorators import login_required
@@ -17,6 +17,9 @@ import logging
 import requests
 from django.views.decorators.http import require_POST
 from main.views import alertas_completar_perfil, city_data, valid_cities
+from main.community.models import Chat, Message, ChatRequest
+from django.utils.html import format_html
+
 
 def moneda_oficial(request):
     money = ""
@@ -241,6 +244,7 @@ def add_product(request):
             product.owner = request.user
             product.city_associated = request.user.city
             product.money_associated = money
+            product.status = 'on_sale'
             product.save()
 
             for f in formset:
@@ -1327,3 +1331,196 @@ def update_renting_highlight_status(request):
         return JsonResponse({'status': 'error', 'message': 'Alquiler no encontrado'}, status=404)
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Error en los datos de entrada'}, status=400)
+    
+
+@login_required
+def send_message(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    owner = product.owner
+    user = request.user
+    error_messages = []
+    success_messages = []
+
+    follow_mutually = Follow.objects.filter(
+                follower=user, following=owner
+            ).exists() and Follow.objects.filter(
+                follower=owner, following=user
+            ).exists()
+
+    if request.method == 'POST':
+        initial_message = request.POST.get('initial_message')
+
+        if Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).exists():
+            # Si ya existe un chat, pero no tiene producto asociado, agrega el mensaje
+            chat = Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).first()
+            if chat.messages.filter(product=product).exists():
+                error_messages.append(
+                    format_html(
+                        'Ya has enviado un mensaje a este usuario interesándote por el producto. Consulta la conversación en tus <a href="{}">chats activos</a>.',
+                        reverse('community:all_chats')
+                    )
+                )
+                return render(request, 'market/product_details.html', {
+                    'product': product,
+                    'error_messages': error_messages,
+                })
+            else:
+                Message.objects.create(chat=chat, sender=user, content=initial_message, product=product)
+                success_messages.append(format_html(
+                        'Mensaje enviado correctamente. Puedes acceder a la conversación en tus <a href="{}">chats activos</a>.',
+                        reverse('community:all_chats')
+                    ))
+                return render(request, 'market/product_details.html', {
+                    'product': product,
+                    'success_messages': success_messages,
+                })
+        elif ChatRequest.objects.filter(Q(sender=user, receiver=owner, product=product)).exists():
+            # Si ya hay una solicitud de chat enviada
+            error_messages.append(format_html(
+                        'Ya has enviado una solicitud a este usuario preguntando por este artículo. Consulta su estado accediendo a la pestaña de "Solicitudes enviadas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
+                        reverse('community:chat_requests')
+                    ))
+            return render(request, 'market/product_details.html', {
+                'product': product,
+                'error_messages': error_messages,
+            })
+        elif ChatRequest.objects.filter(Q(sender=owner, receiver=user, status='pending')).exists() or ChatRequest.objects.filter(Q(sender=user, receiver=owner, status='pending')).exists():
+            # Si ya hay una solicitud de chat pendiente
+            error_messages.append(format_html(
+                        'Ya hay una solicitud de chat pendiente con este usuario. Consulta su estado accediendo a la pestaña de "Solicitudes recibidas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
+                        reverse('community:chat_requests')
+                    ))
+            return render(request, 'market/product_details.html', {
+                'product': product,
+                'error_messages': error_messages,
+            })
+        elif follow_mutually and not Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).exists():
+            #Si ambos se siguen mutuamente pero no había chat previo
+            chat = Chat.objects.create(user1=user, user2=owner, initial_message="He iniciado este chat para preguntarte por producto")
+            Message.objects.create(chat=chat, sender=user, content=initial_message, product=product)
+            success_messages.append(format_html(
+                        'Mensaje enviado correctamente. Puedes acceder a la conversación a través de tus <a href="{}">chats activos</a>.',
+                        reverse('community:all_chats')
+                    ))
+            return render(request, 'market/product_details.html', {
+                'product': product,
+                'success_messages': success_messages,
+            })
+
+        else:
+            # Crear una nueva solicitud de chat si no existe un chat previo
+            ChatRequest.objects.create(sender=user, receiver=owner, initial_message=initial_message, product=product)
+            success_messages.append(format_html(
+                        'Se ha enviado una solicitud de chat al vendedor. Consulta su estado accediendo a la pestaña de "Solicitudes enviadas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
+                        reverse('community:chat_requests')
+                    ))
+            return render(request, 'market/product_details.html', {
+                'product': product,
+                'success_messages': success_messages,
+            })
+        
+    return redirect('market:product_details', product_id=product.id)
+
+def book_product(request, product_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        product = Product.objects.get(id=product_id)
+        if product.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+    product.status = 'booked'
+    product.save()
+    return redirect('my_profile')
+
+def unbook_product(request, product_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        product = Product.objects.get(id=product_id)
+        if product.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Product.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+    product.status = 'on_sale'
+    product.save()
+    return redirect('my_profile')
+
+def sell_product(request, product_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+        
+    if request.method == 'POST':
+        buyer_id = request.POST.get('buyer_id')
+        product = get_object_or_404(Product, id=product_id, owner=request.user)
+        buyer = get_object_or_404(settings.AUTH_USER_MODEL, id=buyer_id)
+
+        product.status = 'sold'
+        product.buyer = buyer
+        product.save()
+        return redirect('my_profile')
+            
+    else:
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+
+def book_renting(request, renting_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        renting = Rental.objects.get(id=renting_id)
+        if renting.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+    renting.status = 'booked'
+    renting.save()
+    return redirect('market:my_market_profile')
+
+def sell_renting(request, renting_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    try:
+        renting = Rental.objects.get(id=renting_id)
+        if renting.owner != request.user:
+            # Si el producto no pertenece al usuario logueado, redirigir a la página de error
+            return render(request, 'edit_your_ads_only.html', {
+                'complete_profile_alerts': complete_profile_alerts,
+                'pending_requests_count':pending_requests_count,
+            })
+    except Rental.DoesNotExist:
+        # Si el producto no existe, redirigir a una página de error o manejar de forma similar
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })
+    renting.status = 'sold'
+    renting.save()
+    return redirect('market:my_market_profile')

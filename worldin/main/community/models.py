@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from main.market.models import Product
 
 # Modelo para el Chat
 class Chat(models.Model):
@@ -19,6 +20,7 @@ class ChatRequest(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='chat_requests_sent', on_delete=models.CASCADE)
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='chat_requests_received', on_delete=models.CASCADE)
     initial_message = models.TextField(blank=False)
+    product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL, related_name='chatrequests')
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=10,
@@ -37,8 +39,8 @@ class Message(models.Model):
     chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
+    product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL, related_name='messages')
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Message from {self.sender.username} at {self.timestamp}"
-

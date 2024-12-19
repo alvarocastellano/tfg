@@ -104,10 +104,18 @@ def create_private_chat(request):
 @login_required
 def accept_chat_request(request, request_id):
     chat_request = get_object_or_404(ChatRequest, id=request_id, receiver=request.user)
+    message = ""
     if chat_request.status == 'pending':
-        Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=chat_request.initial_message)
-        chat_request.status = 'accepted'
-        chat_request.save()
+        if chat_request.product:
+            initial = "He abierto este chat para hablar sobre el producto"
+            chat = Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=initial)
+            message = Message.objects.create(chat=chat, sender=chat_request.sender, content=chat_request.initial_message, product=chat_request.product)
+            chat_request.status = 'accepted'
+            chat_request.save()
+        else:
+            Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=chat_request.initial_message)
+            chat_request.status = 'accepted'
+            chat_request.save()
     return redirect('community:chat_requests')
 
 @login_required

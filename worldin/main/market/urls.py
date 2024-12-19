@@ -9,6 +9,7 @@ urlpatterns = [
     path('my_market_profile/ratings', views.my_market_ratings, name='my_market_ratings'),
     path('my_market_profile/add_product', views.add_product, name='add_product'),
     path('product_details/<int:product_id>/', views.product_details, name='product_details'),
+    path('product/<int:product_id>/send_message/', views.send_message, name='send_message'),
     path('delete_product/<int:product_id>/', views.delete_product, name='delete_product'),
     path('edit_product/<int:product_id>/', views.edit_product, name='edit_product'),
     path('delete_image/<int:product_id>/<int:image_id>/', views.delete_product_image, name='delete_product_image'),
@@ -28,5 +29,8 @@ urlpatterns = [
     path('payment-cancel/', views.payment_cancel, name='payment_cancel'),
     path('update_product_highlight_status/', views.update_product_highlight_status, name='update_product_highlight_status'),
     path('update_renting_highlight_status/', views.update_renting_highlight_status, name='update_renting_highlight_status'),
+    path('book-product/<int:product_id>/', views.book_product, name='book_product'),
+    path('unbook-product/<int:product_id>/', views.unbook_product, name='unbook_product'),
+    path('sell-product/<int:product_id>/', views.sell_product, name='sell_product'),
 
 ]

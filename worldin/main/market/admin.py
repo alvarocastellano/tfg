@@ -4,7 +4,7 @@ from .models import Product, ProductImage, Rental, RentalImage, RentalFeature
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('id', 'owner', 'title', 'description', 'price', 'city_associated')  # Personaliza los campos que quieras ver en el listado.
+    list_display = ('id', 'owner', 'title', 'description', 'price', 'city_associated', 'status', 'buyer')  # Personaliza los campos que quieras ver en el listado.
     search_fields = ('id', 'title', 'owner')  # Campos para búsqueda.
 
 @admin.register(ProductImage)
