@@ -36,6 +36,7 @@ urlpatterns = [
     path('reject_follow_request/<int:request_id>/', views.reject_follow_request, name='reject_follow_request'),
     path('update-city/', views.update_city, name='update_city'),
     path('marketplace/', include('main.market.urls', namespace='market')),
+    path('community/', include('main.community.urls', namespace='community')),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

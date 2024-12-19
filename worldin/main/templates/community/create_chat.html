@@ -1,0 +1,217 @@
+{% extends "main/sidebar.html" %}
+
+{% block title %}Crear chat privado{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+            overflow-x:hidden;
+        }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%; /* Ocupar el máximo ancho disponible */
+            padding: 0; /* Sin padding para que ocupe todo el ancho */
+        }
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+        .search-users-container {
+            background-color:rgb(241, 241, 241); /* Color de fondo para la lista de chats */
+            height: 100%; /* Ajustar altura para toda la pantalla */
+            padding: 15px;
+            overflow-y: auto; /* Scroll si el contenido excede el tamaño */
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            height: 100%; /* Ocupa toda la altura disponible */
+        }
+    
+        .notification-bubble {
+            background-color: #6a4fb8;
+            color: white;
+            border-radius: 30px;
+            font-size: 16px;
+            padding: 20px 20px;
+            margin: 0;
+            width: auto;
+            display: inline-block;
+        }
+    
+        /* Estilo del área de mensaje (textarea) */
+        .form-control {
+            border-radius: 20px;
+            border: 2px solid #6a4fb8;
+            padding: 15px;
+            font-size: 16px;
+            resize: none;
+        }
+    
+        /* Estilo del botón de envío */
+        button.btn {
+            background-color: #6a4fb8;
+            border-color: #6a4fb8;
+            color: white;
+            font-size: 20px;
+            border-radius: 20px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    
+        button.btn i {
+            font-size: 24px;
+        }
+
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .selected {
+            background-color:rgb(27, 17, 119) !important;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container profile-container">
+        <div class="profile-top d-flex justify-content-between align-items-center">
+            <div>
+                <button onclick="goBack()" class="btn btn-secondary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
+                    <h3 style="font-size:12px;">Volver</h3>
+                </button>
+            </div>
+
+            <div class="text-center">
+                <h1><strong>Nuevo chat privado</strong></h1>
+            </div>            
+        </div>
+        
+        <div class="row" style="height: 100vh;">
+            <!-- Buscador de usuarios -->
+            <div class="col-md-4 search-users-container">
+                <form method="GET">
+                    <input type="text" name="q" placeholder="Buscar por nombre de usuario" style="height:45px; width: 300px; border: 2px solid #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8; border-radius: 20px;" class="mt-5">
+                    <button type="submit" style="background-color: #6a4fb8; color: white; border: none; border-radius: 20px; padding: 10px 20px; cursor: pointer;">Buscar</button>
+                </form>
+
+                <ul class="list-group d-block mt-5">
+                    {% if users|length == 0 and request.GET.q %}
+                        <li class="list-group-item">
+                            <div style="text-align: center;">
+                                <p style="display: inline;">No se encuentran usuarios para esta búsqueda.</p>
+                                <a style="display: inline; text-decoration: underline;" href="{% url 'community:create_private_chat' %}">Reestablecer búsqueda</a>
+                            </div>
+                        </li>
+                    {% endif %}
+                    {% for user in users %}
+                        <li class="list-group-item">
+                            <div class="user-info">
+                                {% if user.username == request.user.username %}
+                                    <a href="{% url 'my_profile' %}">
+                                {% else %}
+                                    <a href="{% url 'other_user_profile' user.username %}">
+                                {% endif %}
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                                    {% else %}
+                                        <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                                    {% endif %}
+                                    <div class="usuario-y-nombre mt-2">
+                                        <p style="font-size: 20px;"><strong>@{{ user.username }}</strong></p>
+                                        <p style="font-size: 16px;">{{ user.first_name }} {{ user.last_name }}</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="action-buttons d-none d-md-block">
+                                <form method="POST" id="user-{{ user.id }}-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="selected_user" value="{{ user.id }}">
+                                    <button type="button" class="btn btn-primary select-user-btn" style="background-color:#786dce; color:white; border-color:white; font-size:20px;" onclick="selectUser({{ user.id }})">
+                                        SELECCIONAR
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                        <hr class="dropdown-divider">
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="col-md-8 chat-container">
+                <h4 class="notification-bubble text-center mb-4">
+                    Manda un primer mensaje y espera a que el otro usuario acepte o rechace tu solicitud
+                </h4>
+                {% if error_messages %}
+                    <div class="alert alert-danger" style="font-size:18px;" role="alert">
+                    {% for message in error_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                <form method="POST" action="{% url 'community:create_private_chat' %}" class="d-flex align-items-center b-0 w-80">
+                    {% csrf_token %}
+                    <input type="hidden" name="selected_user" id="selected_user_input">
+                    <div class="form-group mb-0 mr-2 flex-grow-1">
+                        <label for="initial_message" class="visually-hidden">Mensaje inicial:</label>
+                        <textarea name="initial_message" id="initial_message" rows="1" class="form-control" placeholder="Escribe un mensaje para iniciar la conversación..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-0">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        function selectUser(userId) {
+            // Actualiza el campo oculto con el id del usuario seleccionado
+            document.getElementById('selected_user_input').value = userId;
+            
+            // Resalta el botón de selección
+            var buttons = document.querySelectorAll('.select-user-btn');
+            buttons.forEach(function(button) {
+                button.classList.remove('selected');
+            });
+
+            var selectedButton = document.querySelector('#user-' + userId + '-form button');
+            selectedButton.classList.add('selected');
+        }
+    </script>
+
+</body>
+{% endblock %}
