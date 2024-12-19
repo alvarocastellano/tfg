@@ -105,9 +105,9 @@
     <div class="container profile-container">
         <div class="profile-top d-flex justify-content-between align-items-center">
             <div>
-                <button onclick="goBack()" class="btn btn-secondary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
+                <a href="{% url 'community:all_chats' %}" class="btn btn-secondary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
                     <h3 style="font-size:12px;">Volver</h3>
-                </button>
+                </a>
             </div>
 
             <div class="text-center">
@@ -194,9 +194,6 @@
     </div>
 
     <script>
-        function goBack() {
-            window.history.back();
-        }
 
         function selectUser(userId) {
             // Actualiza el campo oculto con el id del usuario seleccionado

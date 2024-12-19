@@ -35,6 +35,12 @@ def create_private_chat(request):
         if not selected_user_id:
             error_messages.append('Selecciona a un usuario para poder iniciar un chat')
             return render(request, 'community/create_chat.html', {'users': users, 'error_messages': error_messages})
+        
+        initial_message = request.POST.get('initial_message', '')
+        if initial_message == '':
+            error_messages.append('Escribe un mensaje inicial para la solicitud de chat')
+            return render(request, 'community/create_chat.html', {'users': users, 'error_messages': error_messages})
+        
         else:
             initial_message = request.POST.get('initial_message', '')
 
@@ -99,7 +105,7 @@ def create_private_chat(request):
 def accept_chat_request(request, request_id):
     chat_request = get_object_or_404(ChatRequest, id=request_id, receiver=request.user)
     if chat_request.status == 'pending':
-        Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver)
+        Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=chat_request.initial_message)
         chat_request.status = 'accepted'
         chat_request.save()
     return redirect('community:chat_requests')
