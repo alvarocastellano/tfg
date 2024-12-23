@@ -235,7 +235,7 @@
                 </ul>
             </div>
 
-            <!-- Imagen centrada (70%) -->
+            <!-- Mensajes (70%) -->
             <div class="col-md-8 network-container">
                     {% if messages.count == 0 and chat.initial_message == '' %}
                         <div class="alert alert-info text-center" role="alert">
@@ -249,7 +249,11 @@
                             <span>{{ chat.created_at|date:"H:i, d M Y" }}</span>
                         </div>
                         {% for message in messages %}
-                            {% if message.product %}
+                            {% if message.is_system_message %}
+                                <em class="text-center"><strong>{{ message.content }}</strong></em>
+                                <br>
+                            {% endif %}
+                            {% if message.product and not message.is_system_message %}
                             <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
                                 <div class="card" style="width: 18rem;">
                                     <div class="card-title"> A @{{ message.sender.username}} le interesa el siguiente producto:</div>
@@ -261,11 +265,25 @@
                                 <p>{{ message.content }}</p>
                                 <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
                             </div>
-                            {% else %}
-                                <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
-                                    <p>{{ message.content }}</p>
-                                    <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
+                            {% elif message.renting and not message.is_system_message %}
+                            <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
+                                <div class="card" style="width: 18rem;">
+                                    <div class="card-title"> A @{{ message.sender.username}} le interesa el siguiente alquiler:</div>
+                                    <img class="card-img-top" src="{{ message.renting.images.first.image.url }}" alt="Imagen del anuncio de alquiler">
+                                    <div class="card-body">
+                                    <h5 class="card-title">{{ message.renting.title }}</h5>
+                                    </div>
                                 </div>
+                                <p>{{ message.content }}</p>
+                                <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
+                            </div>
+                            {% else %}
+                                {% if not message.is_system_message %}
+                                    <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
+                                        <p>{{ message.content }}</p>
+                                        <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
+                                    </div>
+                                {% endif %}
                             {% endif %}
                         {% endfor %}
                     </div>

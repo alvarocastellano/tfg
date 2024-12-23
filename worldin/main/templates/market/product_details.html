@@ -212,25 +212,25 @@
                     <!-- Modal para mensaje -->
                     <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
                         <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                            <h5 class="modal-title" id="contactModalLabel">Enviar mensaje a @{{ product.owner.username }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form method="POST" action="{% url 'market:send_message' product.id %}">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <div class="form-group">
-                                <textarea name="initial_message" class="form-control" rows="4" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                <h5 class="modal-title" id="contactModalLabel">Enviar mensaje a @{{ product.owner.username }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
+                                <form method="POST" action="{% url 'market:send_message' product.id %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                    <textarea name="initial_message" class="form-control" rows="4" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">Enviar</button>
+                                </div>
+                                </form>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Enviar</button>
-                            </div>
-                            </form>
                         </div>
-                    </div>
                     </div>
                     {% if product.owner.id != request.user.id %}
                         <a href="#" class="btn btn-primary contact-button" data-bs-toggle="modal" data-bs-target="#contactModal">

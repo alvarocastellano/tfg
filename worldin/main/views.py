@@ -287,7 +287,7 @@ def profile(request):
 
 
     # Contadores
-    announce_count = len(user_products) + len(user_rentings)
+    announce_count = len([product for product in user_products if product.status != 'sold']) + len([renting for renting in user_rentings if renting.status != 'sold'])
 
     # Filtrado según el parámetro 'filter'
     if filter_option == 'articulos':

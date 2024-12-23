@@ -241,19 +241,19 @@
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Ventas</h5>
-                    <p>{% if sell_count == 0 %} 0 {%else%}{{ sell_count }} {% endif %}</p>
+                    <p>{% if sold_count == 0 %} 0 {%else%}{{ sold_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Compras</h5>
-                    <p>{% if buy_count == 0 %} 0 {%else%}{{ buy_count }} {% endif %}</p>
+                    <p>{% if bought_count == 0 %} 0 {%else%}{{ bought_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Valoraciones</h5>
-                    <p>{% if rating_count == 0 %} 0 {%else%}{{ rating_count }} {% endif %}</p>
+                    <p>{% if ratings_count == 0 %} 0 {%else%}{{ ratings_count }} {% endif %}</p>
                 </a>
             </div>
         </div>
@@ -270,22 +270,50 @@
                     <i class="bi bi-geo-fill"></i>{{profile_user.city}}
                 </h3>
                 <p>
-                    {% if average_rating and rating_count > 0 %}
-                        Valoración media: {{ average_rating }} 
-                        <span>
-                            {% for i in range_of_stars %}
-                                {% if i < average_rating %}
-                                    <i class="bi bi-star-fill"></i>  <!-- Estrella llena -->
-                                {% elif i >= adjusted_rating %}
-                                    <i class="bi bi-star-half"></i>  <!-- Estrella media -->
-                                {% else %}
-                                    <i class="bi bi-star"></i>  <!-- Estrella vacía -->
-                                {% endif %}
-                            {% endfor %}
-                        </span>
-                    {% else %}
-                        Valoración media: 0 <i class="bi bi-star"></i> (Sin valoraciones)
-                    {% endif %}
+                    Valoración media: {{ average_rating }}
+                {% if average_rating >= 0 and average_rating < 0.5 %}
+                    <span class="bi bi-star" style="color: #f0b800;"></span>
+                {% elif average_rating >= 0.5 and average_rating < 1 %}
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 1 and average_rating < 1.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 1.5 and average_rating < 2 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 2 and average_rating < 2.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 2.5 and average_rating < 3 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 3 and average_rating < 3.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 3.5 and average_rating < 4 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 4 and average_rating < 4.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 4.5 and average_rating < 5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating == 5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% endif %}
                 </p>
                 {% endif %}
                 <p>
@@ -297,7 +325,7 @@
                 </div>
                 <div class="separator"></div>
                 <div class="text-center mx-2">
-                    <a href="#" class="btn-ratings-link">VALORACIONES</a>
+                    <a href="{% url 'market:other_user_ratings' profile_user.username %}" class="btn-ratings-link">VALORACIONES</a>
                 </div>            
             </div>
 
@@ -322,25 +350,27 @@
                         {% else %}
                             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
                                 {% for product in user_products %}
-                                    <div class="col">
-                                        <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                            {% if product.highlighted %}
-                                                <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
-                                                    PRODUCTO DESTACADO 
+                                    {% if product.status == 'on_sale' or product.status == 'booked' %}
+                                        <div class="col">
+                                            <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                                {% if product.highlighted %}
+                                                    <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                        PRODUCTO DESTACADO 
+                                                    </div>
+                                                {% endif %}
+                                                <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                                <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                    <h5 class="card-title">{{ product.title }}</h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
+                                                    <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
+                                                    <p class="card-text text-truncate">{{ product.description }}</p>
                                                 </div>
-                                            {% endif %}
-                                            <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                                <h5 class="card-title">{{ product.title }}</h5>
-                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
-                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
-                                                <p class="card-text text-truncate">{{ product.description }}</p>
-                                            </div>
-                                            <div class="card-footer justify-content-center">
-                                                <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                <div class="card-footer justify-content-center">
+                                                    <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>   
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                         {% endif %}

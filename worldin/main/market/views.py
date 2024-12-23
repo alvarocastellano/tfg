@@ -3,7 +3,7 @@ from django.shortcuts import  render
 from .forms import  ProductForm, RentalForm, ProductImageFormSet, RentalImageFormSet
 from django.shortcuts import  render, redirect, get_object_or_404, reverse
 from main.models import CustomUser, Follow, FollowRequest
-from .models import Product, Rental, ProductImage, RentalImage, RentalFeature
+from .models import Product, Rental, ProductImage, RentalImage, RentalFeature, Rating
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from main.views import alertas_completar_perfil, city_data, valid_cities
 from main.community.models import Chat, Message, ChatRequest
 from django.utils.html import format_html
+from django.contrib.auth import get_user_model
 
 
 def moneda_oficial(request):
@@ -126,13 +127,6 @@ def my_market_profile(request):
     # Parámetro para filtrar productos
     filter_option = request.GET.get('filter', 'articulos')  # Por defecto, 'todos'
 
-    if rating_count != 0:
-        average_rating = stars_sum / rating_count
-    else:
-        average_rating = 0.0
-
-    adjusted_rating = average_rating + 0.5
-
     user_products = Product.objects.filter(owner=request.user).annotate(
         highlighted_order=Case(
             When(highlighted=True, then=Value(0)),  # Los destacados primero
@@ -148,8 +142,35 @@ def my_market_profile(request):
             When(highlighted=False, then=Value(1)),  # Los no destacados después
             output_field=BooleanField(),
         )).order_by('highlighted_order', '-highlighted_at', '-created_at')
+    
 
-    announce_count = len(user_products) + len(user_rentings)
+
+    items_bought = list(Product.objects.filter(buyer=request.user)) + list(Rental.objects.filter(buyer=request.user))
+
+    announce_count = len([product for product in user_products if product.status != 'sold']) + len([renting for renting in user_rentings if renting.status != 'sold'])
+
+    total_announces = len(user_products) + len(user_rentings)
+
+    sold_count = len([product for product in user_products if product.status == 'sold']) + len([renting for renting in user_rentings if renting.status == 'sold'])
+
+    bought_count = len(items_bought)
+
+    rated_announces = list(Product.objects.filter(owner=request.user, product_rating__isnull=False)) + list(Rental.objects.filter(owner=request.user, renting_rating__isnull=False))
+
+    ratings_count = len(rated_announces)
+
+    ratings_sum = 0
+    for rating in rated_announces:
+        if isinstance(rating, Product) and rating.product_rating:
+            ratings_sum += rating.product_rating.rating
+        elif isinstance(rating, Rental) and rating.renting_rating:
+            ratings_sum += rating.renting_rating.rating
+
+
+    if ratings_count != 0:
+        average_rating = ratings_sum / ratings_count
+    else:
+        average_rating = 0.0
 
     # Filtrado según el parámetro 'filter'
     if filter_option == 'articulos':
@@ -157,8 +178,85 @@ def my_market_profile(request):
     elif filter_option == 'alquileres':
         user_products = []  # Solo mostrar alquileres
 
-    # Contadores
-    
+    context = {
+        
+        'user_products': user_products,
+        'user_rentings': user_rentings,
+        'announce_count': announce_count,
+        'rating_count': rating_count,
+        'sell_count': sell_count,
+        'buy_count': buy_count,
+        'average_rating': average_rating,
+        'range_of_stars': range_of_stars,
+        'complete_profile_alerts' : complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'total_alerts': total_alerts,
+        'sold_count': sold_count,
+        'bought_count': bought_count,
+        'filter_option': filter_option,
+        'items_bought': items_bought,
+        'rated_announces': rated_announces,
+        'ratings_count': ratings_count,
+        'average_rating': average_rating,
+        'total_announces': total_announces,
+    }
+    return render(request, 'my_market_profile.html', context)
+
+
+def my_market_ratings(request):
+    announce_count = 0
+    rating_count = 0
+    sell_count = 0
+    buy_count = 0
+    stars_sum = 0
+    total_alerts = 0
+    range_of_stars = [i for i in range(5)]
+    user = request.user
+    success_messages = []
+
+    complete_profile_alerts = 0    
+    if user.birthday is None:
+        complete_profile_alerts += 1
+    if user.city == "":
+        complete_profile_alerts += 1
+    if user.description == "":
+        complete_profile_alerts += 1
+    if user.profile_picture == "":
+        complete_profile_alerts += 1
+    if len(user.aficiones.all()) == 0:
+        complete_profile_alerts += 1
+
+    pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+
+    total_alerts = pending_requests_count + complete_profile_alerts
+
+    user_products = Product.objects.filter(owner=request.user)
+    user_rentings = Rental.objects.filter(owner=request.user)
+
+    items_bought = list(Product.objects.filter(buyer=request.user)) + list(Rental.objects.filter(buyer=request.user))
+
+    announce_count = len([product for product in user_products if product.status != 'sold']) + len([renting for renting in user_rentings if renting.status != 'sold'])
+
+    sold_count = len([product for product in user_products if product.status == 'sold']) + len([renting for renting in user_rentings if renting.status == 'sold'])
+
+    bought_count = len(items_bought)
+
+    rated_announces = list(Product.objects.filter(owner=request.user, product_rating__isnull=False)) + list(Rental.objects.filter(owner=request.user, renting_rating__isnull=False))
+
+    ratings_count = len(rated_announces)
+
+    ratings_sum = 0
+    for rating in rated_announces:
+        if isinstance(rating, Product) and rating.product_rating:
+            ratings_sum += rating.product_rating.rating
+        elif isinstance(rating, Rental) and rating.renting_rating:
+            ratings_sum += rating.renting_rating.rating
+
+
+    if ratings_count != 0:
+        average_rating = ratings_sum / ratings_count
+    else:
+        average_rating = 0.0
 
     context = {
         'user_products': user_products,
@@ -169,17 +267,128 @@ def my_market_profile(request):
         'buy_count': buy_count,
         'average_rating': average_rating,
         'range_of_stars': range_of_stars,
-        'adjusted_rating': adjusted_rating,
-        'filter_option': filter_option,
         'complete_profile_alerts' : complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'total_alerts': total_alerts,
+        'sold_count': sold_count,
+        'bought_count': bought_count,
+        'items_bought': items_bought,
+        'success_messages': success_messages,
+        'rated_announces': rated_announces,
+        'ratings_count': ratings_count,
+        'average_rating': average_rating,
     }
-    return render(request, 'my_market_profile.html', context)
+
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        item_type = request.POST.get('item_type')
+        rating = int(request.POST.get('rating'))
+        comment = request.POST.get('comment')
+
+        if item_type == 'product':
+            product = Product.objects.get(id=item_id)
+            Rating.objects.create(user=request.user, product=product, rating=rating, comment=comment)
+        elif item_type == 'renting':
+            renting = Rental.objects.get(id=item_id)
+            Rating.objects.create(user=request.user, renting=renting, rating=rating, comment=comment)
+
+        success_messages.append('Valoración guardada con éxito.')
+        return render(request, 'my_market_ratings.html', context)
+    
+    return render(request, 'my_market_ratings.html', context)
+
+@login_required
+def other_user_ratings(request, username):
+    
+    announce_count = 0
+    rating_count = 0
+    sell_count = 0
+    buy_count = 0
+    total_alerts = 0
+    range_of_stars = [i for i in range(5)]
+    user = request.user
+    success_messages = []
+
+    complete_profile_alerts = 0    
+    if user.birthday is None:
+        complete_profile_alerts += 1
+    if user.city == "":
+        complete_profile_alerts += 1
+    if user.description == "":
+        complete_profile_alerts += 1
+    if user.profile_picture == "":
+        complete_profile_alerts += 1
+    if len(user.aficiones.all()) == 0:
+        complete_profile_alerts += 1
+
+    pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+
+    total_alerts = pending_requests_count + complete_profile_alerts
+
+    try:
+        # Intentar obtener el usuario
+        profile_user = CustomUser.objects.get(username=username)
+        if profile_user == request.user:
+            return redirect('market:my_market_profile')
+    except CustomUser.DoesNotExist:
+        # Si no existe, redirigir a la página de error
+        return render(request, 'user_not_found.html', {
+            'pending_requests_count': pending_requests_count,
+            'complete_profile_alerts': complete_profile_alerts,
+        })
+
+    user_products = Product.objects.filter(owner=profile_user)
+    user_rentings = Rental.objects.filter(owner=profile_user)
+
+    items_bought = list(Product.objects.filter(buyer=profile_user)) + list(Rental.objects.filter(buyer=profile_user))
+
+    announce_count = len([product for product in user_products if product.status != 'sold']) + len([renting for renting in user_rentings if renting.status != 'sold'])
+
+    sold_count = len([product for product in user_products if product.status == 'sold']) + len([renting for renting in user_rentings if renting.status == 'sold'])
+
+    bought_count = len(items_bought)
+
+    rated_announces = list(Product.objects.filter(owner=profile_user, product_rating__isnull=False)) + list(Rental.objects.filter(owner=profile_user, renting_rating__isnull=False))
+
+    ratings_count = len(rated_announces)
+
+    ratings_sum = 0
+    for rating in rated_announces:
+        if isinstance(rating, Product) and rating.product_rating:
+            ratings_sum += rating.product_rating.rating
+        elif isinstance(rating, Rental) and rating.renting_rating:
+            ratings_sum += rating.renting_rating.rating
 
 
-def my_market_ratings(request):
-    return render(request, 'my_market_ratings.html')
+    if ratings_count != 0:
+        average_rating = ratings_sum / ratings_count
+    else:
+        average_rating = 0.0
+
+    context = {
+        'user_products': user_products,
+        'user_rentings': user_rentings,
+        'announce_count': announce_count,
+        'rating_count': rating_count,
+        'sell_count': sell_count,
+        'buy_count': buy_count,
+        'average_rating': average_rating,
+        'range_of_stars': range_of_stars,
+        'complete_profile_alerts' : complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'total_alerts': total_alerts,
+        'sold_count': sold_count,
+        'bought_count': bought_count,
+        'items_bought': items_bought,
+        'success_messages': success_messages,
+        'rated_announces': rated_announces,
+        'ratings_count': ratings_count,
+        'average_rating': average_rating,
+        'profile_user': profile_user,
+    }
+
+    
+    return render(request, 'other_user_ratings.html', context)
 
 
 @login_required
@@ -678,9 +887,6 @@ def market_profile_other_user(request, username):
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
     announce_count = 0
-    
-
-    filter_option = request.GET.get('filter', 'articulos')
 
     user_products = Product.objects.filter(owner=profile_user).annotate(
         highlighted_order=Case(
@@ -698,8 +904,34 @@ def market_profile_other_user(request, username):
             output_field=BooleanField(),
         )).order_by('highlighted_order', '-highlighted_at', '-created_at')
 
-    # Contadores
-    announce_count = len(user_products) + len(user_rentings)
+    items_bought = list(Product.objects.filter(buyer=profile_user)) + list(Rental.objects.filter(buyer=profile_user))
+
+    announce_count = len([product for product in user_products if product.status != 'sold']) + len([renting for renting in user_rentings if renting.status != 'sold'])
+
+    sold_count = len([product for product in user_products if product.status == 'sold']) + len([renting for renting in user_rentings if renting.status == 'sold'])
+
+    bought_count = len(items_bought)
+
+    rated_announces = list(Product.objects.filter(owner=profile_user, product_rating__isnull=False)) + list(Rental.objects.filter(owner=profile_user, renting_rating__isnull=False))
+
+    ratings_count = len(rated_announces)
+
+    ratings_sum = 0
+    for rating in rated_announces:
+        if isinstance(rating, Product) and rating.product_rating:
+            ratings_sum += rating.product_rating.rating
+        elif isinstance(rating, Rental) and rating.renting_rating:
+            ratings_sum += rating.renting_rating.rating
+
+
+    if ratings_count != 0:
+        average_rating = ratings_sum / ratings_count
+    else:
+        average_rating = 0.0
+
+    filter_option = request.GET.get('filter', 'articulos')
+
+
 
     # Filtrado según el parámetro 'filter'
     if filter_option == 'articulos':
@@ -729,6 +961,12 @@ def market_profile_other_user(request, username):
         'rating_count': rating_count,
         'pending_requests_count': pending_requests_count,
         'complete_profile_alerts': complete_profile_alerts,
+        'average_rating': average_rating,
+        'sold_count': sold_count,
+        'bought_count': bought_count,
+        'items_bought': items_bought,
+        'rated_announces': rated_announces,
+        'ratings_count': ratings_count,
     }
     
     return render(request, 'market_profile_other_user.html', context)
@@ -1366,6 +1604,7 @@ def send_message(request, product_id):
                 })
             else:
                 Message.objects.create(chat=chat, sender=user, content=initial_message, product=product)
+                chat.products.add(product)
                 success_messages.append(format_html(
                         'Mensaje enviado correctamente. Puedes acceder a la conversación en tus <a href="{}">chats activos</a>.',
                         reverse('community:all_chats')
@@ -1397,6 +1636,7 @@ def send_message(request, product_id):
         elif follow_mutually and not Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).exists():
             #Si ambos se siguen mutuamente pero no había chat previo
             chat = Chat.objects.create(user1=user, user2=owner, initial_message="He iniciado este chat para preguntarte por producto")
+            chat.products.add(product)
             Message.objects.create(chat=chat, sender=user, content=initial_message, product=product)
             success_messages.append(format_html(
                         'Mensaje enviado correctamente. Puedes acceder a la conversación a través de tus <a href="{}">chats activos</a>.',
@@ -1421,6 +1661,96 @@ def send_message(request, product_id):
         
     return redirect('market:product_details', product_id=product.id)
 
+@login_required
+def send_message_renting(request, renting_id):
+    rental = get_object_or_404(Rental, id=renting_id)
+    owner = rental.owner
+    user = request.user
+    error_messages = []
+    success_messages = []
+
+    follow_mutually = Follow.objects.filter(
+                follower=user, following=owner
+            ).exists() and Follow.objects.filter(
+                follower=owner, following=user
+            ).exists()
+
+    if request.method == 'POST':
+        initial_message = request.POST.get('initial_message')
+
+        if Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).exists():
+            # Si ya existe un chat con el mismo anuncio mencionado
+            chat = Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).first()
+            if chat.messages.filter(renting=rental).exists():
+                error_messages.append(
+                    format_html(
+                        'Ya has enviado un mensaje a este usuario interesándote por el anuncio. Consulta la conversación en tus <a href="{}">chats activos</a>.',
+                        reverse('community:all_chats')
+                    )
+                )
+                return render(request, 'renting_details.html', {
+                    'rental': rental,
+                    'error_messages': error_messages,
+                })
+            else:
+                Message.objects.create(chat=chat, sender=user, content=initial_message, renting=rental)
+                chat.rentings.add(rental)
+                success_messages.append(format_html(
+                        'Mensaje enviado correctamente. Puedes acceder a la conversación en tus <a href="{}">chats activos</a>.',
+                        reverse('community:all_chats')
+                    ))
+                return render(request, 'renting_details.html', {
+                    'rental': rental,
+                    'success_messages': success_messages,
+                })
+        elif ChatRequest.objects.filter(Q(sender=user, receiver=owner, renting=rental)).exists():
+            # Si ya hay una solicitud de chat enviada
+            error_messages.append(format_html(
+                        'Ya has enviado una solicitud a este usuario preguntando por este anuncio. Consulta su estado accediendo a la pestaña de "Solicitudes enviadas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
+                        reverse('community:chat_requests')
+                    ))
+            return render(request, 'renting_details.html', {
+                'rental': rental,
+                'error_messages': error_messages,
+            })
+        elif ChatRequest.objects.filter(Q(sender=owner, receiver=user, status='pending')).exists() or ChatRequest.objects.filter(Q(sender=user, receiver=owner, status='pending')).exists():
+            # Si ya hay una solicitud de chat pendiente
+            error_messages.append(format_html(
+                        'Ya hay una solicitud de chat pendiente con este usuario. Consulta su estado accediendo a la pestaña de "Solicitudes recibidas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
+                        reverse('community:chat_requests')
+                    ))
+            return render(request, 'renting_details.html', {
+                'rental': rental,
+                'error_messages': error_messages,
+            })
+        elif follow_mutually and not Chat.objects.filter(Q(user1=user, user2=owner) | Q(user1=owner, user2=user)).exists():
+            #Si ambos se siguen mutuamente pero no había chat previo
+            chat = Chat.objects.create(user1=user, user2=owner, initial_message="He iniciado este chat para preguntarte por un anuncio")
+            chat.rentings.add(rental)
+            Message.objects.create(chat=chat, sender=user, content=initial_message, renting=rental)
+            success_messages.append(format_html(
+                        'Mensaje enviado correctamente. Puedes acceder a la conversación a través de tus <a href="{}">chats activos</a>.',
+                        reverse('community:all_chats')
+                    ))
+            return render(request, 'renting_details.html', {
+                'rental': rental,
+                'success_messages': success_messages,
+            })
+
+        else:
+            # Crear una nueva solicitud de chat si no existe un chat previo
+            ChatRequest.objects.create(sender=user, receiver=owner, initial_message=initial_message, renting=rental)
+            success_messages.append(format_html(
+                        'Se ha enviado una solicitud de chat al propietario. Consulta su estado accediendo a la pestaña de "Solicitudes enviadas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
+                        reverse('community:chat_requests')
+                    ))
+            return render(request, 'renting_details.html', {
+                'rental': rental,
+                'success_messages': success_messages,
+            })
+        
+    return redirect('market:renting_details', renting_id=rental.id)
+
 def book_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
@@ -1440,6 +1770,17 @@ def book_product(request, product_id):
         })
     product.status = 'booked'
     product.save()
+
+    chat = Chat.objects.filter(products=product).first()
+    if chat:
+        Message.objects.create(
+            chat=chat,
+            sender=request.user,
+            content=f'El producto "{product.title}" ha sido reservado.',
+            product=product,
+            is_system_message=True
+        )
+    
     return redirect('my_profile')
 
 def unbook_product(request, product_id):
@@ -1461,6 +1802,16 @@ def unbook_product(request, product_id):
         })
     product.status = 'on_sale'
     product.save()
+
+    chat = Chat.objects.filter(products=product).first()
+    if chat:
+        Message.objects.create(
+            chat=chat,
+            sender=request.user,
+            content=f'Se ha eliminado la reserva del producto "{product.title}". Vuelve a estar disponible.',
+            product=product,
+            is_system_message=True
+        )
     return redirect('my_profile')
 
 def sell_product(request, product_id):
@@ -1470,11 +1821,24 @@ def sell_product(request, product_id):
     if request.method == 'POST':
         buyer_id = request.POST.get('buyer_id')
         product = get_object_or_404(Product, id=product_id, owner=request.user)
-        buyer = get_object_or_404(settings.AUTH_USER_MODEL, id=buyer_id)
+        
+        User = get_user_model()
+        buyer = get_object_or_404(User, id=buyer_id)
 
         product.status = 'sold'
+        product.highlighted = False
         product.buyer = buyer
         product.save()
+
+        chat = Chat.objects.filter(products=product).first()
+        if chat:
+            Message.objects.create(
+                chat=chat,
+                sender=request.user,
+                content=f'El producto "{product.title}" ha sido vendido.',
+                product=product,
+                is_system_message=True
+            )
         return redirect('my_profile')
             
     else:
@@ -1502,9 +1866,19 @@ def book_renting(request, renting_id):
         })
     renting.status = 'booked'
     renting.save()
-    return redirect('market:my_market_profile')
 
-def sell_renting(request, renting_id):
+    chat = Chat.objects.filter(rentings=renting).first()
+    if chat:
+        Message.objects.create(
+            chat=chat,
+            sender=request.user,
+            content=f'El anuncio de alquiler "{renting.title}" ha sido reservado.',
+            renting=renting,
+            is_system_message=True
+        )
+    return redirect('my_profile')
+
+def unbook_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
@@ -1521,6 +1895,49 @@ def sell_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
         })
-    renting.status = 'sold'
+    renting.status = 'on_sale'
     renting.save()
-    return redirect('market:my_market_profile')
+
+    chat = Chat.objects.filter(rentings=renting).first()
+    if chat:
+        Message.objects.create(
+            chat=chat,
+            sender=request.user,
+            content=f'Se ha eliminado la reserva del anuncio de alquiler "{renting.title}". Vuelve a estar disponible.',
+            renting=renting,
+            is_system_message=True
+        )
+    return redirect('my_profile')
+
+def sell_renting(request, renting_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+        
+    if request.method == 'POST':
+        buyer_id = request.POST.get('renting_buyer_id')
+        rental = get_object_or_404(Rental, id=renting_id, owner=request.user)
+        
+        User = get_user_model()
+        buyer = get_object_or_404(User, id=buyer_id)
+
+        rental.status = 'sold'
+        rental.highlighted = False
+        rental.buyer = buyer
+        rental.save()
+
+        chat = Chat.objects.filter(rentings=rental).first()
+        if chat:
+            Message.objects.create(
+                chat=chat,
+                sender=request.user,
+                content=f'El alquiler "{rental.title}" ha encontrado inquilino(s). Ya no está disponible.',
+                renting=rental,
+                is_system_message=True
+            )
+        return redirect('my_profile')
+            
+    else:
+        return render(request, 'invalid_id.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+        })

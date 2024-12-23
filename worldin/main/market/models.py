@@ -144,3 +144,18 @@ class RentalImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.rental.title}"
+    
+class Rating(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='ratings')
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='product_rating', null=True, blank=True)
+    renting = models.OneToOneField(Rental, on_delete=models.CASCADE, related_name='renting_rating', null=True, blank=True)
+    rating = models.PositiveIntegerField()
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.product:
+            return f"Rating for {self.product.title}"
+        elif self.renting:
+            return f"Rating for {self.renting.title}"
+        return "Rating"

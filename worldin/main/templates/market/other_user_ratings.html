@@ -147,19 +147,19 @@
                 <a href="{% url 'world' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
             </div>
             <div>
-                {% if request.user.profile_picture %}
-                    <img src="{{ request.user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                {% if profile_user.profile_picture %}
+                    <img src="{{ profile_user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                 {% else %}
                     <i class="bi bi-person-circle" style="font-size: 120px; color: #a6a0d6;"></i>
                 {% endif %}
             </div>
             <div class="usuario-y-nombre text-center">
-                <h2>@{{ user.username }}</h2>
-                <p>{{ user.first_name }} {{ user.last_name }}</p>
+                <h2>@{{ profile_user.username }}</h2>
+                <p>{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
-                    <h5>Anuncios activos</h5>
+                    <h5>Anuncios</h5>
                     <p>{% if announce_count == 0 %} 0 {%else%}{{ announce_count }} {% endif %}</p>
                 </a>
             </div>
@@ -181,49 +181,6 @@
                     <p>{% if ratings_count == 0 %} 0 {%else%}{{ ratings_count }} {% endif %}</p>
                 </a>
             </div>
-            <div class="dropdown">
-                <button class="btn dropdown-toggle position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-list" style="color:white; font-size: 2.5em;"></i>
-                    
-                    <!-- Círculo de notificación para solicitudes pendientes -->
-                    {% if total_alerts > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:18px;">
-                            {{ total_alerts }}
-                        </span>
-                    {% endif %}
-                </button>
-                <ul class="dropdown-menu">
-                    <li>
-                        <a class="dropdown-item" href="{% url 'edit_profile' %}">
-                            Editar perfil
-                            {% if complete_profile_alerts > 0 %}
-                                <span class="badge bg-danger ms-2">{{ complete_profile_alerts }}</span>
-                            {% endif %}
-                        </a></li> 
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'profile_settings' %}">Configuración</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    
-                    <!-- Opción de solicitudes de seguimiento si la cuenta es privada -->
-                    {% if request.user.account_visibility == 'private' %}
-                        <li><a class="dropdown-item" href="{% url 'follow_requests' %}">
-                            Solicitudes de seguimiento
-                            {% if pending_requests_count > 0 %}
-                                <span class="badge bg-danger ms-2">{{ pending_requests_count }}</span>
-                            {% endif %}
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                    {% endif %}
-                    
-                    <li>
-                        <form action="{% url 'logout' %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-            
         </div>
         <!-- Botón debajo de la cabecera -->
         <div class="text-center" style="background-color: #6a4fb8; padding: 10px;">
@@ -233,9 +190,9 @@
         </div>
 
         <div class="profile-section">
-            {% if user.city %}
+            {% if profile_user.city %}
             <h3>
-                <i class="bi bi-geo-fill"></i>{{user.city}}
+                <i class="bi bi-geo-fill"></i>{{profile_user.city}}
             </h3>
             <p>
                 Valoración media: {{ average_rating }}
@@ -291,7 +248,7 @@
 
         <div class="links-section d-flex justify-content-center align-items-center">
             <div class="text-center mx-4">
-                <a href="{% url 'market:my_market_profile' %}" class="btn-products-link">ANUNCIOS ACTIVOS</a>
+                <a href="{% url 'market:market_profile_other_user' profile_user.username %}" class="btn-products-link">ANUNCIOS ACTIVOS</a>
             </div>
             <div class="separator"></div>
             <div class="text-center mx-4">
@@ -424,7 +381,7 @@
                                 
                             </p>
                             <p><strong>Comentario:</strong> {{ item.renting_rating.comment }}</p>
-                            <p><strong>Por:</strong> {{ item.renting_rating.user.username }}</p>
+                            <p><strong>Por:</strong> {{ item.renting_rating.profile_user.username }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -435,35 +392,7 @@
 
         </div>
 
-        <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form method="POST" action="{% url 'market:my_market_ratings' %}">
-                        {% csrf_token %}
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="ratingModalLabel">Valorar Producto/Renting</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" name="item_id" id="modalItemId">
-                            <input type="hidden" name="item_type" id="modalItemType">
-                            <div class="mb-3">
-                                <label for="rating" class="form-label">Valoración (1-5):</label>
-                                <input type="number" min="1" max="5" name="rating" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="comment" class="form-label">Comentario:</label>
-                                <textarea name="comment" class="form-control" rows="3" required></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            <button type="submit" class="btn btn-primary">Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+
     </div>
 
     <!-- Script actualizado para evitar interferencia con el logout -->
@@ -492,23 +421,6 @@
                 .catch(error => console.error('Error:', error));
             };
         });
-    </script>
-    <script>
-        var ratingModal = document.getElementById('ratingModal');
-        ratingModal.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var itemId = button.getAttribute('data-item-id');
-            var itemType = button.getAttribute('data-item-type');
-            document.getElementById('modalItemId').value = itemId;
-            document.getElementById('modalItemType').value = itemType;
-        });
-    </script>
-
-    <script>
-        // Esperar 5 segundos (5000 milisegundos) antes de ocultar el mensaje
-        setTimeout(function() {
-            document.getElementById('success-alert').style.display = 'none';
-        }, 5000);
     </script>
 
 </body>
