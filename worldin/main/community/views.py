@@ -2,10 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
-from .models import Chat, ChatRequest, Message
+from .models import Chat, ChatRequest, GroupChat, GroupChatMember, Message
 from main.models import Follow, CustomUser, FollowRequest
 from main.views import alertas_completar_perfil
 from django.contrib import messages
+from main.views import city_data
 
 @login_required
 def all_chats(request):
@@ -14,10 +15,19 @@ def all_chats(request):
 
     private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
 
+    all_groups_chats = GroupChat.objects.filter(members=request.user)
+
+    all_my_chats = sorted(
+        list(private_chats) + list(all_groups_chats),
+        key=lambda chat: chat.created_at,
+        reverse=True
+    )
+
     return render(request, 'community/all_chats.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
-            'private_chats': private_chats
+            'private_chats': private_chats,
+            'all_my_chats': all_my_chats
         })
 
 @login_required
@@ -150,6 +160,14 @@ def chat_detail(request, username):
 
     private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
 
+    all_groups_chats = GroupChat.objects.filter(members=request.user)
+
+    all_my_chats = sorted(
+        list(private_chats) + list(all_groups_chats),
+        key=lambda chat: chat.created_at,
+        reverse=True
+    )
+
     try:
         chat_user = CustomUser.objects.get(username=username)
     except CustomUser.DoesNotExist:
@@ -173,9 +191,136 @@ def chat_detail(request, username):
         'chat': chat,
         'chat_user': chat_user,
         'private_chats': private_chats,
-        'messages': messages
+        'messages': messages,
+        'all_my_chats': all_my_chats
         } )
 
 
 
 
+def city_group_chat(request, city):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    all_groups_chats = GroupChat.objects.filter(members=request.user)
+
+    all_my_chats = sorted(
+        list(private_chats) + list(all_groups_chats),
+        key=lambda chat: chat.created_at,
+        reverse=True
+    )
+
+    city_info = city_data.get(city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    group_chat = GroupChat.objects.filter(name=city).first()
+
+    if city==request.user.city and request.user not in group_chat.members.all():
+        group_chat.members.add(request.user)
+
+    if not group_chat:
+        group_chat = GroupChat.objects.create(name=city, description=f"Grupo de chat para la ciudad de {city}", image=flag_image)
+
+    # Verifica si el usuario ya está en el grupo
+    group_member, created = GroupChatMember.objects.get_or_create(user=request.user, group_chat=group_chat)
+    
+    # Actualiza el tipo de membresía según la ciudad del usuario
+    if request.user.city == city:
+        group_member.membership_type = 'normal'
+    else:
+        group_member.membership_type = 'external'
+    group_member.save()
+
+    messages = group_chat.group_messages.order_by('timestamp')
+
+    if request.method == "POST":
+        content = request.POST.get("content")
+        if content:
+            Message.objects.create(group_chat=group_chat, sender=request.user, content=content)
+
+    return render(request, "community/group_chat.html", {
+        'complete_profile_alerts': complete_profile_alerts, 
+        'pending_requests_count': pending_requests_count,
+        'all_my_chats': all_my_chats,
+        'group_chat': group_chat,
+        'messages': messages,
+        'country': country,
+        'flag_image': flag_image,
+    })
+
+@login_required
+def create_group_chat(request):
+    query = request.GET.get('q')
+    users = CustomUser.objects.exclude(username=request.user.username)
+    error_messages = []
+    
+    # Filtrar usuarios por nombre si existe un query
+    if query:
+        users = users.filter(username__icontains=query)
+
+    if request.method == 'POST':
+        selected_users = request.POST.get('selected_users', '').split(',')
+        if not selected_users:
+            error_messages.append('Selecciona al menos un usuario para poder iniciar un chat grupal')
+            return render(request, 'community/create_group_chat.html', {'users': users, 'error_messages': error_messages})
+
+        group_name = request.POST.get('group_name', '')
+        if group_name == '':
+            error_messages.append('Escribe un nombre para el grupo')
+            return render(request, 'community/create_group_chat.html', {'users': users, 'error_messages': error_messages})
+        
+        initial_message = request.POST.get('initial_message', '')
+        if initial_message == '':
+            error_messages.append('Escribe un mensaje inicial para el grupo')
+            return render(request, 'community/create_group_chat.html', {'users': users, 'error_messages': error_messages})
+
+        # Create the group chat
+        group_chat = GroupChat.objects.create(name=group_name, description=request.POST.get('group_description', ''), initial_message=initial_message, image=request.FILES.get('group_image', None), is_friends_group = True)
+        group_chat.members.add(request.user)
+        GroupChatMember.objects.filter(user=request.user, group_chat=group_chat).update(membership_type='admin')
+
+        # Add the selected members to the group chat
+        for user_id in selected_users:
+            try:
+                user = CustomUser.objects.get(id=int(user_id))  # Convert the user_id to an integer
+                group_chat.members.add(user)
+                
+            except CustomUser.DoesNotExist:
+                pass  # Handle cases where the user does not exist
+
+        Message.objects.create(group_chat=group_chat, sender=request.user, content=initial_message)
+
+        return redirect('community:all_chats')
+
+    return render(request, 'community/create_group_chat.html', {'users': users, 'error_messages': error_messages})
+
+def group_chat_details(request, name):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    all_groups_chats = GroupChat.objects.filter(members=request.user)
+
+    all_my_chats = sorted(
+        list(private_chats) + list(all_groups_chats),
+        key=lambda chat: chat.created_at,
+        reverse=True
+    )
+
+
+    group_chat = GroupChat.objects.filter(name=name).first()
+    
+    messages = group_chat.group_messages.order_by('timestamp')
+
+    if request.method == "POST":
+        content = request.POST.get("content")
+        if content:
+            Message.objects.create(group_chat=group_chat, sender=request.user, content=content)
+
+    return render(request, "community/group_chat.html", {
+        'complete_profile_alerts': complete_profile_alerts, 
+        'pending_requests_count': pending_requests_count,
+        'all_my_chats': all_my_chats,
+        'group_chat': group_chat,
+        'messages': messages,
+    })

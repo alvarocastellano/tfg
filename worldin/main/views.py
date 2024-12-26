@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
+from main.community.models import GroupChat, GroupChatMember
 from .models import CustomUser, Hobby, Follow, FollowRequest
 from main.market.models import Product, Rental
 from django.views.decorators.cache import never_cache
@@ -436,7 +437,21 @@ def edit_profile(request):
             user.birthday = None
 
         # Actualizar otros datos
-        user.city = request.POST.get('city')
+        city = request.POST.get('city')
+        if city not in valid_cities:
+            error_messages.append("Por favor, selecciona una ciudad válida de la lista.")
+        else:
+            user.city = city
+            group_chat = GroupChat.objects.filter(name=city).first()
+            group_member, created = GroupChatMember.objects.get_or_create(user=user, group_chat=group_chat)
+            
+            if user.city == group_chat.name:
+                group_member.membership_type = 'normal'
+            else:
+                group_member.membership_type = 'external'
+            
+            group_member.save()
+            
         user.description = request.POST.get('description')
 
         # Eliminar foto de perfil

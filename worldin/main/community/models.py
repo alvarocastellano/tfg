@@ -10,12 +10,49 @@ class Chat(models.Model):
     products = models.ManyToManyField(Product, blank=True, related_name='associated_chats')
     rentings = models.ManyToManyField(Rental, blank=True, related_name='rentings_associated_chats')
     created_at = models.DateTimeField(auto_now_add=True)
+    is_group = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user1', 'user2')  # Un chat único entre dos usuarios
 
     def __str__(self):
         return f"Chat between {self.user1.username} and {self.user2.username}"
+
+class GroupChat(models.Model):
+    name = models.CharField(max_length=100, blank=False, null=False)
+    image = models.ImageField(upload_to='group_chat_pictures/', blank=True, null=True)
+    initial_message = models.TextField(blank=True)
+    description = models.TextField(blank=True, null=True)
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through='GroupChatMember',
+        related_name='group_chats',
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_group = models.BooleanField(default=True)
+    is_friends_group = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Group Chat: {self.name}"
+
+
+class GroupChatMember(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    group_chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE)
+    membership_type = models.CharField(
+        max_length=10,
+        choices=[('normal', 'Normal'), ('external', 'Externo'), ('admin', 'Administrador')],
+        default='normal'
+    )
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'group_chat')
+
+    def __str__(self):
+        return f"{self.user.username} in {self.group_chat.name} ({self.membership_type})"
+    
 
 # Modelo para la solicitud de chat
 class ChatRequest(models.Model):
@@ -39,7 +76,8 @@ class ChatRequest(models.Model):
         return f"Chat request from {self.sender.username} to {self.receiver.username}"
     
 class Message(models.Model):
-    chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, null=True, blank=True, related_name='messages', on_delete=models.CASCADE)
+    group_chat = models.ForeignKey(GroupChat, null=True, blank=True, on_delete=models.CASCADE, related_name='group_messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
     product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL, related_name='product_messages')

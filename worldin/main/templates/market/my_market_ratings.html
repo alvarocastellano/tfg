@@ -318,68 +318,67 @@
                 </div>
                 {% endif %}
             {% endfor %}
-            {% for item in rated_announces %}
-                <div class="item" style="border: 2px solid #6a4fb8; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
-                    <div class="item-header">
-                        {% if item.product_rating %}
-                            <img src="{{ item.product_rating.product.images.first.image.url }}" alt="Imagen del producto" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #6a4fb8; object-fit: cover;">
-                        {% elif item.renting_rating %}
-                            <img src="{{ item.renting_rating.renting.images.first.image.url }}" alt="Imagen del alquiler" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #6a4fb8; object-fit: cover;">
-                        {% endif %}
-                    </div>
-                    <div class="item-content" style="padding-left: 110px;">
-                        
-                        {% if item.product_rating %}
-                            <p><strong>Producto:</strong> {{ item.product_rating.product.title }}</p>
-                            <p><strong>Valoración:</strong> {{ item.product_rating.rating }}
-                                {% if item.product_rating.rating == 0.5 %}
-                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 1 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 1.5 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 2 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 2.5 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 3 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 3.5 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 4 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                {% elif item.product_rating.rating == 4.5 %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
-                                {% else %}
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
-                                {% endif %}
-                                
-                            </p>
-                            <p><strong>Comentario:</strong> {{ item.product_rating.comment }}</p>
-                            <p><strong>Por:</strong> {{ item.product_rating.user.username }}</p>
-                        {% elif item.renting_rating %}
-                            <p><strong>Alquiler:</strong> {{ item.renting_rating.renting.title }}</p>
-                            <p><strong>Valoración:</strong> {{ item.renting_rating.rating }}
+            <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100vh;">
+                {% for item in rated_announces %}
+                    <div class="item" style="border: 2px solid #6a4fb8; border-radius: 10px; padding: 15px; margin-bottom: 20px; width: 90%; max-width: 900px; display: flex; flex-direction: column; align-items: center; overflow: hidden; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+                        <div class="item-image" style="margin-bottom: 15px;">
+                            {% if item.product_rating %}
+                                <img src="{{ item.product_rating.product.images.first.image.url }}" alt="Imagen del producto" style="width: 150px; height: 150px; border-radius: 50%; border: 3px solid #6a4fb8; object-fit: cover; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+                            {% elif item.renting_rating %}
+                                <img src="{{ item.renting_rating.renting.images.first.image.url }}" alt="Imagen del alquiler" style="width: 150px; height: 150px; border-radius: 50%; border: 3px solid #6a4fb8; object-fit: cover; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+                            {% endif %}
+                        </div>
+                        <div class="item-content" style="text-align: center;">
+                            {% if item.product_rating %}
+                                <p><strong>Anuncio:</strong> {{ item.product_rating.product.title }}</p>
+                                <p><strong>Valoración:</strong>
+                                    {% if item.product_rating.rating == 0.5 %}
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 1 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 1.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 2 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 2.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 3 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 3.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 4 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 4.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% else %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Comentario:</strong> {{ item.product_rating.comment }}</p>
+                                <p><strong>Por: </strong><a href="{% url 'other_user_profile' item.product_rating.user.username %}">@{{ item.product_rating.user.username }}</a></p>
+                            {% elif item.renting_rating %}
+                                <p><strong>Anuncio:</strong> {{ item.renting_rating.renting.title }}</p>
+                                <p><strong>Valoración:</strong>
                                 {% if item.renting_rating.rating == 0.5 %}
                                     <span class="bi bi-star-half" style="color: #f0b800;"></span>
                                 {% elif item.renting_rating.rating == 1 %}
@@ -421,16 +420,16 @@
                                     <span class="bi bi-star-fill" style="color: #f0b800;"></span>
                                     <span class="bi bi-star-fill" style="color: #f0b800;"></span>
                                 {% endif %}
-                                
                             </p>
                             <p><strong>Comentario:</strong> {{ item.renting_rating.comment }}</p>
-                            <p><strong>Por:</strong> {{ item.renting_rating.user.username }}</p>
+                            <p><strong>Por: </strong> <a href="{% url 'other_user_profile' item.renting_rating.user.username %}">@{{ item.renting_rating.user.username }}</a></p>
                         {% endif %}
                     </div>
                 </div>
             {% empty %}
-                <h3>Aún no hay valoraciones...</h3>
+                <h3 style="text-align: center;">Aún no hay valoraciones...</h3>
             {% endfor %}
+        </div>
 
 
         </div>

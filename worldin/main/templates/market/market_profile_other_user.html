@@ -314,7 +314,8 @@
                     <span class="bi bi-star-fill" style="color: #f0b800;"></span>
                     <span class="bi bi-star-fill" style="color: #f0b800;"></span>
                 {% endif %}
-                </p>
+                {% else %}
+                <p>@{{ profile_user }} no tiene ninguna ciudad de residencia establecida en su perfil.</p>
                 {% endif %}
                 <p>
             </div>
@@ -383,25 +384,27 @@
                                 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
                                     
                                     {% for rental in user_rentings %}
-                                        <div class="col">
-                                            <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                                {% if rental.highlighted %}
-                                                    <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
-                                                        ALQUILER DESTACADO 
+                                        {% if rental.status == 'on_sale' or rental.status == 'booked' %}
+                                            <div class="col">
+                                                <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                                    {% if rental.highlighted %}
+                                                        <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                            ALQUILER DESTACADO 
+                                                        </div>
+                                                    {% endif %}
+                                                    <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                                    <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                        <h5 class="card-title">{{ rental.title }}</h5>
+                                                        <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
+                                                        <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
+                                                        <p class="card-text text-truncate">{{ rental.description }}</p>
                                                     </div>
-                                                {% endif %}
-                                                <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                                <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                                    <h5 class="card-title">{{ rental.title }}</h5>
-                                                    <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
-                                                    <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
-                                                    <p class="card-text text-truncate">{{ rental.description }}</p>
-                                                </div>
-                                                <div class="card-footer justify-content-center">
-                                                    <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                    <div class="card-footer justify-content-center">
+                                                        <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        {% endif %}
                                     {% endfor %}
                                 </div>
                             {% endif %}

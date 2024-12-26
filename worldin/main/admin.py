@@ -3,7 +3,7 @@ from .models import CustomUser, Follow
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'first_name', 'last_name', 'email')  # Personaliza los campos que quieras ver en el listado.
+    list_display = ('id', 'username', 'first_name', 'last_name', 'email', 'city')  # Personaliza los campos que quieras ver en el listado.
     search_fields = ('id', 'username')  # Campos para búsqueda.
 
 

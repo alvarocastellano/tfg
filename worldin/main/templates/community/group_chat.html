@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Chat con @{{ chat_user.username }}{% endblock %}
+{% block title %}Chat de {{ group_chat.name }}{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -168,6 +168,37 @@
         .input-group button {
             border-radius: 0 25px 25px 0;
         }
+        .chat-header {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1000;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .group-profile-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .chat-header-expanded {
+            display: none;
+            margin-top: 10px;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .chat-header-expanded ul {
+            padding-left: 20px;
+            margin: 0;
+            list-style: disc;
+        }
+        
     </style>
 </head>
 
@@ -227,7 +258,7 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center mb-1">
                             {% if chat.is_group == False %}
                                 {% if request.user != chat.user2 %}
-                                    <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user2 %}">
+                                    <a style="text-decoration:None; color: #6a4fb8; "  href="{% url 'community:chat_detail' username=chat.user2 %}">
                                         {% if chat.user2.profile_picture %}
                                             <img src="{{ chat.user2.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                         {% else %}
@@ -236,7 +267,7 @@
                                         <strong>@{{ chat.user2 }}</strong>
                                     </a>
                                 {% else %}
-                                    <a style="text-decoration:None; color: #6a4fb8; "  href="{% url 'community:chat_detail' username=chat.user1 %}">
+                                    <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user1 %}">
                                         {% if chat.user1.profile_picture %}
                                             <img src="{{ chat.user1.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                         {% else %}
@@ -245,7 +276,7 @@
                                         <strong>@{{ chat.user1 }}</strong>
                                     </a>
                                 {% endif %}
-                                {% elif chat.is_group == True %}
+                            {% elif chat.is_group == True %}
                                 {% if chat.is_friends_group == False %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
                                         <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
@@ -272,55 +303,68 @@
 
             <!-- Mensajes (70%) -->
             <div class="col-md-8 network-container">
-                    {% if messages.count == 0 and chat.initial_message == '' %}
+                <div class="chat-header" id="chat-header">
+                    <div class="d-flex align-items-center">
+                        {% if group_chat.is_friends_group == False %}
+                            <img src="{% static 'images/' %}{{ group_chat.image }}" alt="{{ group_chat.name }}" class="group-profile-img">
+                            <h5 class="ms-3 mb-0">Comunidad de {{ group_chat.name }}</h5>
+                        {% else %}
+                            {% if group_chat.image %}
+                                <img src="{{ group_chat.image.url }}" alt="Foto de chat grupal" class="profile-picture">
+                            {% else %}
+                                <img src="{% static 'images/default_group_icon.png' %}" alt="Foto de chat grupal" class="profile-picture">
+                            {% endif %}
+                            <h5 class="ms-3 mb-0">{{ group_chat.name }}</h5>
+                        {% endif %}
+                        <button style="text-decoration: None; color: #6a4fb8;" class="btn btn-link ms-auto" id="expand-header">
+                            Pulsa para ver más detalles <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="chat-header-expanded" id="chat-header-expanded">
+                        <p><strong>Descripción:</strong> {{ group_chat.description }}</p>
+                        <p><strong>Miembros:</strong></p>
+                        <ul>
+                            {% for member in group_chat.members.all %}
+                                {% if group_chat.is_friends_group == False %}
+                                    {% if member.city != group_chat.name %}
+                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a> (Externo: Viene de {{ member.city }})</li>
+                                    {% elif member.city == group_chat.name and member.erasmus == True %}
+                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a> (De Erasmus)</li>
+                                    {% else %}
+                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a></li>
+                                    {% endif %}
+                                {% else %}
+                                    {% if member.membership_type == 'admin' %}
+                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a> (ADMINISTRADOR)</li>
+                                    {% else %}
+                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                    {% if group_chat.group_messages.count == 0  %}
                         <div class="alert alert-info text-center" role="alert">
-                            Envía un primer mensaje a este usuario
+                            Envía un primer mensaje al grupo de {{ group_chat.name }}.
                         </div>
                     {% endif %}
             
                     <div class="messages-list">
-                        <div class="message {% if chat.user1 == request.user %}text-right{% else %}text-left{% endif %}">
-                            {{ chat.initial_message }}
-                            <span>{{ chat.created_at|date:"H:i, d M Y" }}</span>
-                        </div>
-                        {% for message in messages %}
-                            {% if message.is_system_message %}
-                                <em class="text-center"><strong>{{ message.content }}</strong></em>
-                                <br>
-                            {% endif %}
-                            {% if message.product and not message.is_system_message %}
-                            <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
-                                <div class="card" style="width: 18rem;">
-                                    <div class="card-title"> A @{{ message.sender.username}} le interesa el siguiente producto:</div>
-                                    <img class="card-img-top" src="{{ message.product.images.first.image.url }}" alt="Imagen del producto">
-                                    <div class="card-body">
-                                    <h5 class="card-title">{{ message.product.title }}</h5>
-                                    </div>
-                                </div>
+                    {% for message in group_chat.group_messages.all %}
+                        {% if message.sender == request.user %}
+                            <div class="message text-right">
                                 <p>{{ message.content }}</p>
                                 <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
                             </div>
-                            {% elif message.renting and not message.is_system_message %}
-                            <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
-                                <div class="card" style="width: 18rem;">
-                                    <div class="card-title"> A @{{ message.sender.username}} le interesa el siguiente alquiler:</div>
-                                    <img class="card-img-top" src="{{ message.renting.images.first.image.url }}" alt="Imagen del anuncio de alquiler">
-                                    <div class="card-body">
-                                    <h5 class="card-title">{{ message.renting.title }}</h5>
-                                    </div>
-                                </div>
+                        {% else %}
+                            <div class="message text-left">
+                                <strong>@{{ message.sender }}</strong>
                                 <p>{{ message.content }}</p>
                                 <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
                             </div>
-                            {% else %}
-                                {% if not message.is_system_message %}
-                                    <div class="message {% if message.sender == request.user %}text-right{% else %}text-left{% endif %}">
-                                        <p>{{ message.content }}</p>
-                                        <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
+                        {% endif %}
+                    {% endfor %}
                     </div>
                 
                     <!-- Formulario para enviar mensaje -->
@@ -342,5 +386,21 @@
             window.history.back();
         }
     </script>
+    <script>
+        document.getElementById('expand-header').addEventListener('click', function () {
+            const expandedSection = document.getElementById('chat-header-expanded');
+            const icon = this.querySelector('i');
+        
+            if (expandedSection.style.display === 'none' || expandedSection.style.display === '') {
+                expandedSection.style.display = 'block';
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            } else {
+                expandedSection.style.display = 'none';
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        });
+    </script>        
 </body>
 {% endblock %}

@@ -184,7 +184,7 @@
         </div>
         <!-- Botón debajo de la cabecera -->
         <div class="text-center" style="background-color: #6a4fb8; padding: 10px;">
-            <a href="{% url 'my_profile' %}" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+            <a href="{% url 'other_user_profile' profile_user.username %}" class="btn btn-primary" style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
                 VER PERFIL GENERAL
             </a>
         </div>
@@ -241,7 +241,7 @@
                 {% endif %}
             </p>
             {% else %}
-            <p>Añade una ciudad de residencia en tu perfil para poder usar el perfil de mercado.</p>
+            <p>@{{ profile_user }} no tiene ninguna ciudad de residencia establecida en su perfil.</p>
             {% endif %}
             <p>
         </div>

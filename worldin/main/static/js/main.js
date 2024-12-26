@@ -122,6 +122,9 @@ function main() {
                     const marketButton = document.getElementById("marketButton");
                     marketButton.href = `/marketplace/market/products/city=${city}`;
 
+                    const communityButton = document.getElementById("communityButton");
+                    communityButton.href = `/community/chat/${city}`;
+
                     $('#cityModal').modal('show');
                 } else {
                     showError(data.message);
@@ -355,6 +358,10 @@ function main() {
                         // Actualizar el enlace de Mercado
                         const marketButton = document.getElementById("marketButton");
                         marketButton.href = `/marketplace/market/products/city=${city}`;
+
+                        const communityButton = document.getElementById("communityButton");
+                        communityButton.href = `/community/chat/${city}`;
+
                         // Muestra el modal
                         $('#cityModal').modal('show');
                     } else {
