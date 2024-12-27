@@ -1623,7 +1623,7 @@ def send_message(request, product_id):
                 'product': product,
                 'error_messages': error_messages,
             })
-        elif ChatRequest.objects.filter(Q(sender=owner, receiver=user, status='pending')).exists() or ChatRequest.objects.filter(Q(sender=user, receiver=owner, status='pending')).exists():
+        elif ChatRequest.objects.filter(Q(sender=owner, receiver=user, status='pending', group_chat__isnull=True)).exists() or ChatRequest.objects.filter(Q(sender=user, receiver=owner, status='pending', group_chat__isnull=True)).exists():
             # Si ya hay una solicitud de chat pendiente
             error_messages.append(format_html(
                         'Ya hay una solicitud de chat pendiente con este usuario. Consulta su estado accediendo a la pestaña de "Solicitudes recibidas" en <a href="{}">tus solicitudes de chat pendientes</a>.',
@@ -1713,7 +1713,7 @@ def send_message_renting(request, renting_id):
                 'rental': rental,
                 'error_messages': error_messages,
             })
-        elif ChatRequest.objects.filter(Q(sender=owner, receiver=user, status='pending')).exists() or ChatRequest.objects.filter(Q(sender=user, receiver=owner, status='pending')).exists():
+        elif ChatRequest.objects.filter(Q(sender=owner, receiver=user, status='pending', group_chat__isnull=True)).exists() or ChatRequest.objects.filter(Q(sender=user, receiver=owner, status='pending', group_chat__isnull=True)).exists():
             # Si ya hay una solicitud de chat pendiente
             error_messages.append(format_html(
                         'Ya hay una solicitud de chat pendiente con este usuario. Consulta su estado accediendo a la pestaña de "Solicitudes recibidas" en <a href="{}">tus solicitudes de chat pendientes</a>.',

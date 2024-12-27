@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import JsonResponse
 from .models import Chat, ChatRequest, GroupChat, GroupChatMember, Message
 from main.models import Follow, CustomUser, FollowRequest
 from main.views import alertas_completar_perfil
-from django.contrib import messages
 from main.views import city_data
+from itertools import chain
+from django.db import models
 
 @login_required
 def all_chats(request):
@@ -14,21 +14,23 @@ def all_chats(request):
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-
     all_groups_chats = GroupChat.objects.filter(members=request.user)
 
     all_my_chats = sorted(
-        list(private_chats) + list(all_groups_chats),
-        key=lambda chat: chat.created_at,
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
         reverse=True
     )
 
     return render(request, 'community/all_chats.html', {
-            'complete_profile_alerts': complete_profile_alerts,
-            'pending_requests_count': pending_requests_count,
-            'private_chats': private_chats,
-            'all_my_chats': all_my_chats
-        })
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'private_chats': private_chats,
+        'all_my_chats': all_my_chats
+    })
 
 @login_required
 def create_private_chat(request):
@@ -84,8 +86,8 @@ def create_private_chat(request):
                     return redirect('community:all_chats')
             else:
                 existing_request = ChatRequest.objects.filter(
-                    (Q(sender=request.user) & Q(receiver=selected_user)) |
-                    (Q(sender=selected_user) & Q(receiver=request.user))
+                    (Q(sender=request.user) & Q(receiver=selected_user) & Q(group_chat__isnull=True)) |
+                    (Q(sender=selected_user) & Q(receiver=request.user) & Q(group_chat__isnull=True))
                 ).order_by('-created_at').first()
 
                 if existing_request:
@@ -120,6 +122,16 @@ def accept_chat_request(request, request_id):
             initial = "He abierto este chat para hablar sobre el producto"
             chat = Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=initial)
             message = Message.objects.create(chat=chat, sender=chat_request.sender, content=chat_request.initial_message, product=chat_request.product)
+            chat_request.status = 'accepted'
+            chat_request.save()
+        elif chat_request.renting:
+            initial = "He abierto este chat para hablar sobre el alquiler"
+            chat = Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=initial)
+            message = Message.objects.create(chat=chat, sender=chat_request.sender, content=chat_request.initial_message, renting=chat_request.renting)
+            chat_request.status = 'accepted'
+            chat_request.save()
+        elif chat_request.group_chat:
+            chat_request.group_chat.members.add(chat_request.receiver)
             chat_request.status = 'accepted'
             chat_request.save()
         else:
@@ -159,12 +171,14 @@ def chat_detail(request, username):
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
     private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-
     all_groups_chats = GroupChat.objects.filter(members=request.user)
 
     all_my_chats = sorted(
-        list(private_chats) + list(all_groups_chats),
-        key=lambda chat: chat.created_at,
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
         reverse=True
     )
 
@@ -173,22 +187,22 @@ def chat_detail(request, username):
     except CustomUser.DoesNotExist:
         return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count})
     
-    chat = Chat.objects.filter(
+    current_chat = Chat.objects.filter(
         (Q(user1=request.user, user2=chat_user) | Q(user1=chat_user, user2=request.user))
     ).first()
 
-    messages = chat.messages.order_by('timestamp')
+    messages = current_chat.messages.order_by('timestamp')
 
     # Manejo de envío de mensaje
     if request.method == "POST":
         content = request.POST.get("content")
         if content:
-            Message.objects.create(chat=chat, sender=request.user, content=content)
+            Message.objects.create(chat=current_chat, sender=request.user, content=content)
 
     return render(request, "community/chat_detail.html", {
         'complete_profile_alerts': complete_profile_alerts, 
         'pending_requests_count': pending_requests_count,
-        'chat': chat,
+        'current_chat': current_chat,
         'chat_user': chat_user,
         'private_chats': private_chats,
         'messages': messages,
@@ -205,8 +219,11 @@ def city_group_chat(request, city):
     all_groups_chats = GroupChat.objects.filter(members=request.user)
 
     all_my_chats = sorted(
-        list(private_chats) + list(all_groups_chats),
-        key=lambda chat: chat.created_at,
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
         reverse=True
     )
 
@@ -254,6 +271,8 @@ def create_group_chat(request):
     query = request.GET.get('q')
     users = CustomUser.objects.exclude(username=request.user.username)
     error_messages = []
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     
     # Filtrar usuarios por nombre si existe un query
     if query:
@@ -284,10 +303,10 @@ def create_group_chat(request):
         for user_id in selected_users:
             try:
                 user = CustomUser.objects.get(id=int(user_id))  # Convert the user_id to an integer
-                group_chat.members.add(user)
+                ChatRequest.objects.create(sender=request.user, receiver=user, initial_message=initial_message, group_chat=group_chat)
                 
             except CustomUser.DoesNotExist:
-                pass  # Handle cases where the user does not exist
+                return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count})
 
         Message.objects.create(group_chat=group_chat, sender=request.user, content=initial_message)
 
@@ -302,8 +321,11 @@ def group_chat_details(request, name):
     all_groups_chats = GroupChat.objects.filter(members=request.user)
 
     all_my_chats = sorted(
-        list(private_chats) + list(all_groups_chats),
-        key=lambda chat: chat.created_at,
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
         reverse=True
     )
 
@@ -324,3 +346,4 @@ def group_chat_details(request, name):
         'group_chat': group_chat,
         'messages': messages,
     })
+

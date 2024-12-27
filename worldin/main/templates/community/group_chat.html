@@ -199,6 +199,10 @@
             list-style: disc;
         }
         
+        .active-chat {
+            background-color:rgb(227, 211, 237); /* Color de fondo resaltado */
+            font-weight: bold; /* Texto en negrita */
+        }
     </style>
 </head>
 
@@ -255,7 +259,7 @@
                 <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong></h4>
                 <ul class="list-group">
                     {% for chat in all_my_chats %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center mb-1">
+                        <li class="list-group-item d-flex justify-content-between align-items-center mb-1 {% if chat.id == group_chat.id %} active-chat {% endif %}">
                             {% if chat.is_group == False %}
                                 {% if request.user != chat.user2 %}
                                     <a style="text-decoration:None; color: #6a4fb8; "  href="{% url 'community:chat_detail' username=chat.user2 %}">
