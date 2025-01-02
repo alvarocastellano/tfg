@@ -115,7 +115,7 @@
                     <h3 style="font-size:12px;">Volver</h3>
                 </a>
             </div>
-            <h1>Solicitudes de chat pendientes</h1>
+            <h1>Solicitudes pendientes</h1>
         </div>
 
         <!-- Botones para seleccionar tipo de solicitudes -->
@@ -127,7 +127,7 @@
         <ul class="list-group d-block" id="requestList">
             {% if not pending_requests %}
                 <div id="alertMessage" class="alert alert-warning received-request" style="font-size: 20px;">
-                    No hay solicitudes de chat pendientes para tí.
+                    No hay solicitudes pendientes para tí.
                     <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -252,9 +252,9 @@
                             <strong>- Estado de la solicitud: </strong>
                             {% if request.status == 'pending' %}<span style="color:#FF5F15"><strong>PENDIENTE</strong></span>
                             {% elif request.status == 'rejected' %}<span style="color:#F32013"><strong>RECHAZADA</strong></span>
-                            . Puedes <a href="{% url 'community:create_private_chat' %}">volver a enviar solicitud al usuario.</a>
+                            . Puedes volver a enviar solicitud al usuario.
                             {% else %}<span style="color:#4BB543"><strong>ACEPTADA</strong></span>
-                            . <a href="{% url 'community:chat_detail' username=request.receiver.username %}">Accede al chat.</a>
+                            . Ya puedes acceder al chat.
                             {% endif %}
                         </div>
                         <br>

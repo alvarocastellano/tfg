@@ -218,7 +218,14 @@
             <div class="text-center">
                 <h1><a href="{% url 'community:all_chats' %}" style="text-decoration:none; color: white;"><strong>Comunidad</strong></a></h1>
                 <h3> 
-                    {{request.user.city}}
+                    {% if request.user.city %}
+                        <h3> 
+                        {% if flag_image %}
+                            <img src="{% static 'images/'|add:flag_image %}" alt="Bandera de {{ country }}" width="50">
+                        {% endif %}  
+                        {{request.user.city}}, {{ country }}
+                        </h3>
+                    {% endif %}
                 </h3>
             </div>
             
@@ -252,9 +259,26 @@
         <div class="row" style="height: 100vh;">
             <!-- Lista de chats (30%) -->
             <div class="col-md-4 chats-container">
-                <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_requests' %}">
-                    <h4 ><strong>Solicitudes de chat pendientes</strong> <i class="bi bi-arrow-right-circle-fill"></i></h4>
+                <a style="text-decoration:None; color: #6a4fb8; display: flex; justify-content: space-between; align-items: center;" href="{% url 'community:chat_requests' %}">
+                    <h4><strong>Solicitudes pendientes</strong></h4>
+                    <div style="display: flex; align-items: center;">
+                        {% if pending_chat_requests_count > 0 %}
+                            <span style="
+                                background-color: red;
+                                color: white;
+                                border-radius: 50%;
+                                padding: 5px 10px;
+                                font-size: 12px;
+                                font-weight: bold;
+                                margin-right: 10px;
+                            ">
+                                {{ pending_chat_requests_count }}
+                            </span>
+                        {% endif %}
+                        <i class="bi bi-arrow-right-circle-fill" style="font-size: 2em;"></i>
+                    </div>
                 </a>
+                
                 <hr>
                 <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong></h4>
                 <ul class="list-group">
@@ -286,6 +310,9 @@
                                         <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
                                         <strong>Comunidad de {{ chat.name }}</strong>
                                     </a>
+                                    {% if request.user.city == chat.name %}
+                                        <i class="bi bi-pin-angle-fill" style="color:#6a4fb8;"></i>
+                                    {% endif %}
                                 {% else %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:group_chat_details' name=chat.name %}">
                                         {% if chat.image %}
@@ -330,18 +357,37 @@
                         <ul>
                             {% for member in group_chat.members.all %}
                                 {% if group_chat.is_friends_group == False %}
-                                    {% if member.city != group_chat.name %}
-                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a> (Externo: Viene de {{ member.city }})</li>
-                                    {% elif member.city == group_chat.name and member.erasmus == True %}
-                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a> (De Erasmus)</li>
+                                    {% if member.city != group_chat.name and member.city %}
+                                        <li>
+                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            (Externo: Su ciudad de residencia es {{ member.city }})
+                                        </li>
+                                    {% elif member.city != group_chat.name and not member.city %}
+                                        <li>
+                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            (Externo: Sin ciudad de residencia especificada)
+                                        </li>
+                                    {% elif member.city == group_chat.name and member.erasmus %}
+                                        <li>
+                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            (De Erasmus)
+                                        </li>
                                     {% else %}
-                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a></li>
+                                        <li>
+                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            (Residente)
+                                        </li>
                                     {% endif %}
                                 {% else %}
                                     {% if member.membership_type == 'admin' %}
-                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a> (ADMINISTRADOR)</li>
+                                        <li>
+                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            (ADMINISTRADOR)
+                                        </li>
                                     {% else %}
-                                        <li><a href="{% url 'other_user_profile' member.username %}" >@{{ member.username }}</a></li>
+                                        <li>
+                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                        </li>
                                     {% endif %}
                                 {% endif %}
                             {% endfor %}

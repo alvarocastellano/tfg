@@ -14,5 +14,6 @@ urlpatterns = [
     path('chat/<str:city>/', views.city_group_chat, name='city_group_chat'),
     path('create_group_chat/', views.create_group_chat, name='create_group_chat'),
     path('chat/<str:name>/', views.group_chat_details, name='group_chat_details'),
+    path('delete_group/<str:name>/', views.delete_group, name='delete_group'),
 
 ]

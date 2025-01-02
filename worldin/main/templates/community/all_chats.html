@@ -97,9 +97,14 @@
 
             <div class="text-center">
                 <h1><strong>Comunidad</strong></h1>
-                <h3> 
-                    {{request.user.city}}
-                </h3>
+                {% if request.user.city %}
+                    <h3> 
+                    {% if flag_image %}
+                        <img src="{% static 'images/'|add:flag_image %}" alt="Bandera de {{ country }}" width="50">
+                    {% endif %}  
+                    {{request.user.city}}, {{ country }}
+                    </h3>
+                {% endif %}
             </div>
             
                 <button type="button" class="btn-products-link" data-bs-toggle="modal" data-bs-target="#chatModal">
@@ -131,8 +136,24 @@
         <div class="row" style="height: 100vh;">
             <!-- Lista de chats (30%) -->
             <div class="col-md-4 chats-container">
-                <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_requests' %}">
-                    <h4 ><strong>Solicitudes de chat pendientes</strong> <i class="bi bi-arrow-right-circle-fill"></i></h4>
+                <a style="text-decoration:None; color: #6a4fb8; display: flex; justify-content: space-between; align-items: center;" href="{% url 'community:chat_requests' %}">
+                    <h4><strong>Solicitudes pendientes</strong></h4>
+                    <div style="display: flex; align-items: center;">
+                        {% if pending_chat_requests_count > 0 %}
+                            <span style="
+                                background-color: red;
+                                color: white;
+                                border-radius: 50%;
+                                padding: 5px 10px;
+                                font-size: 12px;
+                                font-weight: bold;
+                                margin-right: 10px;
+                            ">
+                                {{ pending_chat_requests_count }}
+                            </span>
+                        {% endif %}
+                        <i class="bi bi-arrow-right-circle-fill" style="font-size: 2em;"></i>
+                    </div>
                 </a>
                 <hr>
                 <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong></h4>
@@ -165,6 +186,10 @@
                                             <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
                                             <strong>Comunidad de {{ chat.name }}</strong>
                                         </a>
+                                        {% if request.user.city == chat.name %}
+                                            <i class="bi bi-pin-angle-fill" style="color:#6a4fb8;"></i>
+                                        {% endif %}
+                                        
                                     {% else %}
                                         <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:group_chat_details' name=chat.name %}">
                                             {% if chat.image %}
@@ -175,12 +200,21 @@
                                             <strong>{{ chat.name }}</strong>
                                         </a>
                                     {% endif %}
+                                    {% for member in chat.groupchatmember_set.all %}
+                                        {% if member.user == request.user and member.membership_type == 'admin' %}
+                                            <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm" style="float:right;">Eliminar grupo</button>
+                                            </form>
+                                        {% endif %}
+                                    {% endfor %}
                             {% endif %}
-                            <span class="badge badge-primary badge-pill">{{ chat.unread_count }}</span>
+                                        
                         </li>
                     {% empty %}
                         <li class="list-group-item text-muted">No tienes chats disponibles.</li>
                     {% endfor %}
+
                 </ul>
             </div>
 

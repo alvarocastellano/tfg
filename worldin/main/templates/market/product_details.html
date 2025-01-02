@@ -204,6 +204,9 @@
                             <img src="{{ product.images.first.image.url }}" alt="Imagen de producto" class="img-fluid mx-auto" style="max-width: 60%; height: auto;">
                         </div>
                     {% endif %}
+                    {% if product.status == 'booked' %}
+                        <span class="badge bg-danger text-white mb-2">PRODUCTO RESERVADO A UN USUARIO. AÚN ASÍ, PUEDES CONTACTAR CON EL VENDEDOR.</span>
+                    {% endif %}
                     <h2><strong>{{ product.title }}</strong></h2>
                     <br>
                     <h1><strong>{{ product.price }}{{ product.money_associated }}</strong></h1>

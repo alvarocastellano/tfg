@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
-from main.community.models import GroupChat, GroupChatMember
+from main.community.models import GroupChat, GroupChatMember, ChatRequest
 from .models import CustomUser, Hobby, Follow, FollowRequest
 from main.market.models import Product, Rental
 from django.views.decorators.cache import never_cache
@@ -328,6 +328,8 @@ def profile(request):
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
 
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
     total_alerts = pending_requests_count + complete_profile_alerts
 
     return render(request, 'my_profile.html', {
@@ -342,6 +344,7 @@ def profile(request):
         'total_alerts' : total_alerts,
         'announce_count' : announce_count,
         'filter_option': filter_option,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
 
 def is_profile_complete(user):
@@ -546,6 +549,7 @@ def search_users(request):
     users = CustomUser.objects.exclude(username=request.user.username)
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if query:
         users = CustomUser.objects.filter(username__icontains=query)
@@ -553,17 +557,20 @@ def search_users(request):
     return render(request, 'search_users.html', {
         'users': users, 
         'complete_profile_alerts': complete_profile_alerts,
-        'pending_requests_count': pending_requests_count,})
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        })
 
 @login_required
 def followers_count(request, username):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         user_to_follow = CustomUser.objects.get(username=username)
     except CustomUser.DoesNotExist:
-        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count})
+        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count})
     
     if request.method == "POST":
         if request.POST['value'] == 'follow':
@@ -586,6 +593,7 @@ def other_user_profile(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         # Intentar obtener el usuario
@@ -597,13 +605,13 @@ def other_user_profile(request, username):
         return render(request, 'user_not_found.html', {
             'pending_requests_count': pending_requests_count,
             'complete_profile_alerts': complete_profile_alerts,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     is_own_profile = profile_user == request.user
     is_following = Follow.objects.filter(follower=request.user, following=profile_user).exists()
     user_followers = profile_user.followers.count()
     user_following = profile_user.following.count()
-    announce_count = 0
     
 
     filter_option = request.GET.get('filter', 'articulos')
@@ -625,8 +633,8 @@ def other_user_profile(request, username):
         )).order_by('highlighted_order', '-highlighted_at', '-created_at')
 
     # Contadores
-    announce_count = len(user_products) + len(user_rentings)
-
+    announce_count = len([product for product in user_products if product.status != 'sold']) + len([renting for renting in user_rentings if renting.status != 'sold'])
+    
     # Filtrado según el parámetro 'filter'
     if filter_option == 'articulos':
         user_rentings = []  # Solo mostrar productos
@@ -652,6 +660,7 @@ def other_user_profile(request, username):
         'filter_option': filter_option,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     
     return render(request, 'profile_other_user.html', context)
@@ -662,11 +671,12 @@ def followers_and_following(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         profile_user = CustomUser.objects.get(username=username)
     except CustomUser.DoesNotExist:
-        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count})
+        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count})
     
     
     
@@ -716,6 +726,7 @@ def followers_and_following(request, username):
         'no_following_results': no_following_results,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     
     return render(request, 'followers_and_following.html', context)
@@ -753,6 +764,7 @@ def reject_follow_request(request, request_id):
 def follow_requests(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     
     if request.user.account_visibility == 'private':
         pending_requests = request.user.follow_requests_received.filter(status='pending')
@@ -761,11 +773,13 @@ def follow_requests(request):
             'pending_requests': pending_requests,
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             })
     else:
         return render(request, 'your_vissibility_is_public.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
 
@@ -789,11 +803,14 @@ def sidebar(request):
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
 
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
     return render(request, 'sidebar.html', {
         'user': user,
         'pending_requests_count': pending_requests_count,
         'complete_profile_alerts': complete_profile_alerts,
         'selected_city': selected_city,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
 
 @csrf_exempt  # Si estás usando AJAX en el formulario, necesitas esto. Retíralo si no es necesario.

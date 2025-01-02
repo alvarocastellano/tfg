@@ -121,6 +121,7 @@ def my_market_profile(request):
         complete_profile_alerts += 1
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=user, status='pending').count()
 
     total_alerts = pending_requests_count + complete_profile_alerts
 
@@ -199,6 +200,7 @@ def my_market_profile(request):
         'ratings_count': ratings_count,
         'average_rating': average_rating,
         'total_announces': total_announces,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     return render(request, 'my_market_profile.html', context)
 
@@ -227,6 +229,7 @@ def my_market_ratings(request):
         complete_profile_alerts += 1
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=user, status='pending').count()
 
     total_alerts = pending_requests_count + complete_profile_alerts
 
@@ -277,6 +280,7 @@ def my_market_ratings(request):
         'rated_announces': rated_announces,
         'ratings_count': ratings_count,
         'average_rating': average_rating,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
 
     if request.method == 'POST':
@@ -322,6 +326,7 @@ def other_user_ratings(request, username):
         complete_profile_alerts += 1
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=user, status='pending').count()
 
     total_alerts = pending_requests_count + complete_profile_alerts
 
@@ -335,6 +340,8 @@ def other_user_ratings(request, username):
         return render(request, 'user_not_found.html', {
             'pending_requests_count': pending_requests_count,
             'complete_profile_alerts': complete_profile_alerts,
+            'total_alerts': total_alerts,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
 
     user_products = Product.objects.filter(owner=profile_user)
@@ -385,6 +392,7 @@ def other_user_ratings(request, username):
         'ratings_count': ratings_count,
         'average_rating': average_rating,
         'profile_user': profile_user,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
 
     
@@ -397,6 +405,7 @@ def add_product(request):
     money = moneda_oficial(request)
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if not request.user.city:
         messages.error(request, 'No puedes publicar un artículo hasta que tengas una ciudad asignada en tu perfil.')
@@ -445,6 +454,7 @@ def add_product(request):
                 'money': money,
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
         # Si no hay errores, guardar el producto
@@ -472,11 +482,13 @@ def add_product(request):
         'money': money, 
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
         })
 
 def highlight_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         product = Product.objects.get(id=product_id)
     except Product.DoesNotExist:
@@ -484,6 +496,7 @@ def highlight_product(request, product_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     if product.owner==request.user:
@@ -491,19 +504,22 @@ def highlight_product(request, product_id):
             return render(request, 'already_highlighted.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
         else:
             return render(request, 'highlight_product.html', {'product': product, 'complete_profile_alerts': complete_profile_alerts,
-                'pending_requests_count':pending_requests_count,})
+                'pending_requests_count':pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count,})
     else:
         return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             } )
 
 def highlight_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         renting = Rental.objects.get(id=renting_id)
     except Rental.DoesNotExist:
@@ -511,20 +527,23 @@ def highlight_renting(request, renting_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     if renting.owner==request.user:
         if renting.highlighted:
             return render(request, 'already_highlighted.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
         else:
             return render(request, 'highlight_renting.html', {'renting': renting, 'complete_profile_alerts': complete_profile_alerts,
-                'pending_requests_count':pending_requests_count,})
+                'pending_requests_count':pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count,})
     else:
         return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             } )
 
 def product_details(request, product_id):
@@ -532,6 +551,7 @@ def product_details(request, product_id):
     stars_sum = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         product = Product.objects.get(id=product_id)
@@ -540,6 +560,7 @@ def product_details(request, product_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     if rating_count !=0 :
@@ -553,6 +574,7 @@ def product_details(request, product_id):
         'product': product,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     return render(request, 'product_details.html', context)
 
@@ -560,6 +582,7 @@ def product_details(request, product_id):
 def delete_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         product = Product.objects.get(id=product_id)
         if product.owner != request.user:
@@ -567,12 +590,14 @@ def delete_product(request, product_id):
             return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     except Product.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     product.delete()
     return redirect('market:my_market_profile')
@@ -583,6 +608,7 @@ def edit_product(request, product_id):
     images_count = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         product = Product.objects.get(id=product_id)
@@ -591,12 +617,14 @@ def edit_product(request, product_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
 
     if product.owner != request.user:
         return render(request, "market/edit_your_ads_only.html", {
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             } )
 
     if not request.user.city:
@@ -634,6 +662,7 @@ def edit_product(request, product_id):
                 'images_count' : images_count,
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
         # Si no hay errores, actualizar los detalles del producto
@@ -671,6 +700,7 @@ def edit_product(request, product_id):
                 'images_count' : images_count,
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
         # Guardar cambios en el producto
@@ -683,6 +713,7 @@ def edit_product(request, product_id):
         'images_count' : images_count,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
 
 
@@ -710,6 +741,7 @@ def add_renting(request):
     money = moneda_oficial(request)
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     if not request.user.city:
         messages.error(request, 'No puedes añadir un anuncio hasta que tengas una ciudad asignada en tu perfil.')
@@ -779,6 +811,7 @@ def add_renting(request):
                 'money': money,
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
         if form.is_valid() and formset.is_valid() and not error_messages:
@@ -808,6 +841,7 @@ def add_renting(request):
         'money': money,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
         })
 
 
@@ -816,6 +850,7 @@ def renting_details(request, renting_id):
     stars_sum = 0
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         rental = Rental.objects.get(id=renting_id)
@@ -824,6 +859,7 @@ def renting_details(request, renting_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     if rating_count !=0 :
@@ -837,6 +873,7 @@ def renting_details(request, renting_id):
         'rental': rental,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     return render(request, 'renting_details.html', context)
 
@@ -845,6 +882,7 @@ def renting_details(request, renting_id):
 def delete_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         renting = Rental.objects.get(id=renting_id)
         if renting.owner != request.user:
@@ -852,12 +890,14 @@ def delete_renting(request, renting_id):
             return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     except Rental.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     renting.delete()
     return redirect('market:my_market_profile')
@@ -865,6 +905,7 @@ def delete_renting(request, renting_id):
 def market_profile_other_user(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     complete_profile_alerts = alertas_completar_perfil(request)
     
     try:
@@ -877,6 +918,7 @@ def market_profile_other_user(request, username):
         return render(request, 'user_not_found.html', {
             'pending_requests_count': pending_requests_count,
             'complete_profile_alerts': complete_profile_alerts,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     sell_count = 0
@@ -940,6 +982,7 @@ def market_profile_other_user(request, username):
         user_products = []  # Solo mostrar alquileres
 
     pending_follow_request = FollowRequest.objects.filter(sender=request.user, receiver=profile_user, status='pending').first()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     follow_button_value = 'unfollow' if is_following else 'follow'
 
@@ -967,6 +1010,7 @@ def market_profile_other_user(request, username):
         'items_bought': items_bought,
         'rated_announces': rated_announces,
         'ratings_count': ratings_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     
     return render(request, 'market_profile_other_user.html', context)
@@ -977,6 +1021,7 @@ def edit_renting(request, renting_id):
     available_features= RentalFeature.objects.all()
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         renting = Rental.objects.get(id=renting_id)
@@ -985,12 +1030,14 @@ def edit_renting(request, renting_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
 
     if renting.owner != request.user:
         return render(request, "market/edit_your_ads_only.html", {
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             } ) 
 
     if not request.user.city:
@@ -1065,6 +1112,7 @@ def edit_renting(request, renting_id):
                 'available_features': available_features,
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
         # Si no hay errores, actualizar los detalles del producto
@@ -1110,6 +1158,7 @@ def edit_renting(request, renting_id):
                 'available_features': available_features,
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
 
         # Guardar cambios en el producto
@@ -1124,11 +1173,13 @@ def edit_renting(request, renting_id):
         'available_features': available_features,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
 
 def main_market_products(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     order = request.GET.get('order', None)
     search_query = request.GET.get('q', '')
 
@@ -1137,12 +1188,14 @@ def main_market_products(request, selected_city):
         {
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             } )
 
     if request.user.selected_city == "":
         return render(request, "market/select_city_before_searching.html", {
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             } )    
 
     city_info = city_data.get(selected_city, {})
@@ -1208,6 +1261,7 @@ def main_market_products(request, selected_city):
         'products_count': products_count,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
         'only_user_products': only_user_products,
         'no_results_message': no_results_message,
     }
@@ -1216,6 +1270,7 @@ def main_market_products(request, selected_city):
 def main_market_rentings(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     order = request.GET.get('order', None)
     search_query = request.GET.get('q', '')
     selected_features = request.GET.getlist('features')
@@ -1225,12 +1280,14 @@ def main_market_rentings(request, selected_city):
         {
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             } )
 
     if request.user.selected_city == "":
         return render(request, "market/select_city_before_searching.html", {
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
             } )
 
     city_info = city_data.get(selected_city, {})
@@ -1331,6 +1388,7 @@ def main_market_rentings(request, selected_city):
         'all_features': all_features,
         'selected_features': selected_features,
         'no_caracts_message': no_caracts_message,
+        'pending_chat_requests_count': pending_chat_requests_count,
     }
     return render(request, "main_market_rentings.html", context)
 
@@ -1357,6 +1415,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 def create_checkout_session_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         renting = Rental.objects.get(id=renting_id)
@@ -1365,12 +1424,14 @@ def create_checkout_session_renting(request, renting_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     if renting.highlighted:
         return render(request, 'already_highlighted.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     else:
 
@@ -1413,6 +1474,7 @@ def create_checkout_session_renting(request, renting_id):
 def create_checkout_session_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
     try:
         product = Product.objects.get(id=product_id)
@@ -1421,12 +1483,14 @@ def create_checkout_session_product(request, product_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     
     if product.highlighted:
         return render(request, 'already_highlighted.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     else:
         user_currency = currency(request)
@@ -1488,9 +1552,11 @@ def payment_success_renting(request):
     
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     return render(request, 'payment_success.html', {
         'complete_profile_alerts': complete_profile_alerts,
-        'pending_requests_count': pending_requests_count})
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,})
 
 
 def payment_success_product(request):
@@ -1516,9 +1582,12 @@ def payment_success_product(request):
     
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     return render(request, 'payment_success.html', {
         'complete_profile_alerts': complete_profile_alerts,
-        'pending_requests_count': pending_requests_count})
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        })
 
 def payment_cancel(request):
     session_id = request.GET.get('session_id')  # Obtén el session_id, si lo necesitas.
@@ -1535,9 +1604,11 @@ def payment_cancel(request):
 
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     return render(request, 'payment_cancel.html', {
         'complete_profile_alerts': complete_profile_alerts,
-        'pending_requests_count': pending_requests_count
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
         })
 
 @csrf_exempt
@@ -1754,6 +1825,7 @@ def send_message_renting(request, renting_id):
 def book_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         product = Product.objects.get(id=product_id)
         if product.owner != request.user:
@@ -1761,12 +1833,14 @@ def book_product(request, product_id):
             return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     except Product.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     product.status = 'booked'
     product.save()
@@ -1786,6 +1860,7 @@ def book_product(request, product_id):
 def unbook_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         product = Product.objects.get(id=product_id)
         if product.owner != request.user:
@@ -1793,12 +1868,14 @@ def unbook_product(request, product_id):
             return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     except Product.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     product.status = 'on_sale'
     product.save()
@@ -1817,6 +1894,7 @@ def unbook_product(request, product_id):
 def sell_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
         
     if request.method == 'POST':
         buyer_id = request.POST.get('buyer_id')
@@ -1845,11 +1923,13 @@ def sell_product(request, product_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
 
 def book_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         renting = Rental.objects.get(id=renting_id)
         if renting.owner != request.user:
@@ -1857,12 +1937,14 @@ def book_renting(request, renting_id):
             return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     except Rental.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     renting.status = 'booked'
     renting.save()
@@ -1881,6 +1963,7 @@ def book_renting(request, renting_id):
 def unbook_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
     try:
         renting = Rental.objects.get(id=renting_id)
         if renting.owner != request.user:
@@ -1888,12 +1971,14 @@ def unbook_renting(request, renting_id):
             return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
+                'pending_chat_requests_count': pending_chat_requests_count,
             })
     except Rental.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })
     renting.status = 'on_sale'
     renting.save()
@@ -1912,6 +1997,7 @@ def unbook_renting(request, renting_id):
 def sell_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
         
     if request.method == 'POST':
         buyer_id = request.POST.get('renting_buyer_id')
@@ -1940,4 +2026,5 @@ def sell_renting(request, renting_id):
         return render(request, 'invalid_id.html', {
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
         })

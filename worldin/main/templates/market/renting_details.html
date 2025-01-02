@@ -234,6 +234,9 @@
                             <img src="{{ rental.images.first.image.url }}" alt="Imagen del alquiler" class="img-fluid mx-auto" style="max-width: 60%; height: auto;">
                         </div>
                     {% endif %}
+                    {% if rental.status == 'booked' %}
+                        <span class="badge bg-danger text-white mb-2">ALQUILER RESERVADO A UN USUARIO. AÚN ASÍ, PUEDES CONTACTAR CON EL PROPIETARIO.</span>
+                    {% endif %}
                     <h2 class="mt-5"><strong>{{ rental.title }}</strong></h2>
                     <br>
                     <h2><strong>{{ rental.price }}{{ rental.money_associated }}/mes</strong></h2>

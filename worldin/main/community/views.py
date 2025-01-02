@@ -13,10 +13,17 @@ def all_chats(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user)
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    all_my_chats = sorted(
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
         chain(
             private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
             all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
@@ -29,7 +36,10 @@ def all_chats(request):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'private_chats': private_chats,
-        'all_my_chats': all_my_chats
+        'all_my_chats': all_my_chats,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
 
 @login_required
@@ -132,6 +142,9 @@ def accept_chat_request(request, request_id):
             chat_request.save()
         elif chat_request.group_chat:
             chat_request.group_chat.members.add(chat_request.receiver)
+            member = GroupChatMember.objects.get(user=chat_request.receiver, group_chat=chat_request.group_chat)
+            member.membership_type = 'normal'
+            member.save()
             chat_request.status = 'accepted'
             chat_request.save()
         else:
@@ -165,15 +178,22 @@ def chat_requests(request):
         })
 
 
-
+@login_required
 def chat_detail(request, username):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user)
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    all_my_chats = sorted(
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
         chain(
             private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
             all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
@@ -206,19 +226,25 @@ def chat_detail(request, username):
         'chat_user': chat_user,
         'private_chats': private_chats,
         'messages': messages,
-        'all_my_chats': all_my_chats
+        'all_my_chats': all_my_chats,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
         } )
 
-
-
-
+@login_required
 def city_group_chat(request, city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user)
 
-    all_my_chats = sorted(
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    all_my_chats = [pinned_chat] + sorted(
         chain(
             private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
             all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
@@ -227,7 +253,7 @@ def city_group_chat(request, city):
         reverse=True
     )
 
-    city_info = city_data.get(city, {})
+    city_info = city_data.get(request.user.city, {})
     country = city_info.get('country', 'Desconocido')
     flag_image = city_info.get('flag', '')
 
@@ -264,6 +290,7 @@ def city_group_chat(request, city):
         'messages': messages,
         'country': country,
         'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
 
 @login_required
@@ -274,7 +301,6 @@ def create_group_chat(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     
-    # Filtrar usuarios por nombre si existe un query
     if query:
         users = users.filter(username__icontains=query)
 
@@ -297,7 +323,9 @@ def create_group_chat(request):
         # Create the group chat
         group_chat = GroupChat.objects.create(name=group_name, description=request.POST.get('group_description', ''), initial_message=initial_message, image=request.FILES.get('group_image', None), is_friends_group = True)
         group_chat.members.add(request.user)
-        GroupChatMember.objects.filter(user=request.user, group_chat=group_chat).update(membership_type='admin')
+        admin_member = GroupChatMember.objects.get(user=request.user, group_chat=group_chat)
+        admin_member.membership_type = 'admin'
+        admin_member.save()
 
         # Add the selected members to the group chat
         for user_id in selected_users:
@@ -314,13 +342,22 @@ def create_group_chat(request):
 
     return render(request, 'community/create_group_chat.html', {'users': users, 'error_messages': error_messages})
 
+@login_required
 def group_chat_details(request, name):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user)
 
-    all_my_chats = sorted(
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
         chain(
             private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
             all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
@@ -345,5 +382,24 @@ def group_chat_details(request, name):
         'all_my_chats': all_my_chats,
         'group_chat': group_chat,
         'messages': messages,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
     })
+
+@login_required
+def delete_group(request, name):
+    error_messages = []
+    group_chat = GroupChat.objects.filter(name=name).first()
+    if not group_chat:
+        error_messages.append('El grupo no existe')
+        return render(request, 'community/all_chats.html', {'error_messages': error_messages})
+    
+    if GroupChatMember.objects.filter(user=request.user, group_chat=group_chat, membership_type='admin').exists():
+        group_chat.delete()
+    else:
+        error_messages.append('No tienes permisos para eliminar este grupo')
+        return render(request, 'community/all_chats.html', {'error_messages': error_messages})
+    
+    return redirect('community:all_chats')
 
