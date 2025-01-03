@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from .models import Chat, ChatRequest, GroupChat, GroupChatMember, Message
+from django.db.models import Q, Count
+from .models import Chat, ChatMember, ChatRequest, GroupChat, Message
 from main.models import Follow, CustomUser, FollowRequest
 from main.views import alertas_completar_perfil
 from main.views import city_data
@@ -15,8 +15,14 @@ def all_chats(request):
 
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
     pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
 
     city_info = city_data.get(request.user.city, {})
@@ -31,6 +37,9 @@ def all_chats(request):
         key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
         reverse=True
     )
+    total_unread_count_only_chats = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     return render(request, 'community/all_chats.html', {
         'complete_profile_alerts': complete_profile_alerts,
@@ -40,6 +49,8 @@ def all_chats(request):
         'country': country,
         'flag_image': flag_image,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
+        'total_unread_count_only_chats': total_unread_count_only_chats
     })
 
 @login_required
@@ -141,10 +152,7 @@ def accept_chat_request(request, request_id):
             chat_request.status = 'accepted'
             chat_request.save()
         elif chat_request.group_chat:
-            chat_request.group_chat.members.add(chat_request.receiver)
-            member = GroupChatMember.objects.get(user=chat_request.receiver, group_chat=chat_request.group_chat)
-            member.membership_type = 'normal'
-            member.save()
+            ChatMember.objects.create(group_chat=chat_request.group_chat, user=chat_request.receiver, user_type='normal')
             chat_request.status = 'accepted'
             chat_request.save()
         else:
@@ -185,8 +193,14 @@ def chat_detail(request, username):
 
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
     pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
 
     city_info = city_data.get(request.user.city, {})
@@ -211,6 +225,10 @@ def chat_detail(request, username):
         (Q(user1=request.user, user2=chat_user) | Q(user1=chat_user, user2=request.user))
     ).first()
 
+    current_chat.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
     messages = current_chat.messages.order_by('timestamp')
 
     # Manejo de envío de mensaje
@@ -230,6 +248,7 @@ def chat_detail(request, username):
         'country': country,
         'flag_image': flag_image,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
         } )
 
 @login_required
@@ -240,8 +259,14 @@ def city_group_chat(request, city):
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
 
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
     pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
 
     all_my_chats = [pinned_chat] + sorted(
@@ -257,23 +282,19 @@ def city_group_chat(request, city):
     country = city_info.get('country', 'Desconocido')
     flag_image = city_info.get('flag', '')
 
-    group_chat = GroupChat.objects.filter(name=city).first()
+    group_chat, created = GroupChat.objects.get_or_create(
+        name=city,
+        defaults={'description': f"Grupo de chat para la ciudad de {city}", 'image': flag_image}
+    )
 
-    if city==request.user.city and request.user not in group_chat.members.all():
-        group_chat.members.add(request.user)
+    if created or not ChatMember.objects.filter(group_chat=group_chat, user=request.user).exists():
+        user_type = 'normal' if request.user.city == city else 'external'
+        ChatMember.objects.create(group_chat=group_chat, user=request.user, user_type=user_type)
 
-    if not group_chat:
-        group_chat = GroupChat.objects.create(name=city, description=f"Grupo de chat para la ciudad de {city}", image=flag_image)
+    group_chat.group_messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
 
-    # Verifica si el usuario ya está en el grupo
-    group_member, created = GroupChatMember.objects.get_or_create(user=request.user, group_chat=group_chat)
-    
-    # Actualiza el tipo de membresía según la ciudad del usuario
-    if request.user.city == city:
-        group_member.membership_type = 'normal'
-    else:
-        group_member.membership_type = 'external'
-    group_member.save()
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
 
     messages = group_chat.group_messages.order_by('timestamp')
 
@@ -291,6 +312,7 @@ def city_group_chat(request, city):
         'country': country,
         'flag_image': flag_image,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     })
 
 @login_required
@@ -320,12 +342,15 @@ def create_group_chat(request):
             error_messages.append('Escribe un mensaje inicial para el grupo')
             return render(request, 'community/create_group_chat.html', {'users': users, 'error_messages': error_messages})
 
-        # Create the group chat
-        group_chat = GroupChat.objects.create(name=group_name, description=request.POST.get('group_description', ''), initial_message=initial_message, image=request.FILES.get('group_image', None), is_friends_group = True)
-        group_chat.members.add(request.user)
-        admin_member = GroupChatMember.objects.get(user=request.user, group_chat=group_chat)
-        admin_member.membership_type = 'admin'
-        admin_member.save()
+        group_chat = GroupChat.objects.create(
+            name=group_name,
+            description=request.POST.get('group_description', ''),
+            initial_message=initial_message,
+            image=request.FILES.get('group_image', None),
+            is_friends_group=True
+        )
+
+        ChatMember.objects.create(group_chat=group_chat, user=request.user, user_type='admin')
 
         # Add the selected members to the group chat
         for user_id in selected_users:
@@ -349,8 +374,14 @@ def group_chat_details(request, name):
 
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
-    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user))
-    all_groups_chats = GroupChat.objects.filter(members=request.user).exclude(name=request.user.city)
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
     pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
 
     city_info = city_data.get(request.user.city, {})
@@ -368,6 +399,10 @@ def group_chat_details(request, name):
 
 
     group_chat = GroupChat.objects.filter(name=name).first()
+
+    group_chat.group_messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
     
     messages = group_chat.group_messages.order_by('timestamp')
 
@@ -385,6 +420,7 @@ def group_chat_details(request, name):
         'country': country,
         'flag_image': flag_image,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     })
 
 @login_required
@@ -395,7 +431,7 @@ def delete_group(request, name):
         error_messages.append('El grupo no existe')
         return render(request, 'community/all_chats.html', {'error_messages': error_messages})
     
-    if GroupChatMember.objects.filter(user=request.user, group_chat=group_chat, membership_type='admin').exists():
+    if ChatMember.objects.filter(user=request.user, group_chat=group_chat, user_type='admin').exists():
         group_chat.delete()
     else:
         error_messages.append('No tienes permisos para eliminar este grupo')

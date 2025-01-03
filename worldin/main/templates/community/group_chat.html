@@ -263,15 +263,7 @@
                     <h4><strong>Solicitudes pendientes</strong></h4>
                     <div style="display: flex; align-items: center;">
                         {% if pending_chat_requests_count > 0 %}
-                            <span style="
-                                background-color: red;
-                                color: white;
-                                border-radius: 50%;
-                                padding: 5px 10px;
-                                font-size: 12px;
-                                font-weight: bold;
-                                margin-right: 10px;
-                            ">
+                            <span class="badge bg-danger rounded-pill mr-3">
                                 {{ pending_chat_requests_count }}
                             </span>
                         {% endif %}
@@ -280,7 +272,11 @@
                 </a>
                 
                 <hr>
-                <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong></h4>
+                <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong>
+                    {% if total_unread_count_only_chats > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ total_unread_count_only_chats }}</span>
+                    {% endif %}
+                </h4>
                 <ul class="list-group">
                     {% for chat in all_my_chats %}
                         <li class="list-group-item d-flex justify-content-between align-items-center mb-1 {% if chat.id == group_chat.id %} active-chat {% endif %}">
@@ -294,6 +290,9 @@
                                         {% endif %}
                                         <strong>@{{ chat.user2 }}</strong>
                                     </a>
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %}
                                 {% else %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user1 %}">
                                         {% if chat.user1.profile_picture %}
@@ -303,6 +302,9 @@
                                         {% endif %}
                                         <strong>@{{ chat.user1 }}</strong>
                                     </a>
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %}
                                 {% endif %}
                             {% elif chat.is_group == True %}
                                 {% if chat.is_friends_group == False %}
@@ -310,6 +312,9 @@
                                         <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
                                         <strong>Comunidad de {{ chat.name }}</strong>
                                     </a>
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %}
                                     {% if request.user.city == chat.name %}
                                         <i class="bi bi-pin-angle-fill" style="color:#6a4fb8;"></i>
                                     {% endif %}
@@ -322,9 +327,11 @@
                                         {% endif %}
                                         <strong>{{ chat.name }}</strong>
                                     </a>
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
-                            <span class="badge badge-primary badge-pill">{{ chat.unread_count }}</span>
                         </li>
                     {% empty %}
                         <li class="list-group-item text-muted">No tienes chats disponibles.</li>
@@ -357,36 +364,36 @@
                         <ul>
                             {% for member in group_chat.members.all %}
                                 {% if group_chat.is_friends_group == False %}
-                                    {% if member.city != group_chat.name and member.city %}
+                                    {% if member.user.city != group_chat.name and member.user.city %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
-                                            (Externo: Su ciudad de residencia es {{ member.city }})
+                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                            (Externo: Su ciudad de residencia es {{ member.user.city }})
                                         </li>
-                                    {% elif member.city != group_chat.name and not member.city %}
+                                    {% elif member.user.city != group_chat.name and not member.user.city %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                             (Externo: Sin ciudad de residencia especificada)
                                         </li>
-                                    {% elif member.city == group_chat.name and member.erasmus %}
+                                    {% elif member.user.city == group_chat.name and member.user.erasmus %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                             (De Erasmus)
                                         </li>
                                     {% else %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                             (Residente)
                                         </li>
                                     {% endif %}
                                 {% else %}
-                                    {% if member.membership_type == 'admin' %}
+                                    {% if member.user_type == 'admin' %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                             (ADMINISTRADOR)
                                         </li>
                                     {% else %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.username %}">@{{ member.username }}</a>
+                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                         </li>
                                     {% endif %}
                                 {% endif %}

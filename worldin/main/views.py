@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
-from main.community.models import GroupChat, GroupChatMember, ChatRequest
+from main.community.models import Chat, GroupChat, ChatMember, ChatRequest
 from .models import CustomUser, Hobby, Follow, FollowRequest
 from main.market.models import Product, Rental
 from django.views.decorators.cache import never_cache
@@ -14,7 +14,7 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth import get_user_model
 from datetime import datetime
 from django.http import HttpResponseRedirect, JsonResponse
-from django.db.models import Q, BooleanField, Case, Value, When
+from django.db.models import Q, BooleanField, Case, Value, When, Count
 from django.contrib.messages import get_messages
 from dateutil.relativedelta import relativedelta
 from django.views.decorators.csrf import csrf_exempt
@@ -332,6 +332,16 @@ def profile(request):
 
     total_alerts = pending_requests_count + complete_profile_alerts
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
     return render(request, 'my_profile.html', {
         'user': user,
         'user_products': user_products,
@@ -345,6 +355,7 @@ def profile(request):
         'announce_count' : announce_count,
         'filter_option': filter_option,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     })
 
 def is_profile_complete(user):
@@ -446,12 +457,12 @@ def edit_profile(request):
         else:
             user.city = city
             group_chat = GroupChat.objects.filter(name=city).first()
-            group_member, created = GroupChatMember.objects.get_or_create(user=user, group_chat=group_chat)
+            group_member, created = ChatMember.objects.get_or_create(user=user, group_chat=group_chat)
             
             if user.city == group_chat.name:
-                group_member.membership_type = 'normal'
+                group_member.user_type = 'normal'
             else:
-                group_member.membership_type = 'external'
+                group_member.user_type = 'external'
             
             group_member.save()
             
@@ -551,6 +562,16 @@ def search_users(request):
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
     if query:
         users = CustomUser.objects.filter(username__icontains=query)
     
@@ -559,6 +580,7 @@ def search_users(request):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
         })
 
 @login_required
@@ -567,10 +589,23 @@ def followers_count(request, username):
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
     try:
         user_to_follow = CustomUser.objects.get(username=username)
     except CustomUser.DoesNotExist:
-        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count})
+        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts,
+                                                        'pending_requests_count': pending_requests_count, 
+                                                        'pending_chat_requests_count': pending_chat_requests_count,
+                                                        'total_unread_count': total_unread_count,})
     
     if request.method == "POST":
         if request.POST['value'] == 'follow':
@@ -595,6 +630,17 @@ def other_user_profile(request, username):
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
+
     try:
         # Intentar obtener el usuario
         profile_user = CustomUser.objects.get(username=username)
@@ -606,6 +652,7 @@ def other_user_profile(request, username):
             'pending_requests_count': pending_requests_count,
             'complete_profile_alerts': complete_profile_alerts,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     is_own_profile = profile_user == request.user
@@ -661,6 +708,7 @@ def other_user_profile(request, username):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     
     return render(request, 'profile_other_user.html', context)
@@ -673,10 +721,24 @@ def followers_and_following(request, username):
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
     try:
         profile_user = CustomUser.objects.get(username=username)
     except CustomUser.DoesNotExist:
-        return render(request, "user_not_found.html", {'complete_profile_alerts': complete_profile_alerts, 'pending_requests_count': pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count})
+        return render(request, "user_not_found.html", {
+            'complete_profile_alerts': complete_profile_alerts, 
+            'pending_requests_count': pending_requests_count, 
+            'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,})
     
     
     
@@ -727,6 +789,7 @@ def followers_and_following(request, username):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     
     return render(request, 'followers_and_following.html', context)
@@ -765,6 +828,16 @@ def follow_requests(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     
     if request.user.account_visibility == 'private':
         pending_requests = request.user.follow_requests_received.filter(status='pending')
@@ -774,12 +847,14 @@ def follow_requests(request):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
             })
     else:
         return render(request, 'your_vissibility_is_public.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
 
@@ -805,12 +880,26 @@ def sidebar(request):
 
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
+    total = total_unread_count + pending_chat_requests_count
+
     return render(request, 'sidebar.html', {
         'user': user,
         'pending_requests_count': pending_requests_count,
         'complete_profile_alerts': complete_profile_alerts,
         'selected_city': selected_city,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
+        'total': total,
     })
 
 @csrf_exempt  # Si estás usando AJAX en el formulario, necesitas esto. Retíralo si no es necesario.

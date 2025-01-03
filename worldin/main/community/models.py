@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from main.market.models import Product, Rental
+from main.models import CustomUser
 
 # Modelo para el Chat
 class Chat(models.Model):
@@ -23,35 +24,27 @@ class GroupChat(models.Model):
     image = models.ImageField(upload_to='group_chat_pictures/', blank=True, null=True)
     initial_message = models.TextField(blank=True)
     description = models.TextField(blank=True, null=True)
-    members = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        through='GroupChatMember',
-        related_name='group_chats',
-        blank=True
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     is_group = models.BooleanField(default=True)
     is_friends_group = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Group Chat: {self.name}"
+    
+class ChatMember(models.Model):
+    USER_TYPE_CHOICES = [
+        ('admin', 'Administrador'),
+        ('normal', 'Normal'),
+        ('external', 'Externo'),
+    ]
 
-
-class GroupChatMember(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    group_chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE)
-    membership_type = models.CharField(
-        max_length=10,
-        choices=[('normal', 'Normal'), ('external', 'Externo'), ('admin', 'Administrador')],
-        default='normal'
-    )
-    joined_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'group_chat')
+    group_chat = models.ForeignKey('GroupChat', on_delete=models.CASCADE, related_name='members')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='normal')
 
     def __str__(self):
-        return f"{self.user.username} in {self.group_chat.name} ({self.membership_type})"
+        return f"{self.user.username} in {self.group_chat.name} ({self.get_user_type_display()})"
+
     
 
 # Modelo para la solicitud de chat
@@ -85,6 +78,7 @@ class Message(models.Model):
     renting = models.ForeignKey(Rental, null=True, blank=True, on_delete=models.SET_NULL, related_name='renting_messages')
     is_system_message = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Message from {self.sender.username} at {self.timestamp}"

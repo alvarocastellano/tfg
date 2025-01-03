@@ -209,8 +209,8 @@
                 <li class="list-group-item-sidebar">
                     <a href="{% url 'community:all_chats' %}">
                         <i class="bi bi-chat-fill"></i> Todos mis chats
-                        {% if pending_chat_requests_count > 0 %}
-                                <span class="badge bg-danger ms-2">{{ pending_chat_requests_count }}</span>
+                        {% if total_unread_count > 0 %}
+                                <span class="badge bg-danger ms-2">{{ total_unread_count }}</span>
                         {% endif %}
                     </a></li>
 

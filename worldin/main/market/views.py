@@ -7,7 +7,7 @@ from .models import Product, Rental, ProductImage, RentalImage, RentalFeature, R
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
-from django.db.models import Q, BooleanField, Case, Value, When
+from django.db.models import Q, BooleanField, Case, Value, When, Count
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -17,7 +17,7 @@ import logging
 import requests
 from django.views.decorators.http import require_POST
 from main.views import alertas_completar_perfil, city_data, valid_cities
-from main.community.models import Chat, Message, ChatRequest
+from main.community.models import Chat, Message, ChatRequest, GroupChat
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
@@ -125,6 +125,16 @@ def my_market_profile(request):
 
     total_alerts = pending_requests_count + complete_profile_alerts
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
     # Parámetro para filtrar productos
     filter_option = request.GET.get('filter', 'articulos')  # Por defecto, 'todos'
 
@@ -201,6 +211,7 @@ def my_market_profile(request):
         'average_rating': average_rating,
         'total_announces': total_announces,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     return render(request, 'my_market_profile.html', context)
 
@@ -230,6 +241,16 @@ def my_market_ratings(request):
 
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     total_alerts = pending_requests_count + complete_profile_alerts
 
@@ -281,6 +302,7 @@ def my_market_ratings(request):
         'ratings_count': ratings_count,
         'average_rating': average_rating,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
 
     if request.method == 'POST':
@@ -328,6 +350,16 @@ def other_user_ratings(request, username):
     pending_requests_count = FollowRequest.objects.filter(receiver=user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=user, status='pending').count()
 
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
     total_alerts = pending_requests_count + complete_profile_alerts
 
     try:
@@ -342,6 +374,7 @@ def other_user_ratings(request, username):
             'complete_profile_alerts': complete_profile_alerts,
             'total_alerts': total_alerts,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
 
     user_products = Product.objects.filter(owner=profile_user)
@@ -393,6 +426,7 @@ def other_user_ratings(request, username):
         'average_rating': average_rating,
         'profile_user': profile_user,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
 
     
@@ -406,6 +440,16 @@ def add_product(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     if not request.user.city:
         messages.error(request, 'No puedes publicar un artículo hasta que tengas una ciudad asignada en tu perfil.')
@@ -455,6 +499,7 @@ def add_product(request):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
         # Si no hay errores, guardar el producto
@@ -483,12 +528,23 @@ def add_product(request):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
         })
 
 def highlight_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         product = Product.objects.get(id=product_id)
     except Product.DoesNotExist:
@@ -497,6 +553,7 @@ def highlight_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     if product.owner==request.user:
@@ -505,21 +562,33 @@ def highlight_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
         else:
             return render(request, 'highlight_product.html', {'product': product, 'complete_profile_alerts': complete_profile_alerts,
-                'pending_requests_count':pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count,})
+                'pending_requests_count':pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,})
     else:
         return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             } )
 
 def highlight_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         renting = Rental.objects.get(id=renting_id)
     except Rental.DoesNotExist:
@@ -528,6 +597,7 @@ def highlight_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     if renting.owner==request.user:
         if renting.highlighted:
@@ -535,15 +605,18 @@ def highlight_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
         else:
             return render(request, 'highlight_renting.html', {'renting': renting, 'complete_profile_alerts': complete_profile_alerts,
-                'pending_requests_count':pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count,})
+                'pending_requests_count':pending_requests_count, 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,})
     else:
         return render(request, 'edit_your_ads_only.html', {
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             } )
 
 def product_details(request, product_id):
@@ -552,6 +625,15 @@ def product_details(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     try:
         product = Product.objects.get(id=product_id)
@@ -561,6 +643,7 @@ def product_details(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     if rating_count !=0 :
@@ -575,6 +658,7 @@ def product_details(request, product_id):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     return render(request, 'product_details.html', context)
 
@@ -583,6 +667,15 @@ def delete_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         product = Product.objects.get(id=product_id)
         if product.owner != request.user:
@@ -591,6 +684,7 @@ def delete_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     except Product.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
@@ -598,6 +692,7 @@ def delete_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     product.delete()
     return redirect('market:my_market_profile')
@@ -609,6 +704,15 @@ def edit_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     try:
         product = Product.objects.get(id=product_id)
@@ -618,6 +722,7 @@ def edit_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
 
     if product.owner != request.user:
@@ -625,6 +730,7 @@ def edit_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
             } )
 
     if not request.user.city:
@@ -663,6 +769,7 @@ def edit_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
         # Si no hay errores, actualizar los detalles del producto
@@ -701,6 +808,7 @@ def edit_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
         # Guardar cambios en el producto
@@ -714,6 +822,7 @@ def edit_product(request, product_id):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     })
 
 
@@ -742,6 +851,15 @@ def add_renting(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     if not request.user.city:
         messages.error(request, 'No puedes añadir un anuncio hasta que tengas una ciudad asignada en tu perfil.')
@@ -812,6 +930,7 @@ def add_renting(request):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
         if form.is_valid() and formset.is_valid() and not error_messages:
@@ -842,6 +961,7 @@ def add_renting(request):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
         })
 
 
@@ -851,6 +971,15 @@ def renting_details(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     try:
         rental = Rental.objects.get(id=renting_id)
@@ -860,20 +989,20 @@ def renting_details(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     if rating_count !=0 :
         average_rating = stars_sum/rating_count
     else:
         average_rating = 0.0
-
-    adjusted_rating = average_rating + 0.5
     
     context = {
         'rental': rental,
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     return render(request, 'renting_details.html', context)
 
@@ -883,6 +1012,15 @@ def delete_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         renting = Rental.objects.get(id=renting_id)
         if renting.owner != request.user:
@@ -891,6 +1029,7 @@ def delete_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     except Rental.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
@@ -898,6 +1037,7 @@ def delete_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     renting.delete()
     return redirect('market:my_market_profile')
@@ -906,6 +1046,15 @@ def market_profile_other_user(request, username):
     request.session['previous_url'] = request.META.get('HTTP_REFERER', '/')
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     complete_profile_alerts = alertas_completar_perfil(request)
     
     try:
@@ -919,6 +1068,7 @@ def market_profile_other_user(request, username):
             'pending_requests_count': pending_requests_count,
             'complete_profile_alerts': complete_profile_alerts,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     sell_count = 0
@@ -1011,6 +1161,7 @@ def market_profile_other_user(request, username):
         'rated_announces': rated_announces,
         'ratings_count': ratings_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     
     return render(request, 'market_profile_other_user.html', context)
@@ -1022,6 +1173,15 @@ def edit_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     try:
         renting = Rental.objects.get(id=renting_id)
@@ -1031,6 +1191,7 @@ def edit_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
 
     if renting.owner != request.user:
@@ -1038,6 +1199,7 @@ def edit_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
             } ) 
 
     if not request.user.city:
@@ -1113,6 +1275,7 @@ def edit_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
         # Si no hay errores, actualizar los detalles del producto
@@ -1159,6 +1322,7 @@ def edit_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count': pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
 
         # Guardar cambios en el producto
@@ -1174,12 +1338,22 @@ def edit_renting(request, renting_id):
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     })
 
 def main_market_products(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     order = request.GET.get('order', None)
     search_query = request.GET.get('q', '')
 
@@ -1189,6 +1363,7 @@ def main_market_products(request, selected_city):
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
             } )
 
     if request.user.selected_city == "":
@@ -1196,6 +1371,7 @@ def main_market_products(request, selected_city):
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
             } )    
 
     city_info = city_data.get(selected_city, {})
@@ -1264,6 +1440,7 @@ def main_market_products(request, selected_city):
         'pending_chat_requests_count': pending_chat_requests_count,
         'only_user_products': only_user_products,
         'no_results_message': no_results_message,
+        'total_unread_count': total_unread_count,
     }
     return render(request, "main_market_products.html", context)
 
@@ -1271,6 +1448,15 @@ def main_market_rentings(request, selected_city):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     order = request.GET.get('order', None)
     search_query = request.GET.get('q', '')
     selected_features = request.GET.getlist('features')
@@ -1288,6 +1474,7 @@ def main_market_rentings(request, selected_city):
             'complete_profile_alerts': complete_profile_alerts, 
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
             } )
 
     city_info = city_data.get(selected_city, {})
@@ -1389,6 +1576,7 @@ def main_market_rentings(request, selected_city):
         'selected_features': selected_features,
         'no_caracts_message': no_caracts_message,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     }
     return render(request, "main_market_rentings.html", context)
 
@@ -1416,6 +1604,15 @@ def create_checkout_session_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     try:
         renting = Rental.objects.get(id=renting_id)
@@ -1425,6 +1622,7 @@ def create_checkout_session_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     if renting.highlighted:
@@ -1432,6 +1630,7 @@ def create_checkout_session_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     else:
 
@@ -1475,6 +1674,15 @@ def create_checkout_session_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
 
     try:
         product = Product.objects.get(id=product_id)
@@ -1484,6 +1692,7 @@ def create_checkout_session_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     
     if product.highlighted:
@@ -1491,6 +1700,7 @@ def create_checkout_session_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     else:
         user_currency = currency(request)
@@ -1553,10 +1763,20 @@ def payment_success_renting(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     return render(request, 'payment_success.html', {
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
-        'pending_chat_requests_count': pending_chat_requests_count,})
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,})
 
 
 def payment_success_product(request):
@@ -1583,10 +1803,20 @@ def payment_success_product(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     return render(request, 'payment_success.html', {
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
         })
 
 def payment_cancel(request):
@@ -1605,10 +1835,20 @@ def payment_cancel(request):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     return render(request, 'payment_cancel.html', {
         'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
         })
 
 @csrf_exempt
@@ -1826,6 +2066,15 @@ def book_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         product = Product.objects.get(id=product_id)
         if product.owner != request.user:
@@ -1834,6 +2083,7 @@ def book_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     except Product.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
@@ -1841,6 +2091,7 @@ def book_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     product.status = 'booked'
     product.save()
@@ -1861,6 +2112,15 @@ def unbook_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         product = Product.objects.get(id=product_id)
         if product.owner != request.user:
@@ -1869,6 +2129,7 @@ def unbook_product(request, product_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     except Product.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
@@ -1876,6 +2137,7 @@ def unbook_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     product.status = 'on_sale'
     product.save()
@@ -1895,6 +2157,15 @@ def sell_product(request, product_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
         
     if request.method == 'POST':
         buyer_id = request.POST.get('buyer_id')
@@ -1924,12 +2195,22 @@ def sell_product(request, product_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
 
 def book_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         renting = Rental.objects.get(id=renting_id)
         if renting.owner != request.user:
@@ -1938,6 +2219,7 @@ def book_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     except Rental.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
@@ -1945,6 +2227,7 @@ def book_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     renting.status = 'booked'
     renting.save()
@@ -1964,6 +2247,15 @@ def unbook_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
     try:
         renting = Rental.objects.get(id=renting_id)
         if renting.owner != request.user:
@@ -1972,6 +2264,7 @@ def unbook_renting(request, renting_id):
                 'complete_profile_alerts': complete_profile_alerts,
                 'pending_requests_count':pending_requests_count,
                 'pending_chat_requests_count': pending_chat_requests_count,
+                'total_unread_count': total_unread_count,
             })
     except Rental.DoesNotExist:
         # Si el producto no existe, redirigir a una página de error o manejar de forma similar
@@ -1979,6 +2272,7 @@ def unbook_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })
     renting.status = 'on_sale'
     renting.save()
@@ -1998,6 +2292,15 @@ def sell_renting(request, renting_id):
     complete_profile_alerts = alertas_completar_perfil(request)
     pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
     pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
         
     if request.method == 'POST':
         buyer_id = request.POST.get('renting_buyer_id')
@@ -2027,4 +2330,5 @@ def sell_renting(request, renting_id):
             'complete_profile_alerts': complete_profile_alerts,
             'pending_requests_count': pending_requests_count,
             'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
         })

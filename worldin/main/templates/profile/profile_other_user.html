@@ -280,7 +280,9 @@
                                     </div>
                                 </div>
                             {% else %}
-                                <p class="mt-5"><strong>@{{ profile_user.username }}</strong> no tiene a la venta ningun artículo actualmente.<br> </p>
+                                {% if product.status != 'sold' %}
+                                    <p class="mt-5"><strong>@{{ profile_user.username }}</strong> no tiene a la venta ningun artículo actualmente.<br> </p>
+                                {% endif %}
                             {% endif %}                                
                         {% endfor %}
                        
@@ -318,9 +320,11 @@
                                     </div>
                                 </div>
                             {% else %}
-                                <p class="mt-5">
-                                    <strong>@{{ profile_user.username }}</strong> no tiene ningún anuncio de alquiler activo actualmente.<br>
-                                </p>
+                                {% if rental.status != 'sold' %}
+                                    <p class="mt-5">
+                                        <strong>@{{ profile_user.username }}</strong> no tiene ningún anuncio de alquiler activo actualmente.<br>
+                                    </p>
+                                {% endif %}
                             {% endif %}
                         {% endfor %}
                         
