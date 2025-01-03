@@ -150,13 +150,15 @@
                             </span>
                         {% else %}
                             <a href="{% url 'other_user_profile' chat_request.sender.username %}"><strong>@{{ chat_request.sender.username }}</strong></a>
-                            <span><strong>quiere comenzar un chat contigo 
+                            <span>
                                 {% if chat_request.product %}
-                                        por interés en el siguiente producto:</strong>
+                                <strong>quiere comenzar un chat contigo por interés en el siguiente producto:</strong>
                                 {% elif chat_request.renting %}
-                                        por interés en el siguiente alquiler:</strong>
+                                <strong>quiere comenzar un chat contigo por interés en el siguiente alquiler:</strong>
+                                {% elif chat_request.is_delete_request %}
+                                <strong>solicita eliminar el chat existente contigo.</strong>
                                 {% else %} 
-                                        con el siguiente mensaje:</strong> {{ chat_request.initial_message }}
+                                <strong>quiere comenzar un chat contigo con el siguiente mensaje:</strong> {{ chat_request.initial_message }}
                                 {% endif %}
                             </span>
                         {% endif %}
@@ -219,16 +221,25 @@
                                     <a href="{% url 'other_user_profile' request.receiver.username %}">@{{ request.receiver.username }}</a>
                                 con el siguiente mensaje: </strong> {{ request.initial_message }}
                             {% else %}
-                                <strong>Solicitud de chat enviada a 
-                                <a href="{% url 'other_user_profile' request.receiver.username %}">
-                                    @{{ request.receiver.username }}
-                                </a>
                                 {% if request.product %}
-                                    por interés en el siguiente producto:
+                                    <strong>Solicitud de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}
+                                        </a> por interés en el siguiente producto:
                                 {% elif request.renting %}
-                                    por interés en el siguiente alquiler:
+                                    <strong>Solicitud de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}
+                                        </a> por interés en el siguiente alquiler:
+                                {% elif request.is_delete_request %}
+                                    <strong>Solicitud de eliminación de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}</a>
                                 {% else %} 
-                                    con el siguiente mensaje: </strong> {{ request.initial_message }}
+                                    <strong>Solicitud de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}
+                                        </a> con el siguiente mensaje: </strong> {{ request.initial_message }}
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -254,7 +265,9 @@
                             {% elif request.status == 'rejected' %}<span style="color:#F32013"><strong>RECHAZADA</strong></span>
                             . Puedes volver a enviar solicitud al usuario.
                             {% else %}<span style="color:#4BB543"><strong>ACEPTADA</strong></span>
-                            . Ya puedes acceder al chat.
+                                {% if request.is_delete_request %}. El chat ha sido borrado.
+                                {% else %}. Ya puedes acceder al chat.
+                                {% endif %}
                             {% endif %}
                         </div>
                         <br>

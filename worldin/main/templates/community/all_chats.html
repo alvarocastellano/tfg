@@ -148,6 +148,22 @@
                     </div>
                 </a>
                 <hr>
+                {% if success_messages %}
+                    <div class="alert alert-success" style="font-size:18px;" role="alert" id="success-alert">
+                    {% for message in success_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                {% if error_messages %}
+                    <div class="alert alert-danger" style="font-size:18px;" role="alert" id="error-alert">
+                    {% for message in error_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                
                 <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong>
                     {% if total_unread_count_only_chats > 0 %}
                         <span class="badge bg-danger rounded-pill">{{ total_unread_count_only_chats }}</span>
@@ -166,9 +182,25 @@
                                         {% endif %}
                                         <strong>@{{ chat.user2 }}</strong>
                                     </a>
+                                    
                                     {% if chat.unread_count > 0 %}
                                         <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
                                     {% endif %}
+                                    <div class="dropdown" style="float:right;">
+                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Opciones
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                            <li>
+                                                <form method="post" action="{% url 'community:request_chat_deletion' chat.user2 %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        Solicitar borrado de chat
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 {% else %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user1 %}">
                                         {% if chat.user1.profile_picture %}
@@ -178,9 +210,25 @@
                                         {% endif %}
                                         <strong>@{{ chat.user1 }}</strong>
                                     </a>
+                                    
                                     {% if chat.unread_count > 0 %}
                                         <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
                                     {% endif %}
+                                    <div class="dropdown" style="float:right;">
+                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Opciones
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                            <li>
+                                                <form method="post" action="{% url 'community:request_chat_deletion' chat.user1 %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        Solicitar borrado de chat
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 {% endif %}
                             {% elif chat.is_group == True %}
                                     {% if chat.is_friends_group == False %}
@@ -210,10 +258,19 @@
                                     {% endif %}
                                     {% for member in chat.members.all %}
                                         {% if member.user == request.user and member.user_type == 'admin' %}
-                                            <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger btn-sm" style="float:right;">Eliminar grupo</button>
-                                            </form>
+                                            <div class="dropdown" style="float:right;">
+                                                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Opciones
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                                    <li>
+                                                        <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="dropdown-item">Eliminar grupo</button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         {% endif %}
                                     {% endfor %}
                             {% endif %}
@@ -238,6 +295,18 @@
         function goBack() {
             window.history.back();
         }
+    </script>
+    <script>
+        setTimeout(function() {
+            var successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                successAlert.style.display = 'none';
+            }
+            var errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                errorAlert.style.display = 'none';
+            }
+        }, 3000);
     </script>
 </body>
 {% endblock %}

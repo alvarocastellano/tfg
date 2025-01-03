@@ -155,6 +155,15 @@ def accept_chat_request(request, request_id):
             ChatMember.objects.create(group_chat=chat_request.group_chat, user=chat_request.receiver, user_type='normal')
             chat_request.status = 'accepted'
             chat_request.save()
+        elif chat_request.is_delete_request:
+            chat = Chat.objects.filter(
+                Q(user1=chat_request.sender, user2=chat_request.receiver) |
+                Q(user1=chat_request.receiver, user2=chat_request.sender)
+            ).first()
+            if chat:
+                chat.delete()
+            chat_request.status = 'accepted'
+            chat_request.save()
         else:
             Chat.objects.create(user1=chat_request.sender, user2=chat_request.receiver, initial_message=chat_request.initial_message)
             chat_request.status = 'accepted'
@@ -439,3 +448,122 @@ def delete_group(request, name):
     
     return redirect('community:all_chats')
 
+@login_required
+def request_chat_deletion(request, username):
+    error_messages = []
+    success_messages = []
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
+        reverse=True
+    )
+    total_unread_count_only_chats = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
+    try:
+        chat_user = CustomUser.objects.get(username=username)
+    except CustomUser.DoesNotExist:
+        return render(request, 'user_not_found.html', {
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'private_chats': private_chats,
+        'all_my_chats': all_my_chats,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
+        'total_unread_count_only_chats': total_unread_count_only_chats
+    })
+    
+    chat = Chat.objects.filter(
+        (Q(user1=request.user, user2=chat_user) | Q(user1=chat_user, user2=request.user))
+    ).first()
+
+    if request.user not in [chat.user1, chat.user2]:
+        return render(request, 'user_not_found.html', {
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'private_chats': private_chats,
+        'all_my_chats': all_my_chats,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
+        'total_unread_count_only_chats': total_unread_count_only_chats
+    })
+    
+    receiver = chat.user2 if chat.user1 == request.user else chat.user1
+    
+    # Verificar si ya existe una solicitud de borrado pendiente
+    existing_delete_request_from_myself = ChatRequest.objects.filter(
+        sender=request.user,
+        receiver=receiver,
+        is_delete_request=True,
+        status='pending'
+    ).exists()
+
+    existing_delete_request_from_the_other = ChatRequest.objects.filter(
+        sender=receiver,
+        receiver=request.user,
+        is_delete_request=True,
+        status='pending'
+    ).exists()
+
+    if existing_delete_request_from_myself or existing_delete_request_from_the_other:
+        error_messages.append("Ya hay una solicitud pendiente de borrado de este chat.")
+        return render(request, 'community/all_chats.html', {
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+            'private_chats': private_chats,
+            'all_my_chats': all_my_chats,
+            'country': country,
+            'flag_image': flag_image,
+            'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,
+            'total_unread_count_only_chats': total_unread_count_only_chats,
+            'error_messages': error_messages,
+        })
+    
+    else:
+        ChatRequest.objects.create(
+            sender=request.user,
+            receiver=receiver,
+            initial_message="Solicitud de borrado de chat.",
+            is_delete_request=True
+        )
+        success_messages.append("Solicitud de borrado enviada")
+        return render(request, 'community/all_chats.html', {
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'private_chats': private_chats,
+        'all_my_chats': all_my_chats,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
+        'total_unread_count_only_chats': total_unread_count_only_chats,
+        'success_messages': success_messages,
+    })

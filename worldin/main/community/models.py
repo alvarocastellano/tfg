@@ -55,6 +55,7 @@ class ChatRequest(models.Model):
     group_chat = models.ForeignKey(GroupChat, null=True, blank=True, on_delete=models.CASCADE, related_name='group_requests')
     product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL, related_name='chatrequests')
     renting = models.ForeignKey(Rental, null=True, blank=True, on_delete=models.SET_NULL, related_name='rentings_chatrequests')
+    is_delete_request = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=10,
