@@ -232,10 +232,10 @@
                                 {% endif %}
                             {% elif chat.is_group == True %}
                                     {% if chat.is_friends_group == False %}
-                                        <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
-                                            <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
-                                            <strong>Comunidad de {{ chat.name }}</strong>
-                                        </a>
+                                            <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
+                                                <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
+                                                <strong>Comunidad de {{ chat.name }}</strong>
+                                            </a>
                                         {% if chat.unread_count > 0 %}
                                             <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
                                         {% endif %}
@@ -257,16 +257,24 @@
                                         {% endif %}
                                     {% endif %}
                                     {% for member in chat.members.all %}
-                                        {% if member.user == request.user and member.user_type == 'admin' %}
+                                        {% if member.user == request.user %}
                                             <div class="dropdown" style="float:right;">
                                                 <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                                                     Opciones
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                                    {% if member.user_type == 'admin'%}
+                                                        <li>
+                                                            <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="dropdown-item">Eliminar grupo</button>
+                                                            </form>
+                                                        </li>
+                                                    {% endif %}
                                                     <li>
-                                                        <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;">
+                                                        <form method="POST" action="{% url 'community:leave_group' name=chat.name %}" style="display:inline;">
                                                             {% csrf_token %}
-                                                            <button type="submit" class="dropdown-item">Eliminar grupo</button>
+                                                            <button type="submit" class="dropdown-item">Abandonar grupo</button>
                                                         </form>
                                                     </li>
                                                 </ul>
@@ -306,7 +314,7 @@
             if (errorAlert) {
                 errorAlert.style.display = 'none';
             }
-        }, 3000);
-    </script>
+        }, 4000);
+    </script>    
 </body>
 {% endblock %}

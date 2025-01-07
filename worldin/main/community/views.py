@@ -7,6 +7,7 @@ from main.views import alertas_completar_perfil
 from main.views import city_data
 from itertools import chain
 from django.db import models
+from .forms import EditGroupForm
 
 @login_required
 def all_chats(request):
@@ -567,3 +568,85 @@ def request_chat_deletion(request, username):
         'total_unread_count_only_chats': total_unread_count_only_chats,
         'success_messages': success_messages,
     })
+
+@login_required
+def leave_group(request, name):
+    error_messages = []
+    success_messages = []
+    group = get_object_or_404(GroupChat, name=name)
+    chat_member = group.members.filter(user=request.user).first()
+
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
+        reverse=True
+    )
+    total_unread_count_only_chats = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
+    context = {
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'private_chats': private_chats,
+        'all_my_chats': all_my_chats,
+        'country': country,
+        'flag_image': flag_image,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
+        'total_unread_count_only_chats': total_unread_count_only_chats,
+        'success_messages': success_messages,
+        'error_messages': error_messages,
+    }
+
+    if not chat_member:
+        error_messages.append("No perteneces a este grupo.")
+        return render(request, 'community/all_chats.html', context)
+
+    if chat_member.user_type == 'admin':
+        other_admins = group.members.filter(user_type='admin').exclude(user=request.user)
+        
+        if not other_admins.exists():
+            # Buscar al siguiente miembro más antiguo y convertirlo en admin
+            next_member = group.members.exclude(user=request.user).order_by('id').first()
+            if next_member:
+                next_member.user_type = 'admin'
+                next_member.save()
+            else:
+                # Si no hay más miembros, eliminar el grupo
+                group.delete()
+                error_messages.append("El grupo ha sido eliminado porque no había más miembros.")
+                return render(request, 'community/all_chats.html', context)
+        
+    if group.name == chat_member.user.city:
+        chat_member.delete()
+        success_messages.append("Has abandonado el grupo correctamente, pero seguirá fijado en 'Tus chats' al tratarse de tu comunidad.")
+        return render(request, 'community/all_chats.html', context)
+
+
+    # Eliminar al usuario del grupo
+    chat_member.delete()
+    success_messages.append("Has abandonado el grupo correctamente.")
+    return render(request, 'community/all_chats.html', context)
