@@ -5,6 +5,14 @@ class EditGroupForm(forms.ModelForm):
     class Meta:
         model = GroupChat
         fields = ['name', 'image', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
+        labels = {
+            'name': 'Nombre del grupo',
+            'image': 'Imagen del grupo',
+            'description': 'Descripción del grupo',
         }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+

@@ -17,5 +17,7 @@ urlpatterns = [
     path('delete_group/<str:name>/', views.delete_group, name='delete_group'),
     path('chat/<str:username>/request_deletion/', views.request_chat_deletion, name='request_chat_deletion'),
     path('leave_group/<str:name>/', views.leave_group, name='leave_group'),
-
+    path('edit_group/<int:group_id>/', views.edit_group, name='edit_group'),
+    path('add_member/<int:group_id>/', views.add_member, name='add_member'),
+    path('remove_member/<int:group_id>/<str:username>/', views.remove_member, name='remove_member')
 ]

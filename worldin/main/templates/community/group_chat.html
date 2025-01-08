@@ -410,7 +410,7 @@
 
             <!-- Mensajes (70%) -->
             <div class="col-md-8 network-container">
-                <div class="chat-header" id="chat-header">
+                <div class="chat-header" id="chat-header" style="overflow-y:auto;">
                     <div class="d-flex align-items-center">
                         {% if group_chat.is_friends_group == False %}
                             <img src="{% static 'images/' %}{{ group_chat.image }}" alt="{{ group_chat.name }}" class="group-profile-img">
@@ -428,7 +428,23 @@
                         </button>
                     </div>
                     <div class="chat-header-expanded" id="chat-header-expanded">
-                        <p><strong>Descripción:</strong> {{ group_chat.description }}</p>
+                        {% for member in group_chat.members.all %}
+                            {% if member.user == request.user and member.user_type == 'admin' %}
+                            <button class="btn btn-secondary mb-5" type="button" id="edit-group-btn">Editar grupo</button>
+                            <div id="edit-group-form" style="display: none; margin-top: 10px;">
+                                <form method="POST" enctype="multipart/form-data" action="{% url 'community:edit_group' group_chat.id %}">
+                                    {% csrf_token %}
+                                    {{ form.as_p }}
+                                    <button type="submit" class="btn btn-primary mt-3">Guardar cambios</button>
+                                </form>
+                            </div>
+                            
+                            {% elif member.user == request.user and member.user_type == 'normal' %}
+                                <p><strong>Nombre del grupo:</strong> {{ group_chat.name }}</p>
+                                <p><strong>Descripción:</strong> {{ group_chat.description }}</p>
+                            {% endif %}
+                        {% endfor %}
+                        
                         <p><strong>Miembros:</strong></p>
                         <ul>
                             {% for member in group_chat.members.all %}
@@ -455,14 +471,53 @@
                                         </li>
                                     {% endif %}
                                 {% else %}
+                                    {% if request.user == member.user and member.user_type == 'admin' %}
+                                    <form method="POST" action="{% url 'community:add_member' group_chat.id %}">
+                                        {% csrf_token %}
+                                        <label for="search-user">Añadir miembro al grupo:</label>
+                                        <input type="text" id="search-user" placeholder="Buscar por nombre de usuario..." oninput="filterUsers()" class="form-control">
+                                        <ul class="list-group mt-2" id="user-list">
+                                            {% for user in all_users %}
+                                            <li class="list-group-item d-flex align-items-center user-item" data-username="{{ user.username }}">
+                                                <div class="user-info d-flex align-items-center">
+                                                    <a href="{% url 'other_user_profile' user.username %}" style="text-decoration: none; color: #6a4fb8;">
+                                                        <div class="d-flex align-items-center">
+                                                            {% if user.profile_picture %}
+                                                            <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del usuario">
+                                                            {% else %}
+                                                            <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del usuario">
+                                                            {% endif %}
+                                                            <div class="usuario-y-nombre ml-2">
+                                                                <p style="font-size: 20px; margin-bottom: 0;"><strong>@{{ user.username }}</strong></p>
+                                                                <p style="font-size: 16px; margin-bottom: 0;">{{ user.first_name }} {{ user.last_name }}</p>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="action-buttons ml-auto">
+                                                    <input type="radio" name="new_member_username" value="{{ user.username }}" class="form-check-input">
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                        <button type="submit" class="btn btn-primary mt-3">Enviar solicitud</button>
+                                    </form>
+                                    
+                                    {% endif %}
                                     {% if member.user_type == 'admin' %}
                                         <li>
-                                            <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                            <a class="mt-5" href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                             (ADMINISTRADOR)
                                         </li>
                                     {% else %}
-                                        <li>
+                                        <li class="mt-3">
                                             <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                            {% if request.user != member.user %}
+                                                <form method="POST" action="{% url 'community:remove_member' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 30px;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar miembro</button>
+                                                </form>
+                                            {% endif %}
                                         </li>
                                     {% endif %}
                                 {% endif %}
@@ -496,6 +551,7 @@
                     <!-- Formulario para enviar mensaje -->
                     <form method="POST">
                         {% csrf_token %}
+                        <input type="hidden" name="form_type" value="send_message">
                         <div class="input-group">
                             <input type="text" name="content" class="form-control" placeholder="Escribe tu mensaje aquí..." required>
                             <button class="btn btn-primary" type="submit">
@@ -539,6 +595,39 @@
                 errorAlert.style.display = 'none';
             }
         }, 4000);
-    </script>   
+    </script>
+    <script>
+        document.getElementById('edit-group-btn').addEventListener('click', function () {
+            const form = document.getElementById('edit-group-form');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        });
+    </script>
+    <script>
+        function filterUsers() {
+            const searchInput = document.getElementById('search-user').value.toLowerCase();
+            const userItems = document.querySelectorAll('.user-item');
+        
+            userItems.forEach(item => {
+                const username = item.getAttribute('data-username').toLowerCase();
+                if (username.includes(searchInput)) {
+                    item.style.display = 'flex'; // Mostrar coincidencias
+                } else {
+                    item.style.display = 'none'; // Ocultar no coincidencias
+                }
+            });
+        
+            // Ocultar toda la lista si el input está vacío
+            if (searchInput.trim() === '') {
+                userItems.forEach(item => (item.style.display = 'none'));
+            }
+        }
+    
+    </script>
+    
+    
 </body>
 {% endblock %}

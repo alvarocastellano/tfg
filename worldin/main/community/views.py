@@ -407,7 +407,6 @@ def group_chat_details(request, name):
         reverse=True
     )
 
-
     group_chat = GroupChat.objects.filter(name=name).first()
 
     group_chat.group_messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
@@ -416,13 +415,20 @@ def group_chat_details(request, name):
     
     messages = group_chat.group_messages.order_by('timestamp')
 
+    admin_users = [member for member in group_chat.members.all() if member.user_type == 'admin' and group_chat.is_friends_group]
+
+    all_users = CustomUser.objects.exclude(username=request.user.username)
+
+    form = EditGroupForm(instance=group_chat)
+
     if request.method == "POST":
         content = request.POST.get("content")
         if content:
             Message.objects.create(group_chat=group_chat, sender=request.user, content=content)
 
+
     return render(request, "community/group_chat.html", {
-        'complete_profile_alerts': complete_profile_alerts, 
+        'complete_profile_alerts': complete_profile_alerts,
         'pending_requests_count': pending_requests_count,
         'all_my_chats': all_my_chats,
         'group_chat': group_chat,
@@ -431,6 +437,9 @@ def group_chat_details(request, name):
         'flag_image': flag_image,
         'pending_chat_requests_count': pending_chat_requests_count,
         'total_unread_count': total_unread_count,
+        'admin_users': admin_users,
+        'form': form,
+        'all_users': all_users,
     })
 
 @login_required
@@ -650,3 +659,175 @@ def leave_group(request, name):
     chat_member.delete()
     success_messages.append("Has abandonado el grupo correctamente.")
     return render(request, 'community/all_chats.html', context)
+
+@login_required
+def edit_group(request, group_id):
+    error_messages = []
+    success_messages = []
+    group_chat = get_object_or_404(GroupChat, id=group_id)
+    chat_member = group_chat.members.filter(user=request.user).first()
+
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
+        reverse=True
+    )
+    total_unread_count_only_chats = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats) + pending_chat_requests_count
+
+    if request.method == 'POST':
+        form = EditGroupForm(request.POST, request.FILES, instance=group_chat)
+        if form.is_valid():
+            form.save()
+            success_messages.append("El grupo ha sido actualizado correctamente.")
+            form = EditGroupForm(instance=group_chat)
+        else:
+            error_messages.append("Hubo un error al actualizar el grupo. Por favor, revisa los campos.")
+    else:
+        form = EditGroupForm(instance=group_chat)
+
+    return render(request, 'community/group_chat.html', {
+        'form': form,
+        'group_chat': group_chat,
+        'error_messages': error_messages,
+        'success_messages': success_messages,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'country': country,
+        'flag_image': flag_image,
+        'all_my_chats': all_my_chats,
+        'total_unread_count_only_chats': total_unread_count_only_chats,
+        'total_unread_count': total_unread_count
+    })
+
+
+@login_required
+def add_member(request, group_id):
+    error_messages = []
+    success_messages = []
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    pinned_chat = GroupChat.objects.filter(name=request.user.city).first()
+
+    city_info = city_data.get(request.user.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    all_my_chats = [pinned_chat] + sorted(
+        chain(
+            private_chats.annotate(last_message_date=models.Max('messages__timestamp')),
+            all_groups_chats.annotate(last_message_date=models.Max('group_messages__timestamp'))
+        ),
+        key=lambda chat: chat.last_message_date if chat.last_message_date else chat.created_at,
+        reverse=True
+    )
+
+    group_chat = GroupChat.objects.filter(id=group_id).first()
+
+    group_chat.group_messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+
+    total_unread_count_only_chats = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
+    
+    messages = group_chat.group_messages.order_by('timestamp')
+
+    admin_users = [member for member in group_chat.members.all() if member.user_type == 'admin' and group_chat.is_friends_group]
+
+    all_users = CustomUser.objects.exclude(username=request.user.username)
+
+    form = EditGroupForm(instance=group_chat)
+
+    if request.method == 'POST':
+        username = request.POST.get('new_member_username')
+        if not username:
+            error_messages.append('Debes seleccionar un usuario para enviar la solicitud.')
+        else:
+            try:
+                user = CustomUser.objects.get(username=username)
+                if ChatMember.objects.filter(group_chat=group_chat, user=user).exists():
+                    error_messages.append('El usuario ya es miembro del grupo.')
+                else:
+                    ChatRequest.objects.create(
+                        group_chat=group_chat,
+                        sender=request.user,
+                        receiver=user,
+                        initial_message="¡Únete al grupo!"
+                    )
+                    success_messages.append('Solicitud de unión al grupo enviada correctamente.')
+            except CustomUser.DoesNotExist:
+                error_messages.append('Usuario no encontrado.')
+
+    return render(request, 'community/group_chat.html', {
+        'form': form,
+        'group_chat': group_chat,
+        'error_messages': error_messages,
+        'all_users': all_users,
+        'success_messages': success_messages,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'country': country,
+        'flag_image': flag_image,
+        'all_my_chats': all_my_chats,
+        'total_unread_count_only_chats': total_unread_count_only_chats,
+        'total_unread_count': total_unread_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'messages': messages,
+        'admin_users': admin_users
+
+    })
+
+
+
+@login_required
+def remove_member(request, group_id, username):
+    group_chat = get_object_or_404(GroupChat, id=group_id)
+    error_messages = []
+    success_messages = []
+
+    try:
+        user = CustomUser.objects.get(username=username)
+        member = ChatMember.objects.get(group_chat=group_chat, user=user)
+        if member.user_type == 'admin':
+            error_messages.append('No puedes eliminar a un administrador.')
+        else:
+            member.delete()
+            success_messages.append('Usuario eliminado correctamente.')
+    except (CustomUser.DoesNotExist, ChatMember.DoesNotExist):
+        error_messages.append('El usuario no es miembro del grupo.')
+
+    return redirect('community:group_chat_details', name=group_chat.name)
