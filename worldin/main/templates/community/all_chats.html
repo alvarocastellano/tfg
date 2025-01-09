@@ -265,14 +265,14 @@
                                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
                                                     {% if member.user_type == 'admin'%}
                                                         <li>
-                                                            <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;">
+                                                            <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;" onsubmit="setTimeout(function(){ location.reload(); }, 10);">
                                                                 {% csrf_token %}
                                                                 <button type="submit" class="dropdown-item">Eliminar grupo</button>
                                                             </form>
                                                         </li>
                                                     {% endif %}
                                                     <li>
-                                                        <form method="POST" action="{% url 'community:leave_group' name=chat.name %}" style="display:inline;">
+                                                        <form method="POST" action="{% url 'community:leave_group' name=chat.name %}" style="display:inline;" onsubmit="setTimeout(function(){ location.reload(); }, 10);">
                                                             {% csrf_token %}
                                                             <button type="submit" class="dropdown-item">Abandonar grupo</button>
                                                         </form>

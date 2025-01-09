@@ -437,7 +437,7 @@
                                     {{ form.as_p }}
                                     <button type="submit" class="btn btn-primary mt-3">Guardar cambios</button>
                                 </form>
-                            </div>
+                           </div>
                             
                             {% elif member.user == request.user and member.user_type == 'normal' %}
                                 <p><strong>Nombre del grupo:</strong> {{ group_chat.name }}</p>
@@ -505,15 +505,39 @@
                                     
                                     {% endif %}
                                     {% if member.user_type == 'admin' %}
-                                        <li>
+                                        <li class="mt-3">
                                             <a class="mt-5" href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
                                             (ADMINISTRADOR)
+                                            {% if request.user != member.user and request.user in admin_users %}
+                                                {% if member.user in admin_users %}
+                                                    <form method="POST" action="{% url 'community:remove_admin' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-warning btn-sm">Quitar condición de administrador</button>
+                                                    </form>
+                                                {% else %}
+                                                    <form method="POST" action="{% url 'community:make_admin' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-primary btn-sm">Hacer administrador</button>
+                                                    </form>
+                                                {% endif %}
+                                            {% endif %}
                                         </li>
                                     {% else %}
                                         <li class="mt-3">
                                             <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
-                                            {% if request.user != member.user %}
-                                                <form method="POST" action="{% url 'community:remove_member' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 30px;">
+                                            {% if request.user != member.user and request.user in admin_users %}
+                                                {% if member.user in admin_users %}
+                                                    <form method="POST" action="{% url 'community:remove_admin' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-warning btn-sm">Quitar condición de administrador</button>
+                                                    </form>
+                                                {% else %}
+                                                    <form method="POST" action="{% url 'community:make_admin' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-primary btn-sm">Hacer administrador</button>
+                                                    </form>
+                                                {% endif %}
+                                                <form method="POST" action="{% url 'community:remove_member' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn btn-danger btn-sm">Eliminar miembro</button>
                                                 </form>
@@ -533,17 +557,22 @@
             
                     <div class="messages-list">
                     {% for message in group_chat.group_messages.all %}
-                        {% if message.sender == request.user %}
-                            <div class="message text-right">
-                                <p>{{ message.content }}</p>
-                                <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
-                            </div>
+                        {% if message.is_system_message %}
+                            <em class="text-center mt-3"><strong>{{ message.content }}</strong></em>
+                            <br>
                         {% else %}
-                            <div class="message text-left">
-                                <strong>@{{ message.sender }}</strong>
-                                <p>{{ message.content }}</p>
-                                <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
-                            </div>
+                            {% if message.sender == request.user %}
+                                <div class="message text-right">
+                                    <p>{{ message.content }}</p>
+                                    <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
+                                </div>
+                            {% else %}
+                                <div class="message text-left">
+                                    <strong>@{{ message.sender }}</strong>
+                                    <p>{{ message.content }}</p>
+                                    <span>{{ message.timestamp|date:"H:i, d M Y" }}</span>
+                                </div>
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
                     </div>

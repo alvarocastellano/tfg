@@ -156,6 +156,12 @@ def accept_chat_request(request, request_id):
             ChatMember.objects.create(group_chat=chat_request.group_chat, user=chat_request.receiver, user_type='normal')
             chat_request.status = 'accepted'
             chat_request.save()
+            Message.objects.create(
+            group_chat=chat_request.group_chat,
+            sender=request.user,
+            content=f'El usuario @{request.user} se ha unido al grupo.',
+            is_system_message=True
+        )
         elif chat_request.is_delete_request:
             chat = Chat.objects.filter(
                 Q(user1=chat_request.sender, user2=chat_request.receiver) |
@@ -308,6 +314,11 @@ def city_group_chat(request, city):
 
     messages = group_chat.group_messages.order_by('timestamp')
 
+    admin_users = []
+    for member in group_chat.members.all():
+        if member.user_type == 'admin' and group_chat.is_friends_group:
+            admin_users.append(member.user)
+
     if request.method == "POST":
         content = request.POST.get("content")
         if content:
@@ -323,6 +334,7 @@ def city_group_chat(request, city):
         'flag_image': flag_image,
         'pending_chat_requests_count': pending_chat_requests_count,
         'total_unread_count': total_unread_count,
+        'admin_users': admin_users,
     })
 
 @login_required
@@ -415,7 +427,10 @@ def group_chat_details(request, name):
     
     messages = group_chat.group_messages.order_by('timestamp')
 
-    admin_users = [member for member in group_chat.members.all() if member.user_type == 'admin' and group_chat.is_friends_group]
+    admin_users = []
+    for member in group_chat.members.all():
+        if member.user_type == 'admin' and group_chat.is_friends_group:
+            admin_users.append(member.user)
 
     all_users = CustomUser.objects.exclude(username=request.user.username)
 
@@ -651,12 +666,14 @@ def leave_group(request, name):
         
     if group.name == chat_member.user.city:
         chat_member.delete()
+        Message.objects.create(group_chat=group, sender=request.user, content=f'El usuario @{chat_member.user.username} ha abandonado el grupo.', is_system_message = True)
         success_messages.append("Has abandonado el grupo correctamente, pero seguirá fijado en 'Tus chats' al tratarse de tu comunidad.")
         return render(request, 'community/all_chats.html', context)
 
 
     # Eliminar al usuario del grupo
     chat_member.delete()
+    Message.objects.create(group_chat=group, sender=request.user, content=f'El usuario @{chat_member.user.username} ha abandonado el grupo.', is_system_message = True)
     success_messages.append("Has abandonado el grupo correctamente.")
     return render(request, 'community/all_chats.html', context)
 
@@ -766,7 +783,10 @@ def add_member(request, group_id):
     
     messages = group_chat.group_messages.order_by('timestamp')
 
-    admin_users = [member for member in group_chat.members.all() if member.user_type == 'admin' and group_chat.is_friends_group]
+    admin_users = []
+    for member in group_chat.members.all():
+        if member.user_type == 'admin' and group_chat.is_friends_group:
+            admin_users.append(member.user)
 
     all_users = CustomUser.objects.exclude(username=request.user.username)
 
@@ -781,6 +801,8 @@ def add_member(request, group_id):
                 user = CustomUser.objects.get(username=username)
                 if ChatMember.objects.filter(group_chat=group_chat, user=user).exists():
                     error_messages.append('El usuario ya es miembro del grupo.')
+                elif ChatRequest.objects.filter(group_chat=group_chat, receiver=user, status='pending').exists():
+                    error_messages.append("Existe una solicitud de unión a este chat para el usuario seleccionado que se encuentra aún en estado pendiente.")
                 else:
                     ChatRequest.objects.create(
                         group_chat=group_chat,
@@ -830,4 +852,72 @@ def remove_member(request, group_id, username):
     except (CustomUser.DoesNotExist, ChatMember.DoesNotExist):
         error_messages.append('El usuario no es miembro del grupo.')
 
+    return redirect('community:group_chat_details', name=group_chat.name)
+
+
+@login_required
+def make_admin(request, group_id, username):
+    # Inicializar las listas de mensajes
+    error_messages = []
+    success_messages = []
+    
+    # Obtener el grupo y el usuario
+    group_chat = get_object_or_404(GroupChat, id=group_id)
+    user = get_object_or_404(CustomUser, username=username)
+    
+    # Verificar si el usuario actual es administrador
+    if not group_chat.members.filter(user=request.user, user_type='admin').exists():
+        error_messages.append("No tienes permisos para realizar esta acción.")
+        request.session['error_messages'] = error_messages
+        return redirect('community:group_chat_details', name=group_chat.name)
+
+    # Verificar que el usuario pertenece al grupo
+    member = group_chat.members.filter(user=user).first()
+    if not member:
+        error_messages.append("El usuario no es miembro del grupo.")
+        request.session['error_messages'] = error_messages
+        return redirect('community:group_chat_details', name=group_chat.name)
+
+    # Promover a administrador
+    member.user_type = 'admin'
+    member.save()
+    success_messages.append(f"{user.username} ahora es administrador del grupo.")
+    request.session['success_messages'] = success_messages
+    return redirect('community:group_chat_details', name=group_chat.name)
+
+
+@login_required
+def remove_admin(request, group_id, username):
+    # Inicializar las listas de mensajes
+    error_messages = []
+    success_messages = []
+    
+    # Obtener el grupo y el usuario
+    group_chat = get_object_or_404(GroupChat, id=group_id)
+    user = get_object_or_404(CustomUser, username=username)
+    
+    # Verificar si el usuario actual es administrador
+    if not group_chat.members.filter(user=request.user, user_type='admin').exists():
+        error_messages.append("No tienes permisos para realizar esta acción.")
+        request.session['error_messages'] = error_messages
+        return redirect('community:group_chat_details', name=group_chat.name)
+
+    # Verificar que el usuario pertenece al grupo
+    member = group_chat.members.filter(user=user).first()
+    if not member:
+        error_messages.append("El usuario no es miembro del grupo.")
+        request.session['error_messages'] = error_messages
+        return redirect('community:group_chat_details', name=group_chat.name)
+
+    # Verificar si el usuario es administrador
+    if member.user_type != 'admin':
+        error_messages.append(f"{user.username} no es administrador.")
+        request.session['error_messages'] = error_messages
+        return redirect('community:group_chat_details', name=group_chat.name)
+
+    # Quitar permisos de administrador
+    member.user_type = 'normal'
+    member.save()
+    success_messages.append(f"{user.username} ya no es administrador del grupo.")
+    request.session['success_messages'] = success_messages
     return redirect('community:group_chat_details', name=group_chat.name)
