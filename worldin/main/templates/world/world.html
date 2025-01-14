@@ -326,7 +326,7 @@
                     <div class="modal-body">
                         <div class="city-buttons">
                             {% if request.user.selected_city %}
-                                <a id="marketButton" href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn btn-info">
+                                <a id="marketButton" href="{% url 'market:main_market_products' selected_city=request.user.selected_city %}" class="btn btn-info">
                                     <i class="bi bi-bag-fill"></i>
                                     <div>Mercado</div>
                                 </a>
@@ -334,7 +334,7 @@
                                     <i class="bi bi-calendar-check"></i>
                                     <div>Eventos</div>
                                 </a>
-                                <a href="#" class="btn btn-info">
+                                <a  id="communityButton" href="{% url 'community:city_group_chat' city=request.user.selected_city %}" class="btn btn-info">
                                     <i class="bi bi-people-fill"></i>
                                     <div>Comunidad</div>
                                 </a>

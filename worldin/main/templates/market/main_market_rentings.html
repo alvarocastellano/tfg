@@ -53,7 +53,7 @@
 
         .card-text {
             display: -webkit-box; /* Caja flexible para truncado */
-            -webkit-line-clamp: 3; /* Número máximo de líneas */
+            -webkit-line-clamp: 2; /* Número máximo de líneas */
             -webkit-box-orient: vertical; /* Orientación de la caja */
             overflow: hidden; /* Oculta el texto sobrante */
             text-overflow: ellipsis; /* Agrega los "..." */
@@ -261,7 +261,7 @@
             </div>
             
             <div>
-                <a href="{% url 'my_market_profile' %}">
+                <a href="{% url 'market:my_market_profile' %}">
                     {% if request.user.profile_picture %}
                         <img src="{{ request.user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                     {% else %}
@@ -279,7 +279,7 @@
             </div>
             <div class="separator"></div>
             <div class="text-center mx-2">
-                <a href="{% url 'main_market_products' selected_city=request.user.selected_city %}" class="btn-ratings-link"><i class="bi bi-bag-fill"></i> PRODUCTOS</a>
+                <a href="{% url 'market:main_market_products' selected_city=request.user.selected_city %}" class="btn-ratings-link"><i class="bi bi-bag-fill"></i> PRODUCTOS</a>
             </div>        
         </div>
 
@@ -329,7 +329,7 @@
             </div>
         
             <!-- Botón para reestablecer filtros -->
-            <a href="{% url 'main_market_rentings' selected_city=request.user.selected_city %}" class="btn btn-secondary">
+            <a href="{% url 'market:main_market_rentings' selected_city=request.user.selected_city %}" class="btn btn-secondary">
                 Reestablecer filtros y búsquedas
             </a>
         
@@ -360,52 +360,59 @@
                         Para poder visualizarlos tú también, <a href="{% url 'profile_settings' %}">accede a la configuración de tu cuenta</a> y habilita la opción de "VER MIS PROPIOS ANUNCIOS EN EL MERCADO".
                     </p>
                 {% else %}
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
-                        {% for renting in rentings %}
+                    {% for renting in rentings %}
+                        {% if renting.status != 'sold' %}
                             {% if renting.owner.id != request.user.id or request.user.see_own_products %}
-                                <div class="col d-flex justify-content-center">
-                                    <div class="card d-flex flex-column" 
-                                         style="width: 20rem; height: 30rem; border-color:#6a4fb8; border-width:2px; margin: 10px;">
-                                         {% if renting.highlighted %}
-                                         <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
-                                             ALQUILER DESTACADO 
-                                         </div>
-                                        {% endif %}
-                                         <img class="card-img-top" 
-                                             src="{{ renting.images.first.image.url }}" 
-                                             alt="Imagen de producto" 
-                                             style="object-fit: cover; height: 200px;">
-                                        <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                            <h5 class="card-title text-truncate">{{ renting.title }}</h5>
-                                            <h6 class="card-subtitle mb-2 text-muted">
-                                                <strong style="color:#6a4fb8;">{{ renting.price }}{{ renting.money_associated }}/mes</strong>
-                                            </h6>
-                                            <p class="card-text text-truncate">{{ renting.description }}</p>
-                                            <h6 class="card-subtitle mb-2 text-muted">
-                                                {% if renting.owner.id != request.user.id %}
-                                                    <a href="{% url 'other_user_profile' renting.owner.username %}" 
-                                                       style="text-decoration:none; color:#6a4fb8;">
-                                                        <i class="bi bi-person-fill"></i> 
-                                                        <strong>@{{ renting.owner }}</strong>
-                                                    </a>
-                                                {% else %}
-                                                    <a href="{% url 'my_profile' %}" 
-                                                       style="text-decoration:none; color:#6a4fb8;">
-                                                        <i class="bi bi-person-fill"></i> 
-                                                        <strong>@{{ renting.owner }}</strong>
-                                                    </a>
+                                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
+                                    <div class="col d-flex justify-content-center">
+                                        <div class="card d-flex flex-column" 
+                                            style="width: 20rem; height: 30rem; border-color:#6a4fb8; border-width:2px; margin: 10px;">
+                                            {% if renting.highlighted %}
+                                            <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                ALQUILER DESTACADO 
+                                            </div>
+                                            {% endif %}
+                                            <img class="card-img-top" 
+                                                src="{{ renting.images.first.image.url }}" 
+                                                alt="Imagen de producto" 
+                                                style="object-fit: cover; height: 200px;">
+                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                {% if renting.status == 'booked' %}
+                                                    <span class="badge bg-danger text-white mb-2">RESERVADO</span>
                                                 {% endif %}
-                                            </h6>
-                                        </div>
-                                        <div class="card-footer justify-content-center">
-                                            <a href="{% url 'renting_details' renting_id=renting.id %}" 
-                                               class="btn-add-product me-2">Ver detalles</a>
+                                                <h5 class="card-title text-truncate">{{ renting.title }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">
+                                                    <strong style="color:#6a4fb8;">{{ renting.price }}{{ renting.money_associated }}/mes</strong>
+                                                </h6>
+                                                <p class="card-text text-truncate">{{ renting.description }}</p>
+                                                <h6 class="card-subtitle mb-2 text-muted">
+                                                    {% if renting.owner.id != request.user.id %}
+                                                        <a href="{% url 'other_user_profile' renting.owner.username %}" 
+                                                        style="text-decoration:none; color:#6a4fb8;">
+                                                            <i class="bi bi-person-fill"></i> 
+                                                            <strong>@{{ renting.owner }}</strong>
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="{% url 'my_profile' %}" 
+                                                        style="text-decoration:none; color:#6a4fb8;">
+                                                            <i class="bi bi-person-fill"></i> 
+                                                            <strong>@{{ renting.owner }}</strong>
+                                                        </a>
+                                                    {% endif %}
+                                                </h6>
+                                            </div>
+                                            <div class="card-footer justify-content-center">
+                                                <a href="{% url 'market:renting_details' renting_id=renting.id %}" 
+                                                class="btn-add-product me-2">Ver detalles</a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-center">No se han encontrado anuncios de alquiler disponibles.</p>
                             {% endif %}
                         {% endfor %}
-                    </div>
                 {% endif %}
             {% else %}
                 <p>No se han encontrado anuncios de alquiler disponibles.</p>

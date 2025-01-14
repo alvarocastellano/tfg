@@ -43,12 +43,16 @@
         .list-group {
             margin-right: 20%;
             margin-left: 20%;
+            overflow-y: auto;
+            max-height: 500px;
         }
 
         .list-group-item {
             display: flex;
             align-items: center;
             justify-content: center; /* Centra el contenido en el eje horizontal */
+            
+           
         }
 
         .list-group-item a {
@@ -159,9 +163,6 @@
                         {% if user.username != request.user.username %}
                             <a href="{% url 'other_user_profile' user.username %}" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
                                 VER PERFIL
-                            </a>
-                            <a href="#" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
-                                ENVIAR MENSAJE
                             </a>
                         {% else %}
                             <a href="{% url 'my_profile' %}" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">

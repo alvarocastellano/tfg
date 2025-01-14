@@ -194,9 +194,9 @@
                 </li>
                 <hr class="custom-hr">
                 {% if request.user.selected_city %}
-                    <li class="list-group-item-sidebar"><a href="{% url 'main_market_products' selected_city=request.user.selected_city %}"><i class="bi bi-bag-fill"></i> Mercado</a></li>
+                    <li class="list-group-item-sidebar"><a href="{% url 'market:main_market_products' selected_city=request.user.selected_city %}"><i class="bi bi-bag-fill"></i> Mercado</a></li>
                     <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-calendar-check"></i> Eventos</a></li>
-                    <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-people-fill"></i> Comunidad</a></li>
+                    <li class="list-group-item-sidebar"><a href="{% url 'community:city_group_chat' city=request.user.selected_city %}"><i class="bi bi-people-fill"></i> Comunidad</a></li>
                     <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
                     <hr class="custom-hr">
                 {% else %}
@@ -206,6 +206,14 @@
 
                 
                 <li class="list-group-item-sidebar"><a href="{% url 'world' %}"><i class="bi bi-globe-americas"></i> Mundo</a></li>
+                <li class="list-group-item-sidebar">
+                    <a href="{% url 'community:all_chats' %}">
+                        <i class="bi bi-chat-fill"></i> Todos mis chats
+                        {% if total_unread_count > 0 %}
+                                <span class="badge bg-danger ms-2">{{ total_unread_count }}</span>
+                        {% endif %}
+                    </a></li>
+
                 <hr class="custom-hr">
                 <li class="list-group-item-sidebar"><a href="{% url 'search_users' %}"><i class="bi bi-person-fill-add"></i> Buscar usuarios</a></li>
                 

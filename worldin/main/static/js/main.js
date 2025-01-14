@@ -120,7 +120,10 @@ function main() {
 
                     // Actualizar el enlace de Mercado
                     const marketButton = document.getElementById("marketButton");
-                    marketButton.href = `/market/products/city=${city}`;
+                    marketButton.href = `/marketplace/market/products/city=${city}`;
+
+                    const communityButton = document.getElementById("communityButton");
+                    communityButton.href = `/community/chat/${city}`;
 
                     $('#cityModal').modal('show');
                 } else {
@@ -354,7 +357,11 @@ function main() {
                         `;
                         // Actualizar el enlace de Mercado
                         const marketButton = document.getElementById("marketButton");
-                        marketButton.href = `/market/products/city=${city}`;
+                        marketButton.href = `/marketplace/market/products/city=${city}`;
+
+                        const communityButton = document.getElementById("communityButton");
+                        communityButton.href = `/community/chat/${city}`;
+
                         // Muestra el modal
                         $('#cityModal').modal('show');
                     } else {

@@ -191,6 +191,20 @@
 
             <!-- Detalles del producto (derecha) -->
             <div class="col-md-7 mb-5">
+                {% if success_messages %}
+                    <div class="alert alert-success" style="font-size:18px;" role="alert">
+                    {% for message in success_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                {% if error_messages %}
+                    <div class="alert alert-danger" style="font-size:18px;" role="alert">
+                    {% for message in error_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
                 <div class="rental-details" style="border-color:#6a4fb8; padding: 10px; margin:5px;">
                     {% if rental.images.count > 1 %}
                         <div id="carouselExampleIndicators" class="carousel slide">
@@ -220,6 +234,9 @@
                             <img src="{{ rental.images.first.image.url }}" alt="Imagen del alquiler" class="img-fluid mx-auto" style="max-width: 60%; height: auto;">
                         </div>
                     {% endif %}
+                    {% if rental.status == 'booked' %}
+                        <span class="badge bg-danger text-white mb-2">ALQUILER RESERVADO A UN USUARIO. AÚN ASÍ, PUEDES CONTACTAR CON EL PROPIETARIO.</span>
+                    {% endif %}
                     <h2 class="mt-5"><strong>{{ rental.title }}</strong></h2>
                     <br>
                     <h2><strong>{{ rental.price }}{{ rental.money_associated }}/mes</strong></h2>
@@ -243,19 +260,42 @@
                             </a>
                         {% endif %}
                     {% else %}
-                        {% if rental.owner.profile_picture %}
-                        <a href="{% url 'other_user_profile' rental.owner.username %}" style="text-decoration:none; color:#6a4fb8;">
-                        <h5 class="mt-3"><img src="{{ rental.owner.profile_picture.url }}" class="profile-picture" alt="Foto del vendedor">
-                            <strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h5>
-                        </a>
-                        {% else %}
-                        <a href="{% url 'other_user_profile' rental.owner.username %}" style="text-decoration:none; color:#6a4fb8;">
-                            <h5 class="mt-3"><i class="bi bi-person-circle" style="font-size: 60px; color: #a6a0d6;"></i>
-                            <strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h5>
-                        </a>
+                            {% if rental.owner.profile_picture %}
+                                <a href="{% url 'other_user_profile' rental.owner.username %}" style="text-decoration:none; color:#6a4fb8;">
+                                <h5 class="mt-3"><img src="{{ rental.owner.profile_picture.url }}" class="profile-picture" alt="Foto del vendedor">
+                                    <strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h5>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'other_user_profile' rental.owner.username %}" style="text-decoration:none; color:#6a4fb8;">
+                                    <h5 class="mt-3"><i class="bi bi-person-circle" style="font-size: 60px; color: #a6a0d6;"></i>
+                                    <strong>@{{ rental.owner.username }}</strong> - {{ rental.owner.first_name }} {{ rental.owner.last_name }}</h5>
+                                </a>
                             {% endif %}
+                        
+                            <div class="modal fade" id="contactModalRenting" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                        <h5 class="modal-title" id="contactModalLabel">Enviar mensaje a @{{ rental.owner.username }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form method="POST" action="{% url 'market:send_message_renting' renting_id=rental.id %}">
+                                            {% csrf_token %}
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                <textarea name="initial_message" class="form-control" rows="4" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-primary">Enviar</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         {% if rental.owner.id != request.user.id %}
-                            <a href="#" class="btn btn-primary contact-button">Contactar con {{ rental.owner.first_name }} {{ rental.owner.last_name }}</a>
+                            <a href="#" class="btn btn-primary contact-button" data-bs-toggle="modal" data-bs-target="#contactModalRenting">Contactar con {{ rental.owner.first_name }} {{ rental.owner.last_name }}</a>
                         {% endif %}
                     {% endif %}
                 </div>
