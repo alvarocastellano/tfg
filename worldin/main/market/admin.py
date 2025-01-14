@@ -1,10 +1,10 @@
 from django.contrib import admin
-from .models import Product, ProductImage, Rental, RentalImage, RentalFeature
+from .models import Product, ProductImage, Rental, RentalImage, RentalFeature, Rating
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('id', 'owner', 'title', 'description', 'price', 'city_associated')  # Personaliza los campos que quieras ver en el listado.
+    list_display = ('id', 'owner', 'title', 'description', 'price', 'city_associated', 'status', 'buyer')  # Personaliza los campos que quieras ver en el listado.
     search_fields = ('id', 'title', 'owner')  # Campos para búsqueda.
 
 @admin.register(ProductImage)
@@ -26,3 +26,8 @@ class RentalImageAdmin(admin.ModelAdmin):
 class RentalFeatureAdmin(admin.ModelAdmin):
     list_display = ('id', 'feature')  # Personaliza los campos que quieras ver en el listado.
     search_fields = ('id', 'feature')  # Campos para búsqueda.
+
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'product', 'renting', 'rating', 'comment')  # Personaliza los campos que quieras ver en el listado.
+    search_fields = ('id', 'user')  # Campos para búsqueda.

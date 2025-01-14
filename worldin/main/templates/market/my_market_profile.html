@@ -258,26 +258,26 @@
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
-                    <h5>Anuncios</h5>
+                    <h5>Anuncios activos</h5>
                     <p>{% if announce_count == 0 %} 0 {%else%}{{ announce_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Ventas</h5>
-                    <p>{% if sell_count == 0 %} 0 {%else%}{{ sell_count }} {% endif %}</p>
+                    <p>{% if sold_count == 0 %} 0 {%else%}{{ sold_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Compras</h5>
-                    <p>{% if buy_count == 0 %} 0 {%else%}{{ buy_count }} {% endif %}</p>
+                    <p>{% if bought_count == 0 %} 0 {%else%}{{ bought_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
-                <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                <a href="{% url 'market:my_market_ratings' %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Valoraciones</h5>
-                    <p>{% if rating_count == 0 %} 0 {%else%}{{ rating_count }} {% endif %}</p>
+                    <p>{% if ratings_count == 0 %} 0 {%else%}{{ ratings_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="dropdown">
@@ -337,21 +337,49 @@
                 <i class="bi bi-geo-fill"></i>{{user.city}}
             </h3>
             <p>
-                {% if average_rating and rating_count > 0 %}
-                    Valoración media: {{ average_rating }} 
-                    <span>
-                        {% for i in range_of_stars %}
-                            {% if i < average_rating %}
-                                <i class="bi bi-star-fill"></i>  <!-- Estrella llena -->
-                            {% elif i >= adjusted_rating %}
-                                <i class="bi bi-star-half"></i>  <!-- Estrella media -->
-                            {% else %}
-                                <i class="bi bi-star"></i>  <!-- Estrella vacía -->
-                            {% endif %}
-                        {% endfor %}
-                    </span>
-                {% else %}
-                    Valoración media: 0 <i class="bi bi-star"></i> (Sin valoraciones)
+                Valoración media: {{ average_rating }}
+                {% if average_rating >= 0 and average_rating < 0.5 %}
+                    <span class="bi bi-star" style="color: #f0b800;"></span>
+                {% elif average_rating >= 0.5 and average_rating < 1 %}
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 1 and average_rating < 1.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 1.5 and average_rating < 2 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 2 and average_rating < 2.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 2.5 and average_rating < 3 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 3 and average_rating < 3.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 3.5 and average_rating < 4 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 4 and average_rating < 4.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 4.5 and average_rating < 5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating == 5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
                 {% endif %}
             </p>
             {% endif %}
@@ -392,7 +420,7 @@
                         <i class="bi bi-plus"></i>
                         AÑADIR CIUDAD DE RESIDENCIA
                     </a>                
-                {% elif request.user.city and user_products|length < 1 and user_rentings|length < 1%}
+                {% elif request.user.city %}
                     <div class="mt-3 mb-5">
                         <a href="{% url 'market:add_product' %}" class="btn btn-primary" style="width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
                             <i class="bi bi-plus"></i>
@@ -422,59 +450,77 @@
                     {% else %}
                         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
                             {% for product in user_products %}
-                                <div class="col">
-                                    <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                        {% if product.highlighted %}
-                                            <div id="highlighted-badge-{{ product.id }}" class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
-                                                <div id="countdown-product-{{ product.id }}" data-id="{{ product.id }}" data-expiry="{{ product.highlighted_until|date:"Y-m-d H:i:s" }}" class="text-muted mt-1"></div>
+                                {% if product.status == 'sold' %}
+                                    <div class="col">
+                                        <div class="card d-flex flex-column shadow-sm" 
+                                            style="width: 18rem; height: 100%; border-color: #6a4fb8; border-width: 2px; opacity: 0.5; pointer-events: none;">
+                                            <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                <span class="badge bg-danger text-white mb-2">VENDIDO</span>
+                                                <h5 class="card-title">{{ product.title }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
+                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
+                                                <p class="card-text text-truncate">{{ product.description }}</p>
                                             </div>
-                                        {% endif %}
-                                        <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                        <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                            <h5 class="card-title">{{ product.title }}</h5>
-                                            <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
-                                            <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
-                                            <p class="card-text text-truncate">{{ product.description }}</p>
                                         </div>
-                                        <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
-                                            <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                            {% if  not product.highlighted or not product.highlighted_until %}
-                                                <a href="{% url 'market:highlight_product' product_id=product.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                                    <i class="bi bi-star-fill"></i>
-                                                </a>
+                                    </div>
+                                {% else %}
+                                    <div class="col">
+                                        <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                            {% if product.highlighted %}
+                                                <div id="highlighted-badge-{{ product.id }}" class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                    <div id="countdown-product-{{ product.id }}" data-id="{{ product.id }}" data-expiry="{{ product.highlighted_until|date:"Y-m-d H:i:s" }}" class="text-muted mt-1"></div>
+                                                </div>
                                             {% endif %}
-                                            <a href="{% url 'market:edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
-                                                    style="width: 40px; height: 40px;" 
-                                                    onclick="showConfirmationModal({{ product.id }});">
-                                                <i class="bi bi-trash3-fill"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="confirmationModal" class="modal" tabindex="-1" style="display: none;">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Confirmar Eliminación</h5>
-                                                <button type="button" class="btn-close" onclick="closeConfirmationModal()"></button>
+                                            <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                {% if product.status == 'booked' %}
+                                                    <span class="badge bg-danger text-white mb-2">RESERVADO</span>
+                                                {% endif %}
+                                                <h5 class="card-title">{{ product.title }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
+                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
+                                                <p class="card-text text-truncate">{{ product.description }}</p>
                                             </div>
-                                            <div class="modal-body">
-                                                <p>¿Estás seguro de que deseas borrar este producto? Esta acción no se puede deshacer.</p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal()">Cancelar</button>
-                                                <form id="deleteForm" method="POST" action="{% url 'market:delete_product' product.id %}">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-danger">Sí, borrar</button>
-                                                </form>
+                                            <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                                <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                {% if  not product.highlighted or not product.highlighted_until %}
+                                                    <a href="{% url 'market:highlight_product' product_id=product.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-star-fill"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <a href="{% url 'market:edit_product' product_id=product.id%}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
+                                                        style="width: 40px; height: 40px;" 
+                                                        onclick="showConfirmationModal({{ product.id }});">
+                                                    <i class="bi bi-trash3-fill"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                    
+                                    <div id="confirmationModal" class="modal" tabindex="-1" style="display: none;">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                                                    <button type="button" class="btn-close" onclick="closeConfirmationModal()"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>¿Estás seguro de que deseas borrar este producto? Esta acción no se puede deshacer.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal()">Cancelar</button>
+                                                    <form id="deleteForm" method="POST" action="{% url 'market:delete_product' product.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">Sí, borrar</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}    
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -489,60 +535,79 @@
                             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
                                 
                                 {% for rental in user_rentings %}
-                                    <div class="col">
-                                        <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
-                                            {% if rental.highlighted %}
-                                                <div id="highlighted-badge-{{ rental.id }}" class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
-                                                    <div id="countdown-renting-{{ rental.id }}" data-id="{{ rental.id }}" data-expiry="{{ rental.highlighted_until|date:"Y-m-d H:i:s" }}" class="text-muted mt-1"></div>
+                                    {% if rental.status == 'sold' %}
+                                            <div class="col">
+                                                <div class="card d-flex flex-column shadow-sm" 
+                                                    style="width: 18rem; height: 100%; border-color: #6a4fb8; border-width: 2px; opacity: 0.5; pointer-events: none;">
+                                                    <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de anuncio" style="object-fit: cover; height: 200px;">
+                                                    <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                        <span class="badge bg-danger text-white mb-2">VENDIDO</span>
+                                                        <h5 class="card-title">{{ rental.title }}</h5>
+                                                        <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
+                                                        <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
+                                                        <p class="card-text text-truncate">{{ rental.description }}</p>
+                                                    </div>
                                                 </div>
-                                            {% endif %}
-                                            <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
-                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
-                                                <h5 class="card-title">{{ rental.title }}</h5>
-                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
-                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
-                                                <p class="card-text text-truncate">{{ rental.description }}</p>
                                             </div>
-                                            <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
-                                                <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
-                                                {% if  not rental.highlighted or not rental.highlighted_until %}
-                                                    <a href="{% url 'market:highlight_renting' renting_id=rental.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                                        <i class="bi bi-star-fill"></i>
-                                                    </a>
+                                    {% else %}
+                                        <div class="col">
+                                            <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                                {% if rental.highlighted %}
+                                                    <div id="highlighted-badge-{{ rental.id }}" class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                        <div id="countdown-renting-{{ rental.id }}" data-id="{{ rental.id }}" data-expiry="{{ rental.highlighted_until|date:"Y-m-d H:i:s" }}" class="text-muted mt-1"></div>
+                                                    </div>
                                                 {% endif %}
-                                                <a href="{% url 'market:edit_renting' rental.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                </a>
-                                                
-                                                <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
-                                                        style="width: 40px; height: 40px;" 
-                                                        onclick="showConfirmationModal2({{ rental.id }});">
-                                                    <i class="bi bi-trash3-fill"></i>
-                                                </button>
-                                        
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="confirmationModal2" class="modal" tabindex="-1" style="display: none;">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Confirmar Eliminación</h5>
-                                                    <button type="button" class="btn-close" onclick="closeConfirmationModal2()"></button>
+                                                <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                                <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                    {% if rental.status == 'booked' %}
+                                                    <span class="badge bg-danger text-white mb-2">RESERVADO</span>
+                                                {% endif %}
+                                                    <h5 class="card-title">{{ rental.title }}</h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
+                                                    <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
+                                                    <p class="card-text text-truncate">{{ rental.description }}</p>
                                                 </div>
-                                                <div class="modal-body">
-                                                    <p>¿Estás seguro de que deseas borrar este anuncio de alquiler? <br>Esta acción no se puede deshacer.</p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal2()">Cancelar</button>
-                                                    <form id="deleteForm2" method="POST" action="{% url 'market:delete_renting' rental.id %}">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn btn-danger">Sí, borrar</button>
-                                                    </form>
+                                                <div class="card-footer d-flex align-items-center" style="flex-grow: 1;">
+                                                    <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                                    {% if  not rental.highlighted or not rental.highlighted_until %}
+                                                        <a href="{% url 'market:highlight_renting' renting_id=rental.id%}" class="btn-highlight-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                            <i class="bi bi-star-fill"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                    <a href="{% url 'market:edit_renting' rental.id %}" class="btn-add-product rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-pencil-fill"></i>
+                                                    </a>
+                                                    
+                                                    <button type="button" class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center" 
+                                                            style="width: 40px; height: 40px;" 
+                                                            onclick="showConfirmationModal2({{ rental.id }});">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </button>
+                                            
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                        <div id="confirmationModal2" class="modal" tabindex="-1" style="display: none;">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Confirmar Eliminación</h5>
+                                                        <button type="button" class="btn-close" onclick="closeConfirmationModal2()"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>¿Estás seguro de que deseas borrar este anuncio de alquiler? <br>Esta acción no se puede deshacer.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal2()">Cancelar</button>
+                                                        <form id="deleteForm2" method="POST" action="{% url 'market:delete_renting' rental.id %}">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-danger">Sí, borrar</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                         {% endif %}

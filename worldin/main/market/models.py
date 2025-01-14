@@ -14,6 +14,22 @@ class Product(models.Model):
     highlighted_until = models.DateTimeField(null=True, blank=True)
     highlighted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('on_sale', 'En venta'),
+            ('booked', 'Reservado'),
+            ('sold', 'Vendido')
+        ],
+        default='on_sale'
+    )
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='purchased_products'
+    )
 
     def __str__(self):
         return self.title
@@ -75,6 +91,23 @@ class Rental(models.Model):
     highlighted_until = models.DateTimeField(null=True, blank=True)
     highlighted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('on_sale', 'Anuncio activo'),
+            ('booked', 'Reservado'),
+            ('sold', 'Ya alquilado')
+        ],
+        default='on_sale'
+    )
+    
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='purchased_rentings'
+    )
 
     def __str__(self):
         return self.title
@@ -111,3 +144,18 @@ class RentalImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.rental.title}"
+    
+class Rating(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='ratings')
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='product_rating', null=True, blank=True)
+    renting = models.OneToOneField(Rental, on_delete=models.CASCADE, related_name='renting_rating', null=True, blank=True)
+    rating = models.PositiveIntegerField()
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.product:
+            return f"Rating for {self.product.title}"
+        elif self.renting:
+            return f"Rating for {self.renting.title}"
+        return "Rating"

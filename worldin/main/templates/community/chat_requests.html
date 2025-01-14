@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Solicitudes de seguimiento{% endblock %}
+{% block title %}Solicitudes de chat{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -115,7 +115,7 @@
                     <h3 style="font-size:12px;">Volver</h3>
                 </a>
             </div>
-            <h1>Solicitudes de chat pendientes</h1>
+            <h1>Solicitudes pendientes</h1>
         </div>
 
         <!-- Botones para seleccionar tipo de solicitudes -->
@@ -127,7 +127,7 @@
         <ul class="list-group d-block" id="requestList">
             {% if not pending_requests %}
                 <div id="alertMessage" class="alert alert-warning received-request" style="font-size: 20px;">
-                    No hay solicitudes de chat pendientes para tí.
+                    No hay solicitudes pendientes para tí.
                     <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -136,14 +136,56 @@
             {% for chat_request in pending_requests %}
                 <li class="list-group-item received-request">
                     <div class="user-info">
+                        
                         {% if chat_request.sender.profile_picture %}
                             <img src="{{ chat_request.sender.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                         {% else %}
                             <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
                         {% endif %}
-                        <a href="{% url 'other_user_profile' chat_request.sender.username %}"><strong>@{{ chat_request.sender.username }}</strong></a>
-                        <span><strong>quiere comenzar un chat contigo:</strong> {{ chat_request.initial_message }}</span>
-                    </div>
+                        {% if chat_request.group_chat %}
+                            <a href="{% url 'other_user_profile' chat_request.sender.username %}"><strong>@{{ chat_request.sender.username }}</strong></a>
+                            <span>
+                                <strong>quiere que te unas al chat grupal "{{ chat_request.group_chat.name }}". Ha dejado el siguiente mensaje en el grupo:  </strong>
+                                {{ chat_request.group_chat.initial_message }}
+                            </span>
+                        {% else %}
+                            <a href="{% url 'other_user_profile' chat_request.sender.username %}"><strong>@{{ chat_request.sender.username }}</strong></a>
+                            <span>
+                                {% if chat_request.product %}
+                                <strong>quiere comenzar un chat contigo por interés en el siguiente producto:</strong>
+                                {% elif chat_request.renting %}
+                                <strong>quiere comenzar un chat contigo por interés en el siguiente alquiler:</strong>
+                                {% elif chat_request.is_delete_request %}
+                                <strong>solicita eliminar el chat existente contigo.</strong>
+                                {% else %} 
+                                <strong>quiere comenzar un chat contigo con el siguiente mensaje:</strong> {{ chat_request.initial_message }}
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                    
+                        {% if chat_request.product %}
+                            <div class="card" style="width: 18rem;">
+                                <img class="card-img-top" src="{{ chat_request.product.images.first.image.url }}" alt="Imagen del producto">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ chat_request.product.title }}</h5>
+                                </div>
+                            </div>
+                            <br>
+                            <strong>- Mensaje enviado: </strong>
+                                {{ chat_request.initial_message }}
+                        {% elif chat_request.renting %}
+                            <div class="card" style="width: 18rem;">
+                                <img class="card-img-top" src="{{ chat_request.renting.images.first.image.url }}" alt="Imagen del alquiler">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ chat_request.renting.title }}</h5>
+                                </div>
+                            </div>
+                            <br>
+                            <strong>- Mensaje enviado: </strong>
+                                {{ chat_request.initial_message }}
+                        {% endif %}
+                    <br>
+                    <br>
                     <div class="action-buttons">
                         <form action="{% url 'community:accept_chat_request' chat_request.id %}" method="POST">
                             {% csrf_token %}
@@ -154,6 +196,7 @@
                             <button type="submit" class="btn btn-danger">Rechazar</button>
                         </form>
                     </div>
+                </div>
                 </li>
                 <hr class="dropdown-divider">
             {% endfor %}
@@ -166,29 +209,75 @@
                     </div>
 
                 {% endif %}
+
             {% for request in my_requests %}
                 
                 <li class="list-group-item sent-request">
                     <div class="user-info">
                         
                         <div>
-                            <strong>Solicitud de chat enviada a 
-                            <a href="{% url 'other_user_profile' request.receiver.username %}">
-                                @{{ request.receiver.username }}
-                            </a>
-                            con el siguiente mensaje:</strong> {{ request.initial_message }}.
+                            {% if request.group_chat %}
+                                <strong>Solicitud de unión en chat grupal "{{ request.group_chat.name }}" enviada a:
+                                    <a href="{% url 'other_user_profile' request.receiver.username %}">@{{ request.receiver.username }}</a>
+                                con el siguiente mensaje: </strong> {{ request.initial_message }}
+                            {% else %}
+                                {% if request.product %}
+                                    <strong>Solicitud de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}
+                                        </a> por interés en el siguiente producto:
+                                {% elif request.renting %}
+                                    <strong>Solicitud de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}
+                                        </a> por interés en el siguiente alquiler:
+                                {% elif request.is_delete_request %}
+                                    <strong>Solicitud de eliminación de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}</a>
+                                {% else %} 
+                                    <strong>Solicitud de chat enviada a 
+                                        <a href="{% url 'other_user_profile' request.receiver.username %}">
+                                            @{{ request.receiver.username }}
+                                        </a> con el siguiente mensaje: </strong> {{ request.initial_message }}
+                                {% endif %}
+                            {% endif %}
                         </div>
+                        {% if request.product %}
+                            <div class="card" style="width: 18rem;">
+                                <img class="card-img-top" src="{{ request.product.images.first.image.url }}" alt="Imagen del producto">
+                                <div class="card-body text-center">
+                                <h5 class="card-title">{{ request.product.title }}</h5>
+                                </div>
+                            </div>
+                        {% elif request.renting %}
+                            <div class="card" style="width: 18rem;">
+                                <img class="card-img-top" src="{{ request.renting.images.first.image.url }}" alt="Imagen del alquiler">
+                                <div class="card-body text-center">
+                                <h5 class="card-title">{{ request.renting.title }}</h5>
+                                </div>
+                            </div>
+                        {% endif %}
                         <br>
                         <div> 
                             <strong>- Estado de la solicitud: </strong>
                             {% if request.status == 'pending' %}<span style="color:#FF5F15"><strong>PENDIENTE</strong></span>
                             {% elif request.status == 'rejected' %}<span style="color:#F32013"><strong>RECHAZADA</strong></span>
-                            . Puedes <a href="{% url 'community:create_private_chat' %}">volver a enviar solicitud al usuario.</a>
+                            . Puedes volver a enviar solicitud al usuario.
                             {% else %}<span style="color:#4BB543"><strong>ACEPTADA</strong></span>
-                            . <a href="{% url 'community:chat_detail' username=request.receiver.username %}">Accede al chat.</a>
+                                {% if request.is_delete_request %}. El chat ha sido borrado.
+                                {% else %}. Ya puedes acceder al chat.
+                                {% endif %}
                             {% endif %}
                         </div>
                         <br>
+                        {% if request.product %}
+                        <div>
+                            <strong>- Mensaje enviado: </strong>
+                            {{ request.initial_message }}
+                        </div>
+                        <br>
+                        {% endif %}
                         <div style="font-size:14px;">
                             {{ request.created_at }}
                         </div>

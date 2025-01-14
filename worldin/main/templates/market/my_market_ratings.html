@@ -159,26 +159,26 @@
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
-                    <h5>Artículos</h5>
-                    <p>0</p>
+                    <h5>Anuncios activos</h5>
+                    <p>{% if announce_count == 0 %} 0 {%else%}{{ announce_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Ventas</h5>
-                    <p>0</p>
+                    <p>{% if sold_count == 0 %} 0 {%else%}{{ sold_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Compras</h5>
-                    <p>0</p>
+                    <p>{% if bought_count == 0 %} 0 {%else%}{{ bought_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="text-center">
                 <a href="#" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
                     <h5>Valoraciones</h5>
-                    <p>0</p>
+                    <p>{% if ratings_count == 0 %} 0 {%else%}{{ ratings_count }} {% endif %}</p>
                 </a>
             </div>
             <div class="dropdown">
@@ -234,14 +234,53 @@
 
         <div class="profile-section">
             {% if user.city %}
-            <p>
+            <h3>
                 <i class="bi bi-geo-fill"></i>{{user.city}}
-            </p>
+            </h3>
             <p>
-                {% if user.average_rating and user.rating_count > 0 %}
-                    Valoración media: {{ user.average_rating }}
-                {% else %}
-                    Valoración media: 0 (Sin valoraciones)
+                Valoración media: {{ average_rating }}
+                {% if average_rating >= 0 and average_rating < 0.5 %}
+                    <span class="bi bi-star" style="color: #f0b800;"></span>
+                {% elif average_rating >= 0.5 and average_rating < 1 %}
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 1 and average_rating < 1.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 1.5 and average_rating < 2 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 2 and average_rating < 2.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 2.5 and average_rating < 3 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 3 and average_rating < 3.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 3.5 and average_rating < 4 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating >= 4 and average_rating < 4.5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                {% elif average_rating >= 4.5 and average_rating < 5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                {% elif average_rating == 5 %}
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
                 {% endif %}
             </p>
             {% else %}
@@ -262,7 +301,167 @@
 
         <hr>
         <div class="profile-section">
-            <h3>Aún no hay valoraciones...</h3>
+            {% if success_messages %}
+                <div id="success-alert" class="alert alert-success" style="font-size:18px;" role="alert">
+                    {% for message in success_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% for item in items_bought %}
+                {% if not item.product_rating and not item.renting_rating %}
+                <div class="warning alert-warning mb-5" style="font-size:18px; padding: 15px; " role="alert">
+                    Añade una valoración al anuncio: {{ item.title }}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal" data-item-id="{{ item.id }}" data-item-type="{% if item.square_meters %}renting{% else %}product{% endif %}">
+                        Valorar
+                    </button>
+                </div>
+                {% endif %}
+            {% endfor %}
+            <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 100vh;">
+                {% for item in rated_announces %}
+                    <div class="item" style="border: 2px solid #6a4fb8; border-radius: 10px; padding: 15px; margin-bottom: 20px; width: 90%; max-width: 900px; display: flex; flex-direction: column; align-items: center; overflow: hidden; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+                        <div class="item-image" style="margin-bottom: 15px;">
+                            {% if item.product_rating %}
+                                <img src="{{ item.product_rating.product.images.first.image.url }}" alt="Imagen del producto" style="width: 150px; height: 150px; border-radius: 50%; border: 3px solid #6a4fb8; object-fit: cover; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+                            {% elif item.renting_rating %}
+                                <img src="{{ item.renting_rating.renting.images.first.image.url }}" alt="Imagen del alquiler" style="width: 150px; height: 150px; border-radius: 50%; border: 3px solid #6a4fb8; object-fit: cover; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);">
+                            {% endif %}
+                        </div>
+                        <div class="item-content" style="text-align: center;">
+                            {% if item.product_rating %}
+                                <p><strong>Anuncio:</strong> {{ item.product_rating.product.title }}</p>
+                                <p><strong>Valoración:</strong>
+                                    {% if item.product_rating.rating == 0.5 %}
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 1 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 1.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 2 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 2.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 3 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 3.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 4 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% elif item.product_rating.rating == 4.5 %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                    {% else %}
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                        <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Comentario:</strong> {{ item.product_rating.comment }}</p>
+                                <p><strong>Por: </strong><a href="{% url 'other_user_profile' item.product_rating.user.username %}">@{{ item.product_rating.user.username }}</a></p>
+                            {% elif item.renting_rating %}
+                                <p><strong>Anuncio:</strong> {{ item.renting_rating.renting.title }}</p>
+                                <p><strong>Valoración:</strong>
+                                {% if item.renting_rating.rating == 0.5 %}
+                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 1 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 1.5 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 2 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 2.5 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 3 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 3.5 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 4 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                {% elif item.renting_rating.rating == 4.5 %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-half" style="color: #f0b800;"></span>
+                                {% else %}
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                    <span class="bi bi-star-fill" style="color: #f0b800;"></span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Comentario:</strong> {{ item.renting_rating.comment }}</p>
+                            <p><strong>Por: </strong> <a href="{% url 'other_user_profile' item.renting_rating.user.username %}">@{{ item.renting_rating.user.username }}</a></p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <h3 style="text-align: center;">Aún no hay valoraciones...</h3>
+            {% endfor %}
+        </div>
+
+
+        </div>
+
+        <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{% url 'market:my_market_ratings' %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="ratingModalLabel">Valorar Producto/Renting</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="item_id" id="modalItemId">
+                            <input type="hidden" name="item_type" id="modalItemType">
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Valoración (1-5):</label>
+                                <input type="number" min="1" max="5" name="rating" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Comentario:</label>
+                                <textarea name="comment" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -292,6 +491,23 @@
                 .catch(error => console.error('Error:', error));
             };
         });
+    </script>
+    <script>
+        var ratingModal = document.getElementById('ratingModal');
+        ratingModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var itemId = button.getAttribute('data-item-id');
+            var itemType = button.getAttribute('data-item-type');
+            document.getElementById('modalItemId').value = itemId;
+            document.getElementById('modalItemType').value = itemType;
+        });
+    </script>
+
+    <script>
+        // Esperar 5 segundos (5000 milisegundos) antes de ocultar el mensaje
+        setTimeout(function() {
+            document.getElementById('success-alert').style.display = 'none';
+        }, 5000);
     </script>
 
 </body>

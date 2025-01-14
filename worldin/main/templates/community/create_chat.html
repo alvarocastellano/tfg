@@ -39,7 +39,6 @@
         .chat-container {
             display: flex;
             flex-direction: column;
-            margin-top: 20px;
             height: 100%; /* Ocupa toda la altura disponible */
         }
     
@@ -68,16 +67,10 @@
             background-color: #6a4fb8;
             border-color: #6a4fb8;
             color: white;
-            font-size: 20px;
             border-radius: 20px;
-            padding: 10px 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-    
-        button.btn i {
-            font-size: 24px;
         }
 
         .profile-picture {
@@ -98,6 +91,10 @@
             background-color:rgb(27, 17, 119) !important;
         }
 
+        .input-group {
+            width: auto;
+        }
+
     </style>
 </head>
 
@@ -115,100 +112,135 @@
             </div>            
         </div>
         
-        <div class="row" style="height: 100vh;">
+        <div class="row">
             <!-- Buscador de usuarios -->
-            <div class="col-md-4 search-users-container">
-                <form method="GET">
-                    <input type="text" name="q" placeholder="Buscar por nombre de usuario" style="height:45px; width: 300px; border: 2px solid #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8; border-radius: 20px;" class="mt-5">
-                    <button type="submit" style="background-color: #6a4fb8; color: white; border: none; border-radius: 20px; padding: 10px 20px; cursor: pointer;">Buscar</button>
+            <div class="col-md-7" style="height: 100vh;">
+            <div class="search-users-container">
+                <form method="GET" class="d-flex mt-5">
+                <input type="text" name="q" placeholder="Buscar por nombre de usuario" style="height:45px; width: calc(100% - 120px); border: 2px solid #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8; border-radius: 20px;" class="mr-2">
+                <button type="submit" style="height: 45px; width: 100px; background-color: #6a4fb8; color: white; border: none; border-radius: 20px; padding: 10px 20px; cursor: pointer;">Buscar</button>
                 </form>
 
                 <ul class="list-group d-block mt-5">
-                    {% if users|length == 0 and request.GET.q %}
-                        <li class="list-group-item">
-                            <div style="text-align: center;">
-                                <p style="display: inline;">No se encuentran usuarios para esta búsqueda.</p>
-                                <a style="display: inline; text-decoration: underline;" href="{% url 'community:create_private_chat' %}">Reestablecer búsqueda</a>
+                {% if users|length == 0 and request.GET.q %}
+                    <li class="list-group-item">
+                    <div style="text-align: center;">
+                        <p style="display: inline;">No se encuentran usuarios para esta búsqueda.</p>
+                        <a style="display: inline; text-decoration: underline;" href="{% url 'community:create_private_chat' %}">Reestablecer búsqueda</a>
+                    </div>
+                    </li>
+                {% endif %}
+                {% for user in users %}
+                    <li class="list-group-item d-flex align-items-center">
+                    <div class="user-info d-flex align-items-center">
+                        {% if user.username == request.user.username %}
+                        <a href="{% url 'my_profile' %}" style="text-decoration: none; color: #6a4fb8;">
+                        {% else %}
+                        <a href="{% url 'other_user_profile' user.username %}" style="text-decoration: none; color: #6a4fb8;">
+                        {% endif %}
+                        <div class="d-flex align-items-center">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
+                            {% else %}
+                                <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
+                            {% endif %}
+                            <div class="usuario-y-nombre ml-2">
+                                <p style="font-size: 20px; margin-bottom: 0;"><strong>@{{ user.username }}</strong></p>
+                                <p style="font-size: 16px; margin-bottom: 0;">{{ user.first_name }} {{ user.last_name }}</p>
                             </div>
-                        </li>
-                    {% endif %}
-                    {% for user in users %}
-                        <li class="list-group-item">
-                            <div class="user-info">
-                                {% if user.username == request.user.username %}
-                                    <a href="{% url 'my_profile' %}">
-                                {% else %}
-                                    <a href="{% url 'other_user_profile' user.username %}">
-                                {% endif %}
-                                    {% if user.profile_picture %}
-                                        <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
-                                    {% else %}
-                                        <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
-                                    {% endif %}
-                                    <div class="usuario-y-nombre mt-2">
-                                        <p style="font-size: 20px;"><strong>@{{ user.username }}</strong></p>
-                                        <p style="font-size: 16px;">{{ user.first_name }} {{ user.last_name }}</p>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="action-buttons d-none d-md-block">
-                                <form method="POST" id="user-{{ user.id }}-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="selected_user" value="{{ user.id }}">
-                                    <button type="button" class="btn btn-primary select-user-btn" style="background-color:#786dce; color:white; border-color:white; font-size:20px;" onclick="selectUser({{ user.id }})">
-                                        SELECCIONAR
-                                    </button>
-                                </form>
-                            </div>
-                        </li>
-                        <hr class="dropdown-divider">
-                    {% endfor %}
+                        </div>
+                        </a>
+                    </div>
+                    <div class="action-buttons ml-auto">
+                        <form method="POST" id="user-{{ user.id }}-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="selected_user" value="{{ user.id }}">
+                            <button type="button" class="btn btn-primary select-user-btn" style="background-color:#786dce; color:white; border-color:white; font-size:20px;" onclick="selectUser({{ user.id }})">
+                                SELECCIONAR
+                            </button>
+                        </form>
+                    </div>
+                    </li>
+                    <hr class="dropdown-divider">
+                {% endfor %}
                 </ul>
             </div>
+            </div>
 
-            <div class="col-md-8 chat-container">
-                <h4 class="notification-bubble text-center mb-4">
-                    Manda un primer mensaje y espera a que el otro usuario acepte o rechace tu solicitud
+            <div class="col-md-5">
+            <div class="chat-container d-flex align-items-center">
+                <h4 class="notification-bubble text-center mt-4">
+                Manda un primer mensaje y espera a que el otro usuario acepte o rechace tu solicitud
                 </h4>
                 {% if error_messages %}
-                    <div class="alert alert-danger" style="font-size:18px;" role="alert">
-                    {% for message in error_messages %}
-                        {{ message }}<br>
-                    {% endfor %}
-                    </div>
+                <div class="alert alert-danger mt-4" style="font-size:18px;" role="alert">
+                {% for message in error_messages %}
+                    {{ message }}<br>
+                {% endfor %}
+                </div>
                 {% endif %}
-                <form method="POST" action="{% url 'community:create_private_chat' %}" class="d-flex align-items-center b-0 w-80">
-                    {% csrf_token %}
-                    <input type="hidden" name="selected_user" id="selected_user_input">
-                    <div class="form-group mb-0 mr-2 flex-grow-1">
-                        <label for="initial_message" class="visually-hidden">Mensaje inicial:</label>
-                        <textarea name="initial_message" id="initial_message" rows="1" class="form-control" placeholder="Escribe un mensaje para iniciar la conversación..."></textarea>
+                <form method="POST" action="{% url 'community:create_private_chat' %}" class="d-flex align-items-center mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="selected_user" id="selected_user_input">
+                <div class="input-group flex-grow-1">
+                    <input name="initial_message" id="initial_message" type="text" class="form-control" style="width:auto;" placeholder="Escribe un mensaje para iniciar la conversación...">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i>
+                        </button>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-0">
-                        <i class="bi bi-send"></i>
-                    </button>
+                </div>
                 </form>
+            </div>
             </div>
         </div>
         
     </div>
 
-    <script>
+        <script>
 
-        function selectUser(userId) {
-            // Actualiza el campo oculto con el id del usuario seleccionado
-            document.getElementById('selected_user_input').value = userId;
-            
-            // Resalta el botón de selección
-            var buttons = document.querySelectorAll('.select-user-btn');
-            buttons.forEach(function(button) {
-                button.classList.remove('selected');
+            function selectUser(userId) {
+                // Actualiza el campo oculto con el id del usuario seleccionado
+                document.getElementById('selected_user_input').value = userId;
+                
+                // Resalta el botón de selección y cambia su texto
+                var buttons = document.querySelectorAll('.select-user-btn');
+                buttons.forEach(function(button) {
+                    button.classList.remove('selected');
+                    button.textContent = 'SELECCIONAR';
+                });
+
+                var selectedButton = document.querySelector('#user-' + userId + '-form button');
+                selectedButton.classList.add('selected');
+                selectedButton.textContent = 'SELECCIONADO';
+            }
+        </script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const input = document.getElementById("initial_message");
+        
+                // Crear un elemento invisible para medir el ancho del texto
+                const measureSpan = document.createElement("span");
+                measureSpan.style.visibility = "hidden";
+                measureSpan.style.whiteSpace = "nowrap";
+                measureSpan.style.font = window.getComputedStyle(input).font;
+                document.body.appendChild(measureSpan);
+        
+                // Función para ajustar el ancho del input al placeholder
+                function adjustInputWidth() {
+                    measureSpan.textContent = input.placeholder;
+                    input.style.width = `${measureSpan.offsetWidth + 40}px`; // Añadir un pequeño margen
+                }
+        
+                // Ajustar inicialmente
+                adjustInputWidth();
+        
+                // Limpieza
+                window.addEventListener("unload", () => {
+                    document.body.removeChild(measureSpan);
+                });
             });
-
-            var selectedButton = document.querySelector('#user-' + userId + '-form button');
-            selectedButton.classList.add('selected');
-        }
-    </script>
+        </script>
 
 </body>
 {% endblock %}

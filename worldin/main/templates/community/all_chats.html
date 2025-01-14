@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Crear chat privado{% endblock %}
+{% block title %}Todos mis chats{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -97,14 +97,36 @@
 
             <div class="text-center">
                 <h1><strong>Comunidad</strong></h1>
-                <h3> 
-                    {{request.user.city}}
-                </h3>
+                {% if request.user.city %}
+                    <h3> 
+                    {% if flag_image %}
+                        <img src="{% static 'images/'|add:flag_image %}" alt="Bandera de {{ country }}" width="50">
+                    {% endif %}  
+                    {{request.user.city}}, {{ country }}
+                    </h3>
+                {% endif %}
             </div>
             
-            <div>
-                <div class="text-center mx-2">
-                    <a href="{% url 'community:create_private_chat' %}" class="btn-products-link">NUEVO CHAT</a>
+                <button type="button" class="btn-products-link" data-bs-toggle="modal" data-bs-target="#chatModal">
+                    NUEVO CHAT
+                </button>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="chatModalLabel">Crear nuevo chat</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'community:create_private_chat' %}" class="btn btn-primary">Crear chat privado</a>
+                                <a href="{% url 'community:create_group_chat' %}" class="btn btn-secondary">Crear chat grupal</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -114,40 +136,159 @@
         <div class="row" style="height: 100vh;">
             <!-- Lista de chats (30%) -->
             <div class="col-md-4 chats-container">
-                <a href="{% url 'community:chat_requests' %}">
-                    <h4><strong>Solicitudes de chat pendientes</strong></h4>
+                <a style="text-decoration:None; color: #6a4fb8; display: flex; justify-content: space-between; align-items: center;" href="{% url 'community:chat_requests' %}">
+                    <h4><strong>Solicitudes pendientes</strong></h4>
+                    <div style="display: flex; align-items: center;">
+                        {% if pending_chat_requests_count > 0 %}
+                            <span class="badge bg-danger rounded-pill mr-3">
+                                {{ pending_chat_requests_count }}
+                            </span>
+                        {% endif %}
+                        <i class="bi bi-arrow-right-circle-fill" style="font-size: 2em;"></i>
+                    </div>
                 </a>
                 <hr>
-                <h4><strong>Tus chats</strong></h4>
+                {% if success_messages %}
+                    <div class="alert alert-success" style="font-size:18px;" role="alert" id="success-alert">
+                    {% for message in success_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                {% if error_messages %}
+                    <div class="alert alert-danger" style="font-size:18px;" role="alert" id="error-alert">
+                    {% for message in error_messages %}
+                        {{ message }}<br>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                
+                <h4 style="text-decoration:None; color: #6a4fb8; "><strong>Tus chats</strong>
+                    {% if total_unread_count_only_chats > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ total_unread_count_only_chats }}</span>
+                    {% endif %}
+                </h4>
                 <ul class="list-group">
-                    {% for chat in private_chats %}
-                        {% if request.user == chat.user1 or request.user == chat.user2 %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center mb-1">
+                    {% for chat in all_my_chats %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center mb-1">
+                            {% if chat.is_group == False %}
                                 {% if request.user != chat.user2 %}
-                                    <a href="{% url 'community:chat_detail' username=chat.user2 %}">
+                                    <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user2 %}">
                                         {% if chat.user2.profile_picture %}
                                             <img src="{{ chat.user2.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                         {% else %}
                                             <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
                                         {% endif %}
-                                        @{{ chat.user2 }}
+                                        <strong>@{{ chat.user2 }}</strong>
                                     </a>
+                                    
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %}
+                                    <div class="dropdown" style="float:right;">
+                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Opciones
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                            <li>
+                                                <form method="post" action="{% url 'community:request_chat_deletion' chat.user2 %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        Solicitar borrado de chat
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 {% else %}
-                                    <a href="{% url 'community:chat_detail' username=chat.user1 %}">
+                                    <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user1 %}">
                                         {% if chat.user1.profile_picture %}
                                             <img src="{{ chat.user1.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
                                         {% else %}
                                             <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del cliente">
                                         {% endif %}
-                                        @{{ chat.user1 }}
+                                        <strong>@{{ chat.user1 }}</strong>
                                     </a>
+                                    
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %}
+                                    <div class="dropdown" style="float:right;">
+                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Opciones
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                            <li>
+                                                <form method="post" action="{% url 'community:request_chat_deletion' chat.user1 %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        Solicitar borrado de chat
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 {% endif %}
-                                <span class="badge badge-primary badge-pill">{{ chat.unread_count }}</span>
-                            </li>
-                        {% endif %}
+                            {% elif chat.is_group == True %}
+                                    {% if chat.is_friends_group == False %}
+                                            <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
+                                                <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
+                                                <strong>Comunidad de {{ chat.name }}</strong>
+                                            </a>
+                                        {% if chat.unread_count > 0 %}
+                                            <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                        {% endif %}
+                                        {% if request.user.city == chat.name %}
+                                            <i class="bi bi-pin-angle-fill" style="color:#6a4fb8;"></i>
+                                        {% endif %}
+                                        
+                                    {% else %}
+                                        <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:group_chat_details' name=chat.name %}">
+                                            {% if chat.image %}
+                                                <img src="{{ chat.image.url }}" alt="Foto de chat grupal" class="profile-picture">
+                                            {% else %}
+                                                <img src="{% static 'images/default_group_icon.png' %}" alt="Foto de chat grupal" class="profile-picture">
+                                            {% endif %}
+                                            <strong>{{ chat.name }}</strong>
+                                        </a>
+                                        {% if chat.unread_count > 0 %}
+                                            <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% for member in chat.members.all %}
+                                        {% if member.user == request.user %}
+                                            <div class="dropdown" style="float:right;">
+                                                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Opciones
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                                                    {% if member.user_type == 'admin'%}
+                                                        <li>
+                                                            <form method="POST" action="{% url 'community:delete_group' name=chat.name %}" style="display:inline;" onsubmit="setTimeout(function(){ location.reload(); }, 10);">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="dropdown-item">Eliminar grupo</button>
+                                                            </form>
+                                                        </li>
+                                                    {% endif %}
+                                                    <li>
+                                                        <form method="POST" action="{% url 'community:leave_group' name=chat.name %}" style="display:inline;" onsubmit="setTimeout(function(){ location.reload(); }, 10);">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="dropdown-item">Abandonar grupo</button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                            {% endif %}
+                            
+                                        
+                        </li>
                     {% empty %}
                         <li class="list-group-item text-muted">No tienes chats disponibles.</li>
                     {% endfor %}
+
                 </ul>
             </div>
 
@@ -163,5 +304,17 @@
             window.history.back();
         }
     </script>
+    <script>
+        setTimeout(function() {
+            var successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                successAlert.style.display = 'none';
+            }
+            var errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                errorAlert.style.display = 'none';
+            }
+        }, 4000);
+    </script>    
 </body>
 {% endblock %}
