@@ -97,7 +97,7 @@ def currency(request):
 
 
 
-
+@login_required
 def my_market_profile(request):
     announce_count = 0
     rating_count = 0
@@ -215,7 +215,7 @@ def my_market_profile(request):
     }
     return render(request, 'my_market_profile.html', context)
 
-
+@login_required
 def my_market_ratings(request):
     announce_count = 0
     rating_count = 0

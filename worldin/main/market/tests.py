@@ -1,10 +1,10 @@
 from django.http import HttpRequest
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 from main.models import FollowRequest, CustomUser, Follow
-from .models import Product, Rental, ProductImage
+from .models import Product, Rental, ProductImage, Rating
 from .views import moneda_oficial, currency
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 class MonedaOficialYCurrencyTestCase(TestCase):
 
@@ -664,3 +664,139 @@ class MainMarketProductsTests(TestCase):
             )
         response = self.client.get(reverse('market:main_market_products', args=['city1']))
         self.assertEqual(response.status_code, 200)
+
+
+
+class MyMarketRatingsTestCase(TestCase):
+    def setUp(self):
+        # Crear un usuario de prueba
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
+        self.client = Client()
+        self.client.login(username='testuser', password='testpassword')
+
+        # Crear datos de prueba
+        self.product = Product.objects.create(owner=self.user, title='Test Product', status='available', price=100)
+        self.rental = Rental.objects.create(owner=self.user, title='Test Rental', status='available', price=100, square_meters=100, max_people=3, rooms=2)
+        self.buyer = CustomUser.objects.create_user(username='buyer', email='buyer@example.com', password='buyerpassword')
+        self.product.buyer = self.buyer
+        self.product.status = 'sold'
+        self.product.save()
+        self.rental.buyer = self.buyer
+        self.rental.status = 'sold'
+        self.rental.save()
+
+    def test_my_market_ratings_get(self):
+        response = self.client.get(reverse('market:my_market_ratings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'my_market_ratings.html')
+        self.assertIn('user_products', response.context)
+        self.assertIn('user_rentings', response.context)
+        self.assertIn('announce_count', response.context)
+        self.assertIn('rating_count', response.context)
+        self.assertIn('sell_count', response.context)
+        self.assertIn('buy_count', response.context)
+        self.assertIn('average_rating', response.context)
+        self.assertIn('range_of_stars', response.context)
+        self.assertIn('complete_profile_alerts', response.context)
+        self.assertIn('pending_requests_count', response.context)
+        self.assertIn('total_alerts', response.context)
+        self.assertIn('sold_count', response.context)
+        self.assertIn('bought_count', response.context)
+        self.assertIn('items_bought', response.context)
+        self.assertIn('success_messages', response.context)
+        self.assertIn('rated_announces', response.context)
+        self.assertIn('ratings_count', response.context)
+        self.assertIn('average_rating', response.context)
+        self.assertIn('pending_chat_requests_count', response.context)
+        self.assertIn('total_unread_count', response.context)
+
+    def test_my_market_ratings_post(self):
+        response = self.client.post(reverse('market:my_market_ratings'), {
+            'item_id': self.product.id,
+            'item_type': 'product',
+            'rating': 5,
+            'comment': 'Great product!'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'my_market_ratings.html')
+        self.assertTrue(Rating.objects.filter(user=self.user, product=self.product, rating=5, comment='Great product!').exists())
+        self.assertIn('success_messages', response.context)
+        self.assertIn('Valoración guardada con éxito.', response.context['success_messages'])
+
+class OtherUserRatingsTests(TestCase):
+
+    def setUp(self):
+        # Crear un usuario de prueba
+        self.user = CustomUser.objects.create_user(username='testuser', password='testpassword')
+        self.client = Client()
+        self.client.login(username='testuser', password='testpassword')
+        self.profile_user = CustomUser.objects.create_user(username='testuser2', email='profileuser@example.com', password='testpassword2')
+
+        # Crear datos de prueba
+        self.product = Product.objects.create(owner=self.user, title='Test Product', status='available', price=100)
+        self.rental = Rental.objects.create(owner=self.user, title='Test Rental', status='available', price=100, square_meters=100, max_people=3, rooms=2)
+        self.buyer = CustomUser.objects.create_user(username='buyer', email='buyer@example.com', password='buyerpassword')
+
+        # Crear rating asociado al producto
+        self.product_rating = Rating.objects.create(product=self.product, user=self.buyer, rating=4)
+
+        self.product.buyer = self.buyer
+        self.product.status = 'sold'
+        self.product.save()
+        self.rental.buyer = self.buyer
+        self.rental.status = 'sold'
+        self.rental.save()
+
+    def test_other_user_ratings_redirects_own_profile(self):
+        """Si el usuario intenta acceder a su propio perfil, se redirige correctamente."""
+        response = self.client.get(reverse('market:other_user_ratings', args=[self.user.username]))
+        self.assertRedirects(response, reverse('market:my_market_profile'))
+
+    def test_other_user_ratings_user_not_found(self):
+        """Si el usuario solicitado no existe, se muestra la página de error."""
+        response = self.client.get(reverse('market:other_user_ratings', args=['nonexistentuser']))
+        self.assertTemplateUsed(response, 'user_not_found.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('total_alerts', response.context)
+
+    def test_other_user_ratings_success(self):
+        """Verificar que la página se renderiza correctamente para un usuario válido."""
+        response = self.client.get(reverse('market:other_user_ratings', args=[self.profile_user.username]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'other_user_ratings.html')
+        self.assertEqual(response.context['profile_user'], self.profile_user)
+
+    @patch('main.market.models.Product.objects.filter')
+    @patch('main.market.models.Rental.objects.filter')
+    def test_other_user_ratings_counts(self, mock_rental_filter, mock_product_filter):
+        """Verificar que los conteos de productos y rentas funcionan correctamente."""
+        mock_product_filter.return_value = [
+            Product(id=1, owner=self.profile_user, status='sold', product_rating=Rating(rating=5, user=self.profile_user)),
+            Product(id=2, owner=self.profile_user, status='available', product_rating=Rating(rating=4, user=self.profile_user)),
+        ]
+        mock_rental_filter.return_value = [
+            Rental(id=1, owner=self.profile_user, status='sold', renting_rating=Rating(rating=5, user=self.profile_user)),
+            Rental(id=2, owner=self.profile_user, status='available', renting_rating=Rating(rating=4, user=self.profile_user)),
+        ]
+        
+        response = self.client.get(reverse('market:other_user_ratings', args=[self.profile_user.username]))
+        self.assertEqual(response.context['announce_count'], 2)  # Disponibles
+        self.assertEqual(response.context['sold_count'], 2)      # Vendidos
+
+    def test_other_user_ratings_complete_profile_alerts(self):
+        """Verificar las alertas para un perfil incompleto."""
+        response = self.client.get(reverse('market:other_user_ratings', args=[self.profile_user.username]))
+        self.assertEqual(response.context['complete_profile_alerts'], 5)
+
+    def test_other_user_ratings_ratings_logic(self):
+        # Crear un producto
+        product1 = Product.objects.create(owner=self.user, title='Product 1', status='available', price=50)
+
+        # Crear un rating para el producto
+        rating = Rating.objects.create(product=product1, user=self.buyer, rating=5)
+
+        # Verifica el rating creado
+        self.assertEqual(rating.rating, 5)
+        self.assertEqual(rating.user, self.buyer)
+        self.assertEqual(rating.product, product1)
+
