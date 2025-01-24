@@ -27,6 +27,7 @@ class GroupChat(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_group = models.BooleanField(default=True)
     is_friends_group = models.BooleanField(default=False)
+    is_event_group = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Group Chat: {self.name}"

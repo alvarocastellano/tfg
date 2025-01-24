@@ -33,7 +33,7 @@
         }
 
         .highlight-today {
-            background-color:rgb(153, 135, 206) !important;
+            background-color:rgb(171, 153, 225) !important;
             color: white !important;
         }
 
@@ -64,7 +64,7 @@
             </div>
             {% if request.user.city == selected_city and request.user.is_city_admin %}
                 <div>
-                    <a href="{% url 'events:create_event' %}"><i class="bi bi-plus-circle" style="color:white; background-color: transparent; border-color: white; font-size: 3em;"></i></a>
+                    <a href="{% url 'events:create_event' selected_city %}"><i class="bi bi-plus-circle" style="color:white; background-color: transparent; border-color: white; font-size: 3em;"></i></a>
                 </div>
             {% endif %}
             
@@ -99,14 +99,26 @@
                           {% if day == 0 %}
                             <td></td>
                           {% else %}
-                            <td class="day-cell {% if day == today.day and current_month == today.month and current_year == today.year %}highlight-today{% endif %}" onclick="highlightDay(this)">
-                              <strong>{{ day }}</strong>
-                              {% for event in events %}
-                                {% if event.start.day == day and event.city == selected_city %}
-                                  <p class="text-success small"><i class="bi bi-dot" style="color:white; font-size:3em;"></i></p>
+                            <td style="height: 20px;"
+                                class="day-cell 
+                                {% if day == today.day and current_month == today.month and current_year == today.year %}
+                                    highlight-today
                                 {% endif %}
-                              {% endfor %}
+                                {% if day == selected_day|default:'' %}
+                                    clicked-day
+                                {% endif %}" 
+                                data-day="{{ day }}" 
+                                onclick="selectDay(this)">
+                                <strong>{{ day }}</strong>
+                                <div class="" >
+                                    {% for event in events %}
+                                        {% if event.start.day == day and event.end.day >= day or event.end.day == day and event.start.day <= day or event.start.day <= day and event.end.day >= day and  event.city == selected_city %}
+                                            <i class="bi bi-dot" style="color:#6a4fb8; font-size:2em;"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
                             </td>
+
                           {% endif %}
                         {% endfor %}
                       </tr>
@@ -119,42 +131,60 @@
             <div class="mt-5 mr-5 ml-5">
               <h5>Eventos del día</h5>
               <ul class="list-group" id="event-details">
-                {% for event in events %}
-                  {% if event.city == selected_city %}
-                    <p><i class="bi bi-calendar"></i> {{ event.start}} - {{ event.end }}</p>
-                    <h3> {{ event.title}} </h3>
-                    <p> {{ event.description }} </p>
-                  {% endif %}
+                {% for event in events_for_day %}
+                  <li class="list-group-item" style="padding:25px; color:#6a4fb8;">
+                    <strong>{{ event.title }}</strong>
+                  </li>
                 {% empty %}
                   <p>No hay eventos para este día.</p>
                 {% endfor %}
               </ul>
             </div>
+            
         </div>
         <script>
             function goBack() {
                 window.history.back();
             }
-
-            function highlightDay(element) {
-                // Remove the highlight from any previously clicked day
-                const previouslyClicked = document.querySelector('.clicked-day');
-                if (previouslyClicked) {
-                    previouslyClicked.classList.remove('clicked-day');
-                }
-                // Add the highlight to the clicked day
-                element.classList.add('clicked-day');
-            }
         </script>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const today = new Date();
-                    const todayCell = document.querySelector(`.day-cell.highlight-today`);
-                    if (todayCell) {
-                        todayCell.classList.add('clicked-day');
-                    }
-                });
-            </script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const todayCell = document.querySelector(`.day-cell.highlight-today`);
+          });
+        </script>
+        <script>
+          function selectDay(cell) {
+              // Remover clase 'clicked-day' de cualquier día previamente seleccionado
+              const previouslySelected = document.querySelector('.day-cell.clicked-day');
+              if (previouslySelected) {
+                  previouslySelected.classList.remove('clicked-day');
+              }
+      
+              // Agregar la clase 'clicked-day' al día seleccionado
+              cell.classList.add('clicked-day');
+      
+              // Guardar el día seleccionado en localStorage
+              const day = cell.getAttribute('data-day');
+              localStorage.setItem('selectedDay', day);
+      
+              // Redirección a la URL con el día seleccionado
+              const currentUrl = new URL(window.location.href);
+              currentUrl.searchParams.set('day', day);
+              window.location.href = currentUrl;
+          }
+
+          document.addEventListener('DOMContentLoaded', function() {
+              const selectedDay = localStorage.getItem('selectedDay');
+              if (selectedDay) {
+                  const selectedCell = document.querySelector(`.day-cell[data-day="${selectedDay}"]`);
+                  if (selectedCell) {
+                      selectedCell.classList.add('clicked-day');
+                  }
+              }
+          });
+        </script>
+      
             
     </div>
 </body>

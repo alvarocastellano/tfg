@@ -3,21 +3,31 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from .models import Event
 from .forms import EventForm
-from main.community.models import ChatRequest, Chat, GroupChat
+from main.community.models import ChatRequest, Chat, GroupChat, ChatMember
 from main.models import FollowRequest
 from main.views import alertas_completar_perfil, city_data, valid_cities
 import calendar
 from datetime import datetime, timedelta
+from django.utils.dateparse import parse_date
+from django.utils.timezone import make_aware
+
 
 @login_required
 def event_calendar(request, selected_city):
     # Obtener mes y año de la URL o usar los actuales
     current_year = int(request.GET.get('year', datetime.now().year))
     current_month = int(request.GET.get('month', datetime.now().month))
-    today = datetime.now()
+    today = make_aware(datetime.now())
+
+    # Día seleccionado desde GET (si existe)
+    selected_day = request.GET.get('day', None)
+    selected_date = (
+        make_aware(datetime(current_year, current_month, int(selected_day)))
+        if selected_day else None
+    )
 
     # Navegación entre meses
-    first_day_of_month = datetime(current_year, current_month, 1)
+    first_day_of_month = make_aware(datetime(current_year, current_month, 1))
     previous_month = (first_day_of_month - timedelta(days=1)).month
     previous_year = (first_day_of_month - timedelta(days=1)).year
     next_month = (first_day_of_month + timedelta(days=31)).month
@@ -29,6 +39,29 @@ def event_calendar(request, selected_city):
 
     # Obtener eventos para el mes actual
     events = Event.objects.filter(city=selected_city, start__year=current_year, start__month=current_month)
+
+    # Filtrar eventos para el día seleccionado
+    events_for_day = []
+    if selected_date:
+        for event in events:
+            # Calcula todos los días que abarca el evento
+            event_start_date = event.start.date()
+            event_end_date = event.end.date()
+            
+            # Si el evento comienza y termina en el mismo día, solo se muestra en ese día
+            if event_start_date == event_end_date:
+                if event_start_date == selected_date.date():
+                    events_for_day.append(event)
+            
+            # Si el evento abarca varios días, lo agregamos a todos los días del rango
+            else:
+                current_day = event_start_date
+                while current_day <= event_end_date:
+                    if current_day == selected_date.date():
+                        events_for_day.append(event)
+                        break
+                    current_day += timedelta(days=1)
+
 
     # Información adicional
     city_info = city_data.get(selected_city, {})
@@ -73,6 +106,7 @@ def event_calendar(request, selected_city):
 
     return render(request, 'calendar.html', {
         'events': events,
+        'events_for_day': events_for_day,
         'selected_city': selected_city,
         'country': country,
         'flag_image': flag_image,
@@ -89,23 +123,47 @@ def event_calendar(request, selected_city):
         'pending_chat_requests_count': pending_chat_requests_count,
         'total_unread_count': total_unread_count,
         'today': today,
+        'selected_date': selected_date,
     })
 
+
 @login_required
-def create_event(request):
-    if not request.user.is_city_admin:
-        return redirect('events:event_calendar')  # Sólo administradores pueden crear eventos
+def create_event(request, selected_city):
+
+    error_messages = []
+    city_info = city_data.get(selected_city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    # Validar si el usuario es administrador de la ciudad
+    if not request.user.is_city_admin or request.user.city != selected_city:
+        return redirect('events:event_calendar', selected_city=selected_city)
 
     if request.method == 'POST':
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
-            event.creator = request.user
-            event.save()
-            return redirect('events:event_calendar')
+            if event.start >= event.end:
+                error_messages.append("La fecha de inicio del evento debe ser anterior a su fecha de finalización.")
+                return render(request, 'events/event_form.html', {'form':form, 'error_messages':error_messages, 'selected_city':selected_city, 'country':country, 'flag_image':flag_image})
+            else:
+                event.creator = request.user
+                event.city = selected_city  # Asociar el evento a la ciudad seleccionada
+                assigned_chat = GroupChat.objects.create(name=event.title, is_event_group=True, description=event.description)
+                ChatMember.objects.create(group_chat=assigned_chat, user=request.user, user_type='admin')
+                event.associated_chat = assigned_chat
+                event.save()
+                return redirect('events:event_calendar', selected_city=selected_city)
     else:
         form = EventForm()
-    return render(request, 'events/event_form.html', {'form': form})
+
+    return render(request, 'events/event_form.html', {
+        'form': form,
+        'selected_city': selected_city,
+        'country': country,
+        'flag_image': flag_image,
+    })
+
 
 @login_required
 def edit_event(request, pk):
