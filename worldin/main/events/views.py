@@ -194,7 +194,7 @@ def edit_event(request, event_id):
             return redirect('events:event_calendar', selected_city=request.user.selected_city)
     else:
         form = EventForm(instance=event)
-    return render(request, 'events/event_form.html', {
+    return render(request, 'events/edit_event.html', {
         'form': form,
         'selected_city': event.city,
         'country': country,
