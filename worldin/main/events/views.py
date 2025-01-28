@@ -182,8 +182,15 @@ def edit_event(request, event_id):
 
     if request.method == 'POST':
         form = EventForm(request.POST, instance=event)
+        
         if form.is_valid():
             form.save()
+            event = form.save(commit=False)
+            if event.start >= event.end:
+                error_messages.append("La fecha de inicio del evento debe ser anterior a su fecha de finalización.")
+                return render(request, 'events/edit_event.html', {'form':form, 'error_messages':error_messages, 'selected_city':request.user.selected_city, 'country':country, 'flag_image':flag_image})
+            else:
+                event.save()
             return redirect('events:event_calendar', selected_city=request.user.selected_city)
     else:
         form = EventForm(instance=event)

@@ -139,7 +139,7 @@
                         <i class="bi bi-link"></i>
                     </label>
                     <div class="col-sm-11">
-                        <strong>Link a página de venta de entradas:</strong> {{ event.tickets_link }}
+                        <strong>Link a página de venta de entradas:</strong> <a href="{{ event.tickets_link }}" target="_blank">{{ event.tickets_link }}</a>
                     </div>
                 </div>
             {% endif %}
