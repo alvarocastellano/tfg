@@ -1,5 +1,5 @@
 {% extends 'sidebar.html' %}
-{% block title %}Crear evento{% endblock %}
+{% block title %}Detalles de evento{% endblock %}
 {% block content %}
 {% load static %}
 {% load widget_tweaks %}
@@ -59,7 +59,7 @@
             </div>
 
             <div class="text-center mx-auto">
-                <h1><strong>Crear Evento</strong></h1>
+                <h1><strong>Evento: {{ event.title }}</strong></h1>
                 {% if request.user.city %}
                     <h3> 
                     {% if flag_image %}
@@ -80,83 +80,93 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            <form method="post" style="width: 100%;">
-            {% csrf_token %}
-            <div class="form-group mb-3 row align-items-center">
-                <label for="id_title" class="col-sm-2 col-form-label" style="color: #6a4fb8; font-size: 1.2em;">{{ form.title.label }}<span style="color:red;"><strong> *</strong></span></label>
-                <div class="col-sm-10">
-                {{ form.title|add_class:"form-control rounded-pill" }}
-                </div>
-            </div>
-            <div class="form-group mb-3 row align-items-center">
-                <label for="id_description" class="col-sm-2 col-form-label" style="color: #6a4fb8; font-size: 1.2em;">{{ form.description.label }}</label>
-                <div class="col-sm-10">
-                {{ form.description|add_class:"form-control rounded" }}
-                </div>
-            </div>
-            <div class="form-group mb-3 row align-items-center">
-                <label for="id_location" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
-                    <i class="bi bi-geo-alt"></i><span style="color:red;"><strong> *</strong></span>
-                </label>
-                <div class="col-sm-11">
-                    {{ form.location|add_class:"form-control rounded-pill"|attr:"placeholder: Ubicación" }}
-                </div>
-            </div>
-            <div class="form-group mb-3 row align-items-center">
-                <label for="id_start" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;" title="Fecha y hora de inicio del evento">
-                    <i class="bi bi-clock"></i><span style="color:red;"><strong> *</strong></span>
-                </label>
-                <div class="col-sm-11">
-                    {{ form.start|add_class:"form-control rounded-pill"|attr:"placeholder: Hora de inicio" }}
-                </div>
-            </div>
-            <div class="form-group mb-3 row align-items-center">
-                <label for="id_end" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;" title="Fecha y hora de finalización del evento">
-                    <i class="bi bi-clock-history"></i><span style="color:red;"><strong> *</strong></span>
-                </label>
-                <div class="col-sm-11">
-                    {{ form.end|add_class:"form-control rounded-pill"|attr:"placeholder: Hora de finalización" }}
-                </div>
-            </div>
-            <div class="form-group mb-3 row align-items-center">
-                <label for="id_price" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
-                    <i class="bi bi-currency-dollar"></i><span style="color:red;"><strong> *</strong></span>
-                </label>
-                <div class="col-sm-11">
-                    {{ form.price|add_class:"form-control rounded-pill"|attr:"placeholder: Precio" }}
-                </div>
-                <p> El precio es simplemente informativo, la aplicación no recoge pagos en el proceso de inscripción en eventos. 
-                    Todo lo relacionado con entradas o tickets a eventos deberá realizarse de manera externa a la aplicación. 
-                    Para ello se habilita el campo de enlace para entradas, donde es posible realizar este proceso mediante terceros.</p>
 
-            </div>
             <div class="form-group mb-3 row align-items-center">
-                <label for="id_dresscode" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
-                    <i class="fa-solid fa-shirt"></i>
-                </label>
-                <div class="col-sm-11">
-                    {{ form.dresscode|add_class:"form-control rounded-pill"|attr:"placeholder: Código de vestimenta" }}
+                <div class="col-sm-10">
+                <h3><strong>{{ event.title }}</strong></h3>
+                </div>
+            </div>
+            <div class="form-group mb-5 row align-items-center">
+                <div class="col-sm-10">
+                {{ event.description }}
                 </div>
             </div>
             <div class="form-group mb-3 row align-items-center">
-                <label for="id_tickets_link" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
-                    <i class="bi bi-link"></i>
+                <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
+                    <i class="bi bi-geo-alt"></i>
                 </label>
                 <div class="col-sm-11">
-                    {{ form.tickets_link|add_class:"form-control rounded-pill"|attr:"placeholder: Enlace para entradas" }}
+                    <strong>Ubicación:</strong> {{ event.location }}
                 </div>
             </div>
             <div class="form-group mb-3 row align-items-center">
-                <label for="id_max_people" class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
-                    <i class="fa-solid fa-users"></i>
+                <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;" title="Fecha y hora de inicio del evento">
+                    <i class="bi bi-clock"></i>
                 </label>
                 <div class="col-sm-11">
-                    {{ form.max_people|add_class:"form-control rounded-pill"|attr:"placeholder: Límite de participantes" }}
+                    <strong>Inicio del evento:</strong> {{ event.start }}
                 </div>
             </div>
-            <button type="submit" class="btn btn-success">Guardar</button>
-            <a href="{% url 'events:event_calendar' selected_city=selected_city %}" class="btn btn-secondary">Cancelar</a>
-            </form>
+            <div class="form-group mb-3 row align-items-center">
+                <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;" title="Fecha y hora de finalización del evento">
+                    <i class="bi bi-clock-history"></i>
+                </label>
+                <div class="col-sm-11">
+                    <strong>Fin del evento:</strong> {{ event.end }}
+                </div>
+            </div>
+            <div class="form-group mb-3 row align-items-center">
+                <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
+                    <i class="bi bi-currency-dollar"></i>
+                </label>
+                <div class="col-sm-11">
+                    <strong>Precio:</strong> {{ event.price }} {{ money }}
+                </div>
+            </div>
+            {% if event.dresscode %}
+                <div class="form-group mb-3 row align-items-center">
+                    <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
+                        <i class="fa-solid fa-shirt"></i>
+                    </label>
+                    <div class="col-sm-11">
+                        <strong>Dresscode:</strong> {{ event.dresscode }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if event.tickets_link %}
+                <div class="form-group mb-3 row align-items-center">
+                    <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
+                        <i class="bi bi-link"></i>
+                    </label>
+                    <div class="col-sm-11">
+                        <strong>Link a página de venta de entradas:</strong> {{ event.tickets_link }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if event.max_people %}
+                <div class="form-group mb-3 row align-items-center">
+                    <label class="col-sm-1 text-end" style="color: #6a4fb8; font-size: 1.5em;">
+                        <i class="fa-solid fa-users"></i>
+                    </label>
+                    <div class="col-sm-11">
+                        <strong>Límite de participantes:</strong> {{ event.max_people }}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="form-group mt-5 row align-items-center">
+                {% if finished_event %}
+                    <h3 class="text-danger"><strong>Este evento ya ha finalizado.</strong></h3>
+                {% elif request.user in event.associated_chat.chat_members.all %}
+                    <h3 class="text-success"><strong>Ya estás inscrito en este evento.</strong></h3>
+                {% elif event.max_people and event.associated_chat.members.count >= event.max_people %}
+                    <h3 class="text-danger"><strong>El evento está lleno.</strong></h3>
+                {% else %}
+                    <form method="post" action="{% url 'events:join_event' event.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Unirse al evento</button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
         
     </div>

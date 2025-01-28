@@ -134,6 +134,10 @@
                 {% for event in events_for_day %}
                   <li class="list-group-item" style="padding:25px; color:#6a4fb8;">
                     <strong>{{ event.title }}</strong>
+                    <a href="{% url 'events:event_detail' event.id %}" class="btn btn-light btn-sm float-right" style="font-size:16px;">Ver detalles</a>
+                    {% if event.creator == request.user and event.end >= today %}
+                    <a href="{% url 'events:edit_event' event.id %}" class="btn btn-secondary btn-sm float-right mr-3" style="font-size:16px;">Editar</a>
+                    {% endif %}
                   </li>
                 {% empty %}
                   <p>No hay eventos para este día.</p>

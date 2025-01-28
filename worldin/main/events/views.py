@@ -8,7 +8,6 @@ from main.models import FollowRequest
 from main.views import alertas_completar_perfil, city_data, valid_cities
 import calendar
 from datetime import datetime, timedelta
-from django.utils.dateparse import parse_date
 from django.utils.timezone import make_aware
 
 
@@ -47,7 +46,7 @@ def event_calendar(request, selected_city):
             # Calcula todos los días que abarca el evento
             event_start_date = event.start.date()
             event_end_date = event.end.date()
-            
+
             # Si el evento comienza y termina en el mismo día, solo se muestra en ese día
             if event_start_date == event_end_date:
                 if event_start_date == selected_date.date():
@@ -166,16 +165,132 @@ def create_event(request, selected_city):
 
 
 @login_required
-def edit_event(request, pk):
-    event = get_object_or_404(Event, pk=pk)
+def edit_event(request, event_id):
+    error_messages = []
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        error_messages.append("El evento no existe.")
+        return redirect('events:event_calendar', selected_city=request.user.selected_city)
+    
+    city_info = city_data.get(event.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+    
     if event.creator != request.user:
-        return redirect('events:event_calendar')  # Solo el creador puede editar
+        return redirect('events:event_calendar', selected_city=request.user.selected_city)  # Solo el creador puede editar
 
     if request.method == 'POST':
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
             form.save()
-            return redirect('events:event_calendar')
+            return redirect('events:event_calendar', selected_city=request.user.selected_city)
     else:
         form = EventForm(instance=event)
-    return render(request, 'events/event_form.html', {'form': form})
+    return render(request, 'events/event_form.html', {
+        'form': form,
+        'selected_city': event.city,
+        'country': country,
+        'flag_image': flag_image,
+        'error_messages': error_messages,})
+
+@login_required
+def event_detail(request, event_id):
+    error_messages = []
+    finished_event = False
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        error_messages.append("El evento no existe.")
+        return redirect('events:event_calendar', selected_city=request.user.selected_city)
+
+    if event.end < make_aware(datetime.now()):
+        finished_event = True
+    
+    city_info = city_data.get(event.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    money = ""
+    if event.city == "Sofia":
+        money = "лв"  # Bulgaria
+    elif event.city == "Praga":
+        money = "Kč"  # República Checa
+    elif event.city == "Copenhague":
+        money = "kr"  # Dinamarca
+    elif event.city == "Budapest":
+        money = "Ft"  # Hungría
+    elif event.city == "Varsovia":
+        money = "zł"  # Polonia
+    elif event.city == "Buenos Aires":
+        money = "$"  # Peso argentino
+    elif event.city == "Canberra":
+        money = "$"  # Dólar australiano
+    elif event.city == "Brasilia":
+        money = "R$"  # Real brasileño
+    elif event.city == "Ottawa":
+        money = "$"  # Dólar canadiense
+    elif event.city == "Santiago":
+        money = "$"  # Peso chileno
+    elif event.city == "Pekín":
+        money = "¥"  # Yuan renminbi chino
+    elif event.city == "Washington D.C.":
+        money = "$"  # Dólar estadounidense
+    elif event.city == "Nueva Delhi":
+        money = "₹"  # Rupia india
+    elif event.city == "Tokio":
+        money = "¥"  # Yen japonés
+    elif event.city == "Montevideo":
+        money = "$"  # Peso uruguayo
+    else:
+        money = "€"  # Países de la zona euro
+
+    return render(request, 'events/event_detail.html', {
+        'event': event,
+        'selected_city': event.city,
+        'country': country,
+        'flag_image': flag_image,
+        'error_messages': error_messages,
+        'money': money,
+        'finished_event': finished_event})
+
+@login_required
+def join_event(request, event_id):
+    error_messages = []
+    success_messages = []
+    finished_event = False
+    try:
+        event = Event.objects.get(id=event_id)
+    except Event.DoesNotExist:
+        error_messages.append("El evento no existe.")
+        return redirect('events:event_calendar', selected_city=request.user.selected_city)
+    
+    city_info = city_data.get(event.city, {})
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
+
+    # Verificar si el evento ya ha terminado
+    if event.end < make_aware(datetime.now()):
+        finished_event = True
+        error_messages.append("El evento ya ha terminado y no es posible unirse.")
+        return render(request, 'events/event_detail.html', {'event': event, 'finished_event': finished_event ,'error_messages': error_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+
+    # Verificar si el evento está lleno
+    if event.max_people and event.associated_chat.members.count() >= event.max_people:
+        error_messages.append("El evento está lleno y no se pueden unir más participantes.")
+        return render(request, 'events/event_detail.html', {'event': event, 'error_messages': error_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+
+    # Verificar si ya es miembro del chat del evento
+    if ChatMember.objects.filter(group_chat=event.associated_chat, user=request.user).exists():
+        error_messages.append("Ya estás inscrito en este evento.")
+        return render(request, 'events/event_detail.html', {'event': event, 'error_messages': error_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+
+    # Agregar al usuario al chat grupal
+    ChatMember.objects.create(
+        group_chat=event.associated_chat,
+        user=request.user,
+        user_type='normal'  # Usuario normal, no admin
+    )
+
+    success_messages.append("Te has unido al evento correctamente.")
+    return render(request, 'events/event_detail.html', {'event': event, 'success_messages': success_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})

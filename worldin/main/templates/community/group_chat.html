@@ -481,6 +481,56 @@
                                             (Residente)
                                         </li>
                                     {% endif %}
+                                {% elif group_chat.is_event_group %}
+                                    {% if request.user == member.user and member.user_type == 'admin' %}
+                                        <form method="POST" action="{% url 'community:add_member' group_chat.id %}">
+                                            {% csrf_token %}
+                                            <label for="search-user">Añadir miembro al grupo:</label>
+                                            <input type="text" id="search-user" placeholder="Buscar por nombre de usuario..." oninput="filterUsers()" class="form-control">
+                                            <ul class="list-group mt-2" id="user-list">
+                                                {% for user in all_users %}
+                                                <li class="list-group-item d-flex align-items-center user-item" data-username="{{ user.username }}">
+                                                    <div class="user-info d-flex align-items-center">
+                                                        <a href="{% url 'other_user_profile' user.username %}" style="text-decoration: none; color: #6a4fb8;">
+                                                            <div class="d-flex align-items-center">
+                                                                {% if user.profile_picture %}
+                                                                <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del usuario">
+                                                                {% else %}
+                                                                <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del usuario">
+                                                                {% endif %}
+                                                                <div class="usuario-y-nombre ml-2">
+                                                                    <p style="font-size: 20px; margin-bottom: 0;"><strong>@{{ user.username }}</strong></p>
+                                                                    <p style="font-size: 16px; margin-bottom: 0;">{{ user.first_name }} {{ user.last_name }}</p>
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                    <div class="action-buttons ml-auto">
+                                                        <input type="radio" name="new_member_username" value="{{ user.username }}" class="form-check-input">
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <button type="submit" class="btn btn-primary mt-3">Enviar solicitud</button>
+                                        </form>
+                                        
+                                        {% endif %}
+                                        {% if member.user_type == 'admin' %}
+                                            <li class="mt-3">
+                                                <a class="mt-5" href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                                (ADMINISTRADOR)
+                                            </li>
+                                        {% else %}
+                                            <li class="mt-3">
+                                                <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                                {% if request.user != member.user and request.user in admin_users %}
+                                                    <form method="POST" action="{% url 'community:remove_member' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar miembro</button>
+                                                    </form>
+                                                {% endif %}
+                                            </li>
+                                        {% endif %}
                                 {% else %}
                                     {% if request.user == member.user and member.user_type == 'admin' %}
                                     <form method="POST" action="{% url 'community:add_member' group_chat.id %}">
