@@ -37,6 +37,7 @@ urlpatterns = [
     path('update-city/', views.update_city, name='update_city'),
     path('marketplace/', include('main.market.urls', namespace='market')),
     path('community/', include('main.community.urls', namespace='community')),
+    path('events/', include('main.events.urls', namespace='events')),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

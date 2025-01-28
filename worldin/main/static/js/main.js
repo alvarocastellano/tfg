@@ -125,6 +125,10 @@ function main() {
                     const communityButton = document.getElementById("communityButton");
                     communityButton.href = `/community/chat/${city}`;
 
+                    const eventsButton = document.getElementById("eventsButton");
+                    eventsButton.href = `/events/calendar/city=${city}`;
+
+
                     $('#cityModal').modal('show');
                 } else {
                     showError(data.message);
@@ -361,6 +365,9 @@ function main() {
 
                         const communityButton = document.getElementById("communityButton");
                         communityButton.href = `/community/chat/${city}`;
+
+                        const eventsButton = document.getElementById("eventsButton");
+                        eventsButton.href = `/events/calendar/city=${city}`;
 
                         // Muestra el modal
                         $('#cityModal').modal('show');

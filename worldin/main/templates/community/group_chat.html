@@ -351,7 +351,7 @@
                                     </div>
                                 {% endif %}
                             {% elif chat.is_group == True %}
-                                {% if chat.is_friends_group == False %}
+                                {% if chat.is_friends_group == False and chat.is_event_group == False %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
                                         <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
                                         <strong>Comunidad de {{ chat.name }}</strong>
@@ -362,6 +362,14 @@
                                     {% if request.user.city == chat.name %}
                                         <i class="bi bi-pin-angle-fill" style="color:#6a4fb8;"></i>
                                     {% endif %}
+                                {% elif chat.is_event_group %}
+                                    <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
+                                        <img src="{% static 'images/event.png' %}" alt="Grupo de evento" class="profile-picture">
+                                        <strong>Evento: {{ chat.name }}</strong>
+                                    </a>
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %} 
                                 {% else %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:group_chat_details' name=chat.name %}">
                                         {% if chat.image %}
@@ -412,14 +420,17 @@
             <div class="col-md-8 network-container">
                 <div class="chat-header" id="chat-header" style="overflow-y:auto;">
                     <div class="d-flex align-items-center">
-                        {% if group_chat.is_friends_group == False %}
+                        {% if group_chat.is_friends_group == False and group_chat.is_event_group == False %}
                             <img src="{% static 'images/' %}{{ group_chat.image }}" alt="{{ group_chat.name }}" class="group-profile-img">
                             <h5 class="ms-3 mb-0">Comunidad de {{ group_chat.name }}</h5>
+                        {% elif group_chat.is_event_group %}
+                            <img src="{% static 'images/event.png' %}" alt="Grupo de evento" class="group-profile-img">
+                            <h5 class="ms-3 mb-0">Evento: {{ group_chat.name }}</h5>
                         {% else %}
                             {% if group_chat.image %}
-                                <img src="{{ group_chat.image.url }}" alt="Foto de chat grupal" class="profile-picture">
+                                <img src="{{ group_chat.image.url }}" alt="Foto de chat grupal" class="group-profile-img">
                             {% else %}
-                                <img src="{% static 'images/default_group_icon.png' %}" alt="Foto de chat grupal" class="profile-picture">
+                                <img src="{% static 'images/default_group_icon.png' %}" alt="Foto de chat grupal" class="group-profile-img">
                             {% endif %}
                             <h5 class="ms-3 mb-0">{{ group_chat.name }}</h5>
                         {% endif %}
@@ -448,7 +459,7 @@
                         <p><strong>Miembros:</strong></p>
                         <ul>
                             {% for member in group_chat.members.all %}
-                                {% if group_chat.is_friends_group == False %}
+                                {% if group_chat.is_friends_group == False and group_chat.is_event_group == False %}
                                     {% if member.user.city != group_chat.name and member.user.city %}
                                         <li>
                                             <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
@@ -470,6 +481,56 @@
                                             (Residente)
                                         </li>
                                     {% endif %}
+                                {% elif group_chat.is_event_group %}
+                                    {% if request.user == member.user and member.user_type == 'admin' %}
+                                        <form method="POST" action="{% url 'community:add_member' group_chat.id %}">
+                                            {% csrf_token %}
+                                            <label for="search-user">Añadir miembro al grupo:</label>
+                                            <input type="text" id="search-user" placeholder="Buscar por nombre de usuario..." oninput="filterUsers()" class="form-control">
+                                            <ul class="list-group mt-2" id="user-list">
+                                                {% for user in all_users %}
+                                                <li class="list-group-item d-flex align-items-center user-item" data-username="{{ user.username }}">
+                                                    <div class="user-info d-flex align-items-center">
+                                                        <a href="{% url 'other_user_profile' user.username %}" style="text-decoration: none; color: #6a4fb8;">
+                                                            <div class="d-flex align-items-center">
+                                                                {% if user.profile_picture %}
+                                                                <img src="{{ user.profile_picture.url }}" class="profile-picture" alt="Perfil del usuario">
+                                                                {% else %}
+                                                                <img src="{% static 'images/default_user_icon_2.webp' %}" class="profile-picture" alt="Perfil del usuario">
+                                                                {% endif %}
+                                                                <div class="usuario-y-nombre ml-2">
+                                                                    <p style="font-size: 20px; margin-bottom: 0;"><strong>@{{ user.username }}</strong></p>
+                                                                    <p style="font-size: 16px; margin-bottom: 0;">{{ user.first_name }} {{ user.last_name }}</p>
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                    <div class="action-buttons ml-auto">
+                                                        <input type="radio" name="new_member_username" value="{{ user.username }}" class="form-check-input">
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <button type="submit" class="btn btn-primary mt-3">Enviar solicitud</button>
+                                        </form>
+                                        
+                                        {% endif %}
+                                        {% if member.user_type == 'admin' %}
+                                            <li class="mt-3">
+                                                <a class="mt-5" href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                                (ADMINISTRADOR)
+                                            </li>
+                                        {% else %}
+                                            <li class="mt-3">
+                                                <a href="{% url 'other_user_profile' member.user.username %}">@{{ member.user.username }}</a>
+                                                {% if request.user != member.user and request.user in admin_users %}
+                                                    <form method="POST" action="{% url 'community:remove_member' group_chat.id member.user.username %}" style="display:inline; margin-left: 10px; margin-top: 50px;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar miembro</button>
+                                                    </form>
+                                                {% endif %}
+                                            </li>
+                                        {% endif %}
                                 {% else %}
                                     {% if request.user == member.user and member.user_type == 'admin' %}
                                     <form method="POST" action="{% url 'community:add_member' group_chat.id %}">

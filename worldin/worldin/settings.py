@@ -63,11 +63,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main.market.apps.MarketConfig',
     'main.community.apps.CommunityConfig',
+    'main.events.apps.EventsConfig',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'widget_tweaks',
 ]
 
 #Si falla probar 2,3,4...
@@ -123,6 +125,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'world'),
             os.path.join(BASE_DIR, 'main', 'templates', 'market'),
             os.path.join(BASE_DIR, 'main', 'templates', 'community'),
+            os.path.join(BASE_DIR, 'main', 'templates', 'events'),
 
             ],
         'APP_DIRS': True,
