@@ -12,7 +12,7 @@ class Command(BaseCommand):
         "Copenhague": {"country": "Dinamarca", "flag": "dinamarca.png"},
         "Berlin": {"country": "Alemania", "flag": "alemania.png"},
         "Munich": {"country": "Alemania", "flag": "alemania.png"},
-        "Tallin": {"country": "Estonia", "flag": "estonia.png"},
+        "Tallinn": {"country": "Estonia", "flag": "estonia.png"},
         "Dublin": {"country": "Irlanda", "flag": "irlanda.png"},
         "Cork": {"country": "Irlanda", "flag": "irlanda.png"},
         "Atenas": {"country": "Grecia", "flag": "grecia.png"},

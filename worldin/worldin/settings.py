@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'main.market.apps.MarketConfig',
     'main.community.apps.CommunityConfig',
     'main.events.apps.EventsConfig',
+    'main.turism.apps.TurismConfig',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -126,6 +127,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'market'),
             os.path.join(BASE_DIR, 'main', 'templates', 'community'),
             os.path.join(BASE_DIR, 'main', 'templates', 'events'),
+            os.path.join(BASE_DIR, 'main', 'templates', 'turism'),
 
             ],
         'APP_DIRS': True,

@@ -152,7 +152,7 @@
                                 <option value="Copenhague">Dinamarca</option>
                                 <option value="Berlin">Alemania</option>
                                 <option value="Munich">Alemania</option>
-                                <option value="Tallin">Estonia</option>
+                                <option value="Tallinn">Estonia</option>
                                 <option value="Dublin">Irlanda</option>
                                 <option value="Cork">Irlanda</option>
                                 <option value="Atenas">Grecia</option>
@@ -197,7 +197,7 @@
                     <li class="list-group-item-sidebar"><a href="{% url 'market:main_market_products' selected_city=request.user.selected_city %}"><i class="bi bi-bag-fill"></i> Mercado</a></li>
                     <li class="list-group-item-sidebar"><a href="{% url 'events:event_calendar' selected_city=request.user.selected_city %}"><i class="bi bi-calendar-check"></i> Eventos</a></li>
                     <li class="list-group-item-sidebar"><a href="{% url 'community:city_group_chat' city=request.user.selected_city %}"><i class="bi bi-people-fill"></i> Comunidad</a></li>
-                    <li class="list-group-item-sidebar"><a href="#"><i class="bi bi-geo-fill"></i> Turismo</a></li>
+                    <li class="list-group-item-sidebar"><a href="{% url 'turism:city_map' city_name=request.user.selected_city %}"><i class="bi bi-geo-fill"></i> Turismo</a></li>
                     <hr class="custom-hr">
                 {% else %}
                     <li class="list-group-item-sidebar">Selecciona una ciudad para poder acceder a más funcionalidades</li>
