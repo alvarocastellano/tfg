@@ -73,6 +73,8 @@ INSTALLED_APPS = [
     'widget_tweaks',
 ]
 
+TEST_DISCOVERY_PATTERN = 'test*.py'
+
 #Si falla probar 2,3,4...
 SITE_ID = 1
 
