@@ -128,6 +128,20 @@ def event_calendar(request, selected_city):
 
 @login_required
 def create_event(request, selected_city):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
 
     error_messages = []
     city_info = city_data.get(selected_city, {})
@@ -144,7 +158,17 @@ def create_event(request, selected_city):
             event = form.save(commit=False)
             if event.start >= event.end:
                 error_messages.append("La fecha de inicio del evento debe ser anterior a su fecha de finalización.")
-                return render(request, 'events/event_form.html', {'form':form, 'error_messages':error_messages, 'selected_city':selected_city, 'country':country, 'flag_image':flag_image})
+                return render(request, 'events/event_form.html', {
+                    'form':form, 
+                    'error_messages':error_messages, 
+                    'selected_city':selected_city, 
+                    'country':country, 
+                    'flag_image':flag_image,
+                    'complete_profile_alerts': complete_profile_alerts,
+                    'pending_requests_count': pending_requests_count,
+                    'pending_chat_requests_count': pending_chat_requests_count,
+                    'total_unread_count': total_unread_count,
+                    })
             else:
                 event.creator = request.user
                 event.city = selected_city  # Asociar el evento a la ciudad seleccionada
@@ -161,11 +185,29 @@ def create_event(request, selected_city):
         'selected_city': selected_city,
         'country': country,
         'flag_image': flag_image,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,
     })
 
 
 @login_required
 def edit_event(request, event_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
     error_messages = []
     try:
         event = Event.objects.get(id=event_id)
@@ -188,7 +230,16 @@ def edit_event(request, event_id):
             event = form.save(commit=False)
             if event.start >= event.end:
                 error_messages.append("La fecha de inicio del evento debe ser anterior a su fecha de finalización.")
-                return render(request, 'events/edit_event.html', {'form':form, 'error_messages':error_messages, 'selected_city':request.user.selected_city, 'country':country, 'flag_image':flag_image})
+                return render(request, 'events/edit_event.html', {
+                    'form':form, 
+                    'error_messages':error_messages, 
+                    'selected_city':request.user.selected_city, 
+                    'country':country, 
+                    'flag_image':flag_image,
+                    'complete_profile_alerts': complete_profile_alerts,
+                    'pending_requests_count': pending_requests_count,
+                    'pending_chat_requests_count': pending_chat_requests_count,
+                    'total_unread_count': total_unread_count,})
             else:
                 event.save()
             return redirect('events:event_calendar', selected_city=request.user.selected_city)
@@ -199,10 +250,28 @@ def edit_event(request, event_id):
         'selected_city': event.city,
         'country': country,
         'flag_image': flag_image,
-        'error_messages': error_messages,})
+        'error_messages': error_messages,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,})
 
 @login_required
 def event_detail(request, event_id):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
     error_messages = []
     finished_event = False
     try:
@@ -259,13 +328,31 @@ def event_detail(request, event_id):
         'flag_image': flag_image,
         'error_messages': error_messages,
         'money': money,
-        'finished_event': finished_event})
+        'finished_event': finished_event,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,})
 
 @login_required
 def join_event(request, event_id):
     error_messages = []
     success_messages = []
     finished_event = False
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
     try:
         event = Event.objects.get(id=event_id)
     except Event.DoesNotExist:
@@ -280,17 +367,45 @@ def join_event(request, event_id):
     if event.end < make_aware(datetime.now()):
         finished_event = True
         error_messages.append("El evento ya ha terminado y no es posible unirse.")
-        return render(request, 'events/event_detail.html', {'event': event, 'finished_event': finished_event ,'error_messages': error_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+        return render(request, 'events/event_detail.html', {
+            'event': event, 
+            'finished_event': finished_event ,
+            'error_messages': error_messages, 
+            'country': country, 
+            'flag_image': flag_image, 
+            'selected_city': event.city,
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,})
 
     # Verificar si el evento está lleno
     if event.max_people and event.associated_chat.members.count() >= event.max_people:
         error_messages.append("El evento está lleno y no se pueden unir más participantes.")
-        return render(request, 'events/event_detail.html', {'event': event, 'error_messages': error_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+        return render(request, 'events/event_detail.html', {
+            'event': event, 
+            'error_messages': error_messages, 
+            'country': country, 
+            'flag_image': flag_image, 
+            'selected_city': event.city,
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,})
 
     # Verificar si ya es miembro del chat del evento
     if ChatMember.objects.filter(group_chat=event.associated_chat, user=request.user).exists():
         error_messages.append("Ya estás inscrito en este evento.")
-        return render(request, 'events/event_detail.html', {'event': event, 'error_messages': error_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+        return render(request, 'events/event_detail.html', {
+            'event': event, 
+            'error_messages': error_messages, 
+            'country': country, 
+            'flag_image': flag_image, 
+            'selected_city': event.city,
+            'complete_profile_alerts': complete_profile_alerts,
+            'pending_requests_count': pending_requests_count,
+            'pending_chat_requests_count': pending_chat_requests_count,
+            'total_unread_count': total_unread_count,})
 
     # Agregar al usuario al chat grupal
     ChatMember.objects.create(
@@ -300,4 +415,13 @@ def join_event(request, event_id):
     )
 
     success_messages.append("Te has unido al evento correctamente.")
-    return render(request, 'events/event_detail.html', {'event': event, 'success_messages': success_messages, 'country': country, 'flag_image': flag_image, 'selected_city': event.city})
+    return render(request, 'events/event_detail.html', {
+        'event': event, 
+        'success_messages': success_messages, 
+        'country': country, 
+        'flag_image': flag_image, 
+        'selected_city': event.city,
+        'complete_profile_alerts': complete_profile_alerts,
+        'pending_requests_count': pending_requests_count,
+        'pending_chat_requests_count': pending_chat_requests_count,
+        'total_unread_count': total_unread_count,})

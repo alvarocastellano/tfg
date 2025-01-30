@@ -2,10 +2,28 @@ from django.contrib.auth.decorators import login_required
 from main.views import city_data 
 from django.shortcuts import render
 import requests
+from main.models import FollowRequest
+from main.community.models import ChatRequest, Chat, GroupChat
+from django.db.models import Count, Q
+from main.views import alertas_completar_perfil
 
 
 @login_required
 def city_map(request, city_name):
+    complete_profile_alerts = alertas_completar_perfil(request)
+    pending_requests_count = FollowRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    pending_chat_requests_count = ChatRequest.objects.filter(receiver=request.user, status='pending').count()
+
+    private_chats = Chat.objects.filter(Q(user1=request.user) | Q(user2=request.user)).annotate(
+        unread_count=Count('messages', filter=Q(messages__is_read=False) & ~Q(messages__sender=request.user))
+    )
+
+    all_groups_chats = GroupChat.objects.filter(members__user=request.user).exclude(name=request.user.city).annotate(
+        unread_count=Count('group_messages', filter=Q(group_messages__is_read=False) & ~Q(group_messages__sender=request.user))
+    )
+
+    total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
     city_info = city_data.get(city_name)
 
     # Información adicional
@@ -13,7 +31,12 @@ def city_map(request, city_name):
     flag_image = city_info.get('flag', '')
 
     if not city_info:
-        return render(request, 'invalid_city.html', {"city_name": city_name})
+        return render(request, 'invalid_city.html', {
+            "city_name": city_name,
+            "complete_profile_alerts": complete_profile_alerts,
+            "pending_requests_count": pending_requests_count,
+            "pending_chat_requests_count": pending_chat_requests_count,
+            "total_unread_count": total_unread_count,})
 
     lat, lon = city_info["lat"], city_info["lon"]
 
@@ -45,5 +68,9 @@ def city_map(request, city_name):
         "lon": lon,
         "places": places,
         "country": country,
-        "flag_image": flag_image
+        "flag_image": flag_image,
+        "complete_profile_alerts": complete_profile_alerts,
+        "pending_requests_count": pending_requests_count,
+        "pending_chat_requests_count": pending_chat_requests_count,
+        "total_unread_count": total_unread_count,
     })
