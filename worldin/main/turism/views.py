@@ -6,7 +6,41 @@ from main.models import FollowRequest
 from main.community.models import ChatRequest, Chat, GroupChat
 from django.db.models import Count, Q
 from main.views import alertas_completar_perfil
+from urllib.parse import quote
 
+def city_conversor(city):
+    if city == "La Valeta":
+        return "Valletta"
+    elif city == "Atenas":
+        return "Athens"
+    elif city == "Luxemburgo":
+        return "Luxembourg"
+    elif city == "Roterdam":
+        return "Rotterdam"
+    elif city == "Viena":
+        return "Wien"
+    elif city == "Varsovia":
+        return "Warsaw"
+    elif city == "Oporto":
+        return "Porto"
+    elif city == "Buenos Aires":
+        return "Buenos%20Aires"
+    elif city == "Washington D.C.":
+        return "Washington"
+    elif city == "Nueva Delhi":
+        return "New%20Delhi"
+    elif city == "Sofia":
+        return quote("София")
+    elif city == "Copenhague":
+        return quote("København")
+    elif city == "Brasilia":
+        return quote("Brasília")
+    elif city == "Praga":
+        return "Praha"
+    elif city == "Pekín":
+        return quote("北京")
+    else:
+        return city
 
 @login_required
 def city_map(request, city_name):
@@ -40,8 +74,10 @@ def city_map(request, city_name):
 
     lat, lon = city_info["lat"], city_info["lon"]
 
+    conversor = city_conversor(city_name)
+
     # URL para Overpass API
-    overpass_url = f'https://overpass-api.de/api/interpreter?data=[out:json];area[name="{city_name}"];node["tourism"]["tourism"!~"^(hotel|hostel|motel|picnic_site|camp_site|chalet|artwork|viewpoint|apartment|guest_house|attraction|gallery)$"](area);out;'
+    overpass_url = f'https://overpass-api.de/api/interpreter?data=[out:json];area[name="{conversor}"];node["tourism"]["tourism"!~"^(hotel|hostel|motel|picnic_site|camp_site|chalet|viewpoint|apartment|guest_house|attraction|gallery)$"](area);out;'
 
     response = requests.get(overpass_url)
     data = response.json() if response.status_code == 200 else {"elements": []}
