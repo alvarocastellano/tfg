@@ -38,6 +38,7 @@ urlpatterns = [
     path('marketplace/', include('main.market.urls', namespace='market')),
     path('community/', include('main.community.urls', namespace='community')),
     path('events/', include('main.events.urls', namespace='events')),
+    path('turism/', include('main.turism.urls', namespace='turism')),
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
