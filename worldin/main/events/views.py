@@ -173,6 +173,7 @@ def create_event(request, selected_city):
                 event.creator = request.user
                 event.city = selected_city  # Asociar el evento a la ciudad seleccionada
                 assigned_chat = GroupChat.objects.create(name=event.title, is_event_group=True, description=event.description)
+                assigned_chat.save()
                 ChatMember.objects.create(group_chat=assigned_chat, user=request.user, user_type='admin')
                 event.associated_chat = assigned_chat
                 event.save()

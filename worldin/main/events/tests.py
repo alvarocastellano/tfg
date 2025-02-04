@@ -5,7 +5,9 @@ from django.utils.timezone import make_aware
 from datetime import datetime 
 from main.events.models import Event 
 from main.models import FollowRequest
-from main.community.models import ChatRequest
+from main.community.models import ChatRequest, GroupChat
+from unittest.mock import patch
+
 User = get_user_model() 
 
 class EventCalendarViewTests(TestCase): 
@@ -95,3 +97,69 @@ class EventCalendarViewTests(TestCase):
         response = self.client.get(reverse("events:event_calendar", args=[self.selected_city])) 
         self.assertEqual(response.context["pending_requests_count"], 1) 
         self.assertEqual(response.context["pending_chat_requests_count"], 1)
+
+class CreateEventTest(TestCase):
+
+    def setUp(self):
+        # Crear usuario
+        self.user = User.objects.create_user(username='testuser', password='password123', email='prueba"gmail.com')
+        self.user.city = 'Madrid'  # Aseguramos que este usuario es administrador de Madrid
+        self.user.is_city_admin = True
+        self.user.save()
+
+        # Crear ciudad para test
+        self.selected_city = 'Madrid'
+
+        # URL de la vista
+        self.url = reverse('events:create_event', kwargs={'selected_city': self.selected_city})
+
+        # Datos válidos para el evento
+        self.valid_data = {
+            'title': 'Concierto en Madrid',
+            'description': 'Un gran evento musical.',
+            'location': 'Plaza Mayor',
+            'start': '2025-03-01 20:00',
+            'end': '2025-03-01 23:00',
+            'price': 30.0,
+            'max_people': 100
+        }
+
+    def test_create_event_authenticated_user(self):
+        """Test si un usuario autenticado puede acceder a la vista y crear un evento."""
+        self.client.login(username='testuser', password='password123')
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        # Enviar el formulario con datos válidos
+        response = self.client.post(self.url, self.valid_data)
+
+        # Verificar que el evento ha sido creado
+        self.assertEqual(Event.objects.count(), 1)
+        event = Event.objects.first()
+        self.assertEqual(event.title, 'Concierto en Madrid')
+        self.assertEqual(event.city, self.selected_city)
+        self.assertRedirects(response, reverse('events:event_calendar', kwargs={'selected_city': self.selected_city}))
+
+    def test_create_event_not_city_admin(self):
+        """Test si un usuario no administrador de ciudad no puede crear eventos."""
+        # Crear un usuario sin privilegios de administrador de ciudad
+        non_admin_user = User.objects.create_user(username='nonadmin', password='password123', email='prueba@gmail.com')
+        non_admin_user.city = 'Madrid'
+        non_admin_user.save()
+
+        self.client.login(username='nonadmin', password='password123')
+
+        response = self.client.get(self.url)
+        self.assertRedirects(response, reverse('events:event_calendar', kwargs={'selected_city': self.selected_city}))
+
+    @patch('main.events.views.GroupChat.objects.create')
+    def test_create_event_group_chat_creation(self, mock_create_group_chat):
+        """Test si se crea un grupo de chat asociado al evento."""
+        self.client.login(username='testuser', password='password123')
+
+        # Verificar que la creación del grupo de chat se llama
+        mock_create_group_chat.return_value = GroupChat(name='Concierto en Madrid', is_event_group=True, description='Un gran evento musical.')
+        self.client.post(self.url, self.valid_data)
+
+        mock_create_group_chat.assert_called_once_with(name='Concierto en Madrid', is_event_group=True, description='Un gran evento musical.')

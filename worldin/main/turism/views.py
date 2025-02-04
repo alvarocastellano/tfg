@@ -60,10 +60,6 @@ def city_map(request, city_name):
     total_unread_count = sum(chat.unread_count for chat in private_chats) + sum(chat.unread_count for chat in all_groups_chats)
     city_info = city_data.get(city_name)
 
-    # Información adicional
-    country = city_info.get('country', 'Desconocido')
-    flag_image = city_info.get('flag', '')
-
     if not city_info:
         return render(request, 'invalid_city.html', {
             "city_name": city_name,
@@ -71,6 +67,10 @@ def city_map(request, city_name):
             "pending_requests_count": pending_requests_count,
             "pending_chat_requests_count": pending_chat_requests_count,
             "total_unread_count": total_unread_count,})
+    
+    # Información adicional
+    country = city_info.get('country', 'Desconocido')
+    flag_image = city_info.get('flag', '')
 
     lat, lon = city_info["lat"], city_info["lon"]
 
