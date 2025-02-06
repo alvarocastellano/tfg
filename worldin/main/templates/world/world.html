@@ -330,15 +330,15 @@
                                     <i class="bi bi-bag-fill"></i>
                                     <div>Mercado</div>
                                 </a>
-                                <a href="#" class="btn btn-info">
+                                <a id="eventsButton" href="{% url 'events:event_calendar' selected_city=request.user.selected_city %}" class="btn btn-info">
                                     <i class="bi bi-calendar-check"></i>
                                     <div>Eventos</div>
-                                </a>
+                                </a>                                
                                 <a  id="communityButton" href="{% url 'community:city_group_chat' city=request.user.selected_city %}" class="btn btn-info">
                                     <i class="bi bi-people-fill"></i>
                                     <div>Comunidad</div>
                                 </a>
-                                <a href="#" class="btn btn-info">
+                                <a id="turismButton" href="{% url 'turism:city_map' city_name=request.user.selected_city %}" class="btn btn-info">
                                     <i class="bi bi-geo-fill"></i>
                                     <div>Turismo</div>
                                 </a>

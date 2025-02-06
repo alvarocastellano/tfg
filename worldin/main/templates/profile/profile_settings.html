@@ -140,12 +140,22 @@
         <!-- Botón para borrar la cuenta -->
         <div class="form-group">
           <h3>SOLICITAR PERFIL DE ADMINISTRADOR</h3>
-          <p>
+          {% if request.user.is_city_admin %}
+            <p>
+              Ya cuentas con perfil de administrador de ciudad. La ciudad de la que eres administrador es {{ request.user.city }}.<br>
+              Si deseas dejar de ser administrador de ciudad, envía un email a la dirección <b>"noreply.confirmation.worldin@gmail.com"</b> con el asunto <b>"ELIMINACIÓN PERFIL ADMIN - CIUDAD"</b>
+              indicando de qué ciudad quieres dejar de ser administrador. <br>
+              Los administradores de Worldin analizarán la solicitud y la tramitarán lo más rápido posible.
+            </p>
+
+          {% else %}
+            <p>
               Solicita un perfil de administrador de tu ciudad.<br>
               Con un perfil de administrador podrás publicar y administrar eventos y ser RRPP de tu ciudad.<br>
               Envía un email a la dirección <b>"noreply.confirmation.worldin@gmail.com"</b> con el asunto <b>"SOLICITUD PERFIL ADMIN - CIUDAD"</b> indicando de qué ciudad quieres ser administrador. <br>
               Los administradores de Worldin analizarán la solicitud y la tramitarán lo más rápido posible.
-          </p>
+            </p>
+          {% endif %}
       </div>
       <hr>
 

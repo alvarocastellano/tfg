@@ -27,6 +27,8 @@ class GroupChat(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_group = models.BooleanField(default=True)
     is_friends_group = models.BooleanField(default=False)
+    is_event_group = models.BooleanField(default=False)
+    chat_members = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ChatMember', related_name='group_chats')
 
     def __str__(self):
         return f"Group Chat: {self.name}"

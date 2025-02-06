@@ -63,12 +63,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main.market.apps.MarketConfig',
     'main.community.apps.CommunityConfig',
+    'main.events.apps.EventsConfig',
+    'main.turism.apps.TurismConfig',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'widget_tweaks',
 ]
+
+TEST_DISCOVERY_PATTERN = 'test*.py'
 
 #Si falla probar 2,3,4...
 SITE_ID = 1
@@ -123,6 +128,8 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'world'),
             os.path.join(BASE_DIR, 'main', 'templates', 'market'),
             os.path.join(BASE_DIR, 'main', 'templates', 'community'),
+            os.path.join(BASE_DIR, 'main', 'templates', 'events'),
+            os.path.join(BASE_DIR, 'main', 'templates', 'turism'),
 
             ],
         'APP_DIRS': True,

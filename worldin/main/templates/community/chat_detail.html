@@ -323,7 +323,7 @@
                                     </div>
                                 {% endif %}
                             {% elif chat.is_group == True %}
-                                {% if chat.is_friends_group == False %}
+                                {% if chat.is_friends_group == False and chat.is_event_group == False %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
                                         <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
                                         <strong>Comunidad de {{ chat.name }}</strong>
@@ -334,6 +334,14 @@
                                     {% if request.user.city == chat.name %}
                                         <i class="bi bi-pin-angle-fill" style="color:#6a4fb8;"></i>
                                     {% endif %}
+                                {% elif chat.is_event_group %}
+                                    <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
+                                        <img src="{% static 'images/event.png' %}" alt="Grupo de evento" class="profile-picture">
+                                        <strong>Evento: {{ chat.name }}</strong>
+                                    </a>
+                                    {% if chat.unread_count > 0 %}
+                                        <span class="badge bg-danger rounded-pill">{{ chat.unread_count }}</span>
+                                    {% endif %} 
                                 {% else %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:group_chat_details' name=chat.name %}">
                                         {% if chat.image %}

@@ -16,7 +16,7 @@ function main() {
         { lat: 50.0755, lng: 14.4378, cities: ['Praga'], country: 'Chequia', flag: 'chequia.png' },
         { lat: 55.6761, lng: 12.5683, cities: ['Copenhague'], country: 'Dinamarca', flag: 'dinamarca.png' },
         { lat: 52.5200, lng: 13.4050, cities: ['Berlin','Munich'], country: 'Alemania', flag: 'alemania.png' },
-        { lat: 59.4370, lng: 24.7536, cities: ['Tallin'], country: 'Estonia', flag: 'estonia.png' },
+        { lat: 59.4370, lng: 24.7536, cities: ['Tallinn'], country: 'Estonia', flag: 'estonia.png' },
         { lat: 53.3498, lng: -6.2603, cities: ['Dublin','Cork'], country: 'Irlanda', flag: 'irlanda.png' },
         { lat: 37.9838, lng: 23.7275, cities: ['Atenas'], country: 'Grecia', flag: 'grecia.png' },
         { lat: 40.4168, lng: -3.7038, cities: ['Madrid','Sevilla','Barcelona'], country: 'España', flag: 'spain.png' },
@@ -124,6 +124,13 @@ function main() {
 
                     const communityButton = document.getElementById("communityButton");
                     communityButton.href = `/community/chat/${city}`;
+
+                    const eventsButton = document.getElementById("eventsButton");
+                    eventsButton.href = `/events/calendar/city=${city}`;
+
+                    const turismButton = document.getElementById("turismButton");
+                    turismButton.href = `/turism/city_map/${city}`;
+
 
                     $('#cityModal').modal('show');
                 } else {
@@ -361,6 +368,12 @@ function main() {
 
                         const communityButton = document.getElementById("communityButton");
                         communityButton.href = `/community/chat/${city}`;
+
+                        const eventsButton = document.getElementById("eventsButton");
+                        eventsButton.href = `/events/calendar/city=${city}`;
+
+                        const turismButton = document.getElementById("turismButton");
+                        turismButton.href = `/turism/city_map/${city}`;
 
                         // Muestra el modal
                         $('#cityModal').modal('show');

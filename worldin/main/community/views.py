@@ -429,7 +429,7 @@ def group_chat_details(request, name):
 
     admin_users = []
     for member in group_chat.members.all():
-        if member.user_type == 'admin' and group_chat.is_friends_group:
+        if member.user_type == 'admin' and (group_chat.is_friends_group or group_chat.is_event_group):
             admin_users.append(member.user)
 
     all_users = CustomUser.objects.exclude(username=request.user.username)
