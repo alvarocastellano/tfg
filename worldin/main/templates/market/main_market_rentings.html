@@ -1,6 +1,6 @@
 {% extends "main/sidebar.html" %}
 
-{% block title %}Mi perfil{% endblock %}
+{% block title %}Portal de alquileres{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -360,12 +360,12 @@
                         Para poder visualizarlos tú también, <a href="{% url 'profile_settings' %}">accede a la configuración de tu cuenta</a> y habilita la opción de "VER MIS PROPIOS ANUNCIOS EN EL MERCADO".
                     </p>
                 {% else %}
+                <div class="row">
                     {% for renting in rentings %}
                         {% if renting.status != 'sold' %}
                             {% if renting.owner.id != request.user.id or request.user.see_own_products %}
-                                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
-                                    <div class="col d-flex justify-content-center">
-                                        <div class="card d-flex flex-column" 
+                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center mt-5">
+                                    <div class="card d-flex flex-column" 
                                             style="width: 20rem; height: 30rem; border-color:#6a4fb8; border-width:2px; margin: 10px;">
                                             {% if renting.highlighted %}
                                             <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
@@ -407,12 +407,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
                                 {% endif %}
                             {% else %}
                                 <p class="text-center">No se han encontrado anuncios de alquiler disponibles.</p>
                             {% endif %}
                         {% endfor %}
+                    </div>
                 {% endif %}
             {% else %}
                 <p>No se han encontrado anuncios de alquiler disponibles.</p>
