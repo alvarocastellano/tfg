@@ -75,10 +75,3 @@ Si quieres contribuir a Worldin, puedes enviar un email a noreply.confirmation.w
 
 ---
 **Worldin** - Conectando estudiantes Erasmus+ en todo el mundo. 🌐
-
-=======
-# tfg
-Worldin: Red social para Erasmus
-
-PASO 1) CREAR ENTORNO VIRTUAL
-PASO 2) pip install -r requirements.txt
