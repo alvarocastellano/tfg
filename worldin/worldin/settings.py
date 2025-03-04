@@ -36,6 +36,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'noreply.confirmation.worldin@gmail.com'
 EMAIL_HOST_PASSWORD = 'aebg yhfr iktu tuno'
 
+EMAIL_TEMPLATE_NAME = "registration/password_reset_email.html"
+PASSWORD_RESET_SUBJECT_TEMPLATE_NAME = "registration/password_reset_subject.txt"
+
 # Dirección de correo predeterminada
 DEFAULT_FROM_EMAIL = 'noreply.confirmation.worldin@gmail.com'
 
@@ -77,6 +80,8 @@ TEST_DISCOVERY_PATTERN = 'test*.py'
 
 #Si falla probar 2,3,4...
 SITE_ID = 1
+SITE_NAME = 'WORLDIN'
+DOMAIN = "localhost:8000"
 
 
 AUTHENTICATION_BACKENDS = (

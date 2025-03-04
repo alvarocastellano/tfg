@@ -265,9 +265,9 @@
                 </h4>
                 <ul class="list-group">
                     {% for chat in all_my_chats %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center mb-1 {% if chat.id == current_chat.id %} active-chat {% endif %}">
                             {% if chat.is_group == False %}
                                 {% if request.user != chat.user2 %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center mb-1 {% if chat.id == current_chat.id and chat.user2 == current_chat.user2 %} active-chat {% endif %}">
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:chat_detail' username=chat.user2 %}">
                                         {% if chat.user2.profile_picture %}
                                             <img src="{{ chat.user2.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
@@ -295,6 +295,7 @@
                                         </ul>
                                     </div>
                                 {% else %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center mb-1 {% if chat.id == current_chat.id and chat.user1 == current_chat.user1 %} active-chat {% endif %}">
                                     <a style="text-decoration:None; color: #6a4fb8; "  href="{% url 'community:chat_detail' username=chat.user1 %}">
                                         {% if chat.user1.profile_picture %}
                                             <img src="{{ chat.user1.profile_picture.url }}" class="profile-picture" alt="Perfil del cliente">
@@ -323,6 +324,7 @@
                                     </div>
                                 {% endif %}
                             {% elif chat.is_group == True %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center mb-1 {% if chat.id == current_chat.id and chat.name == current_chat.name %} active-chat {% endif %}">
                                 {% if chat.is_friends_group == False and chat.is_event_group == False %}
                                     <a style="text-decoration:None; color: #6a4fb8; " href="{% url 'community:city_group_chat' city=chat.name %}">
                                         <img src="{% static 'images/' %}{{ chat.image }}" alt="Bandera de {{ chat.country }}" class="profile-picture">
