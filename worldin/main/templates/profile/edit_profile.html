@@ -1,0 +1,329 @@
+{% extends "main/base.html" %}
+
+{% block title %}Editar perfil{% endblock %}
+
+
+{% block content %}
+{% load static %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #6a4fb8; /* Background color para todo el cuerpo */
+      color: white; /* Color de texto */
+      font-family: 'Work Sans', sans-serif; /* Fuente */
+      font-weight: 500; /* Peso de la fuente */
+      font-size: 25px; /* Tamaño de la fuente */
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh; /* Set minimum height for full viewport */
+    }
+
+    .profile-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh; /* Fills entire viewport height */
+    }
+
+    .usuario-y-nombre {
+      display: flex;
+      flex-direction: column; /* Ajustar para mostrar elementos en una columna */
+      justify-content: center; /* Centrar verticalmente */
+      align-items: center; /* Centrar horizontalmente */
+      color: #6a4fb8;
+      text-align: center; /* Alinear texto al centro */
+    }
+
+    .form-group{
+        font-size:22px;
+    }
+
+    .form-check-label{
+        font-size:22px;
+    }
+
+    .profile-bottom {
+      display: flex;
+      background-color: #6a4fb8; /* Fondo semi-transparente para el formulario */
+      color: white; /* Text color for bottom row */
+      justify-content: center; /* Centrar verticalmente */
+      align-items: center; /* Centrar horizontalmente */
+      text-align: center;
+      flex: 1; /* Que ocupe todo el espacio disponible */
+    }
+
+    .container {
+      max-width: 700px; /* Set a maximum width for content */
+      justify-content: center;
+      margin: auto; /* Center horizontally */
+    }
+
+    .bi-arrow-left-short {
+      font-size: 1.5em;
+      position: fixed; /* Fix arrow position */
+      top: 3%; /* Adjust top margin */
+      left: 3%; /* Adjust left margin */
+    }
+
+    .btn-group-toggle .btn {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 10px;
+      border-color:white;
+      color:white;
+    }
+
+    .btn-group-toggle .btn.active {
+      background-color: white !important; 
+      color: #786dce !important; 
+      border-color: #786dce !important; 
+    }
+  </style>
+</head>
+
+<body>
+  <a href="{% url 'my_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+
+  <div class="profile-container">
+
+    <div class="profile-bottom d-flex align-items-center justify-content-center"> <!-- Centrar vertical y horizontalmente -->
+      
+      <form action="{% url 'edit_profile' %}" method="post" enctype="multipart/form-data" class="row" style="width:70%;">
+        {% csrf_token %}
+
+
+
+        <h1 style="padding:5%;">EDITAR PERFIL</h1>
+
+        {% if complete_profile_alerts == 1 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>90%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 2 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>80%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 3 %}
+          <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+            <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            Tu perfil está al <strong>70%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+            
+          </div>
+          
+        {% elif complete_profile_alerts == 4 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>60%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 5 %}
+        <div id="alertMessage" class="alert alert-warning" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          Tu perfil está al <strong>50%.</strong> <br>Recuerda que los campos de: fecha de nacimiento, aficiones, ciudad, descripción y foto de perfil deben estar rellenos para poder completar tu perfil.
+          
+        </div>
+        {% elif complete_profile_alerts == 0 %}
+        <div id="alertMessage" class="alert alert-success" style="font-size: 20px;">
+          <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <i class="bi bi-trophy-fill"></i>
+          Tu perfil está actualmente al <strong>100%.</strong> 
+          
+        </div>
+      {% endif %}
+
+        {% if error_messages %}
+        <div class="alert alert-danger" style="font-size:18px;" role="alert">
+          {% for message in error_messages %}
+              {{ message }}<br>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+        <div class="col-md-5">
+          <div class="form-group">
+            <label for="text">Nombre de usuario: *</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Correo electrónico: *</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+          </div>
+
+          <div class="form-group">
+            <label for="name">Nombre: *</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ user.first_name }}">
+          </div>
+
+          <div class="form-group">
+            <label for="surname">Apellido: *</label>
+            <input type="text" class="form-control" id="surname" name="surname" value="{{ user.last_name }}">
+          </div>
+
+          <div class="form-group">
+            <label for="birthday">Fecha de nacimiento:</label>
+            <input type="date" class="form-control" id="birthday" name="birthday" value="{{ user.birthday|date:"Y-m-d" }}">
+     
+          </div>
+
+          <div class="form-group">
+            <label for="aficiones">Aficiones (Máximo 7):</label>
+            <div class="btn-group-toggle" data-toggle="buttons">
+                {% for hobby in available_hobbies %}
+                    <label class="btn btn-outline-primary {% if hobby in user.aficiones.all %} active {% endif %}">
+                        <input type="checkbox" name="hobbies" value="{{ hobby.id }}" autocomplete="off"
+                            {% if hobby in user.aficiones.all %} checked {% endif %}> {{ hobby.name }}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+        </div>
+        <div class="col-md-2">
+        </div>
+
+        <div class="col-md-5">
+          <div class="form-group">
+            <label for="city">
+              Ciudad: <br>
+              <p style="font-size:16px;">Los anuncios que publiques irán al mercado de la ciudad seleccionada.
+              En caso de no seleccionar ninguna ciudad, no podrás publicar anuncios.</p>
+            </label>
+            <input type="text" class="form-control rounded-start" list="ciudades" value="{{ user.city }}" name="city" id="city" placeholder="Buscar ciudad..." style="border-color: #6a4fb8; background-color: #fff; box-shadow: 0px 0px 5px #6a4fb8;">
+                <datalist id="ciudades" style="max-height: 100px; overflow-y: auto;">
+                  <option value="Bruselas">Bélgica</option>
+                  <option value="Sofia">Bulgaria</option>
+                  <option value="Praga">Chequia</option>
+                  <option value="Copenhague">Dinamarca</option>
+                  <option value="Berlin">Alemania</option>
+                  <option value="Munich">Alemania</option>
+                  <option value="Tallinn">Estonia</option>
+                  <option value="Dublin">Irlanda</option>
+                  <option value="Cork">Irlanda</option>
+                  <option value="Atenas">Grecia</option>
+                  <option value="Madrid">España</option>
+                  <option value="Sevilla">España</option>
+                  <option value="Barcelona">España</option>
+                  <option value="Paris">Francia</option>
+                  <option value="Lens">Francia</option>
+                  <option value="Marsella">Francia</option>
+                  <option value="Zagreb">Croacia</option>
+                  <option value="Split">Croacia</option>
+                  <option value="Roma">Italia</option>
+                  <option value="Salerno">Italia</option>
+                  <option value="Florencia">Italia</option>
+                  <option value="Bari">Italia</option>
+                  <option value="Luxemburgo">Luxemburgo</option>
+                  <option value="Budapest">Hungría</option>
+                  <option value="La Valeta">Malta</option>
+                  <option value="Amsterdam">Países Bajos</option>
+                  <option value="Roterdam">Países Bajos</option>
+                  <option value="Viena">Austria</option>
+                  <option value="Varsovia">Polonia</option>
+                  <option value="Lisboa">Portugal</option>
+                  <option value="Oporto">Portugal</option>
+                  <option value="Buenos Aires">Argentina</option>
+                  <option value="Canberra">Australia</option>
+                  <option value="Brasilia">Brasil</option>
+                  <option value="Ottawa">Canadá</option>
+                  <option value="Santiago">Chile</option>
+                  <option value="Pekín">China</option>
+                  <option value="Washington D.C.">Estados Unidos</option>
+                  <option value="Nueva Delhi">India</option>
+                  <option value="Tokio">Japón</option>
+                  <option value="Montevideo">Uruguay</option>
+                </datalist>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Descripción:</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ user.description }}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="profile_photo">Foto de perfil:</label>
+            <br>
+            {% if user.profile_picture %}
+            <button type="submit" name="eliminar_foto_perfil" class="btn btn-danger" style="margin-bottom:3%;">Eliminar foto de perfil actual</button>
+            <input type="file" class="form-control" id="profile_photo" name="profile_photo">
+
+            {% else %}
+              <input type="file" class="form-control" id="profile_photo" name="profile_photo">
+            {% endif%}
+          </div>
+
+          <div class="form-check form-switch" style="margin-left:-17%;">
+            <label for="user_type">Tipo de usuario:</label>
+
+            <div class="row">
+              <div class="col">
+                <label class="form-check-label" for="erasmus" data-toggle="tooltip" title="Resides en tu ciudad">Local</label>
+              </div>
+              <div class="col">
+                {% if user.erasmus %}
+                <input class="form-check-input" type="checkbox" role="switch" for="erasmus" name="erasmus" value="True" style="background-color:#786dce !important; border-color:white; width:80%;" checked>
+                {% else %}
+                  <input class="form-check-input" type="checkbox" role="switch" for="erasmus" name="erasmus" value="True" style="background-color:#786dce !important; border-color:white; width:80%;">
+                {% endif %}
+              </div>
+              <div class="col">
+                <label class="form-check-label" for="flexSwitchCheckDefault" data-toggle="tooltip" title="Cursando el programa Erasmus+ en una ciudad distinta a la tuya de residencia">Erasmus</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="background-color:#786dce; color:white; border-color:white; margin-top:15%; margin-bottom:4%; font-size:22px;">Guardar cambios</button>
+
+
+        </div>
+
+       
+
+      </form>
+    </div>
+  </div>
+  <script>
+    $(document).ready(function() {
+      // Manejo de botones toggle para checkboxes
+      $('.btn-group-toggle input[type="checkbox"]').change(function() {
+        if ($(this).is(':checked')) {
+          $(this).parent().addClass('active');
+        } else {
+          $(this).parent().removeClass('active');
+        }
+      });
+    });
+  </script>
+  
+</body>
+
+{% endblock %}

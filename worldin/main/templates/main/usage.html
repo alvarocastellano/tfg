@@ -1,0 +1,206 @@
+{% extends "main/base.html" %}
+
+{% block title %}Condiciones de Uso y Términos del Servicio{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Fredoka One', cursive;
+            font-size: 140%;
+            overflow-x: hidden;
+            margin-bottom: 10%;
+        }
+
+        section {
+            height: auto; /* Cambiado de 70vh a auto para adaptarse al contenido */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center; /* Centra el texto */
+            margin-bottom: 20px; /* Agrega un margen inferior entre secciones */
+        }
+
+        .section-content h2 {
+            color: #786dce;
+            font-size: 3em;
+        }
+
+        .section-content h3 {
+            color: #786dce;
+        }
+
+        /* Estilo para las listas */
+        ul {
+            list-style-type: disc; /* Establece el tipo de viñetas */
+            padding-left: 20px; /* Agrega un poco de espacio a la izquierda */
+            text-align: left; /* Alinea el texto de la lista a la izquierda */
+        }
+
+        .button-policy {
+            background-color: rgba(106, 79, 184, 0.8);
+            border-color:white;
+        }
+
+        /* Navbar */
+        nav {
+            background-color: rgba(106, 79, 184, 0.8);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item mb-3">
+                    <a class="nav-link btn btn-primary" href="{% url 'home' %}" style="background-color:#6a4fb8; color:white; border-color:white; margin-right:3%;">Inicio</a>
+                </li>
+                <li class="nav-item mb-3">
+                    <a class="nav-link btn btn-primary" href="{% url 'contact_us' %}" style="background-color:#6a4fb8; color:white; border-color:white; margin-right:3%;">Contacta con nosotros</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn btn-primary" href="{% url 'login' %}" style="background-color:#6a4fb8; color:white; border-color:white;">Iniciar sesión</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Sección 1: TITULO -->
+    <section id="term">
+        <div class="section-content">
+            <h2>Condiciones de Uso y Términos del Servicio</h2>
+            v1.0.0 - 10/10/2024
+        </div>
+    </section>
+
+    <!-- Sección 2: INTRODUCCION -->
+    <section id="term" style="margin-top:10%;">
+        <div class="section-content">
+            <h3>Introducción</h3>
+            <p>
+                Estas condiciones de uso establecen los términos bajo los cuales los usuarios pueden utilizar nuestra plataforma.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 3: ACEPTACION DE LOS TERMINOS -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Aceptación de los Términos</h3>
+            <p>
+                Al utilizar nuestra plataforma, aceptas estos términos y condiciones en su totalidad.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 4: CAMBIOS EN LOS TERMINOS -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Cambios en los Términos</h3>
+            <p>
+                Nos reservamos el derecho de modificar estos términos en cualquier momento. Te notificaremos sobre cambios significativos.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 5: USO DEL SERVICIO -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Uso del Servicio</h3>
+            <p>
+                Los usuarios deben utilizar la plataforma de manera responsable y respetuosa.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 6: REGISTRO Y SEGURIDAD -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Registro y Seguridad</h3>
+            <p>
+                Es tu responsabilidad mantener la seguridad de tu cuenta y notificar cualquier uso no autorizado.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 7: CONTENIDO DEL USUARIO -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Contenido del Usuario</h3>
+            <p>
+                Los usuarios son responsables del contenido que publican y otorgan a la plataforma los derechos necesarios para mostrarlo.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 8: PROPIEDAD INTELECTUAL -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Propiedad Intelectual</h3>
+            <p>
+                Todos los derechos de propiedad intelectual sobre la plataforma y su contenido pertenecen a nosotros.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 9: LIMITACION DE RESPONSABILIDAD -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Limitación de Responsabilidad</h3>
+            <p>
+                No somos responsables de daños directos, indirectos, incidentales o consecuentes derivados de tu uso de la plataforma.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 10: LEY APLICABLE -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Ley Aplicable</h3>
+            <p>
+                Estos términos se regirán por las leyes del país en el que operamos.
+            </p>
+        </div>
+    </section>
+
+    <!-- Sección 11: CONTACTO -->
+    <section id="term">
+        <div class="section-content">
+            <h3>Contacto</h3>
+            <p>
+                Para preguntas o aclaraciones sobre estos términos, contáctanos en: acastealonso@gmail.com <br>
+                Para más información, visitar la <a href="{% url 'contact_us' %}">página de contacto</a>.
+            </p>
+        </div>
+    </section>
+
+    <section id="term">
+        <div class="section-content">
+            <a href="{% url 'policy' %}" class="btn btn-primary button-policy">POLÍTICA DE PRIVACIDAD</a>
+        </div>
+    </section>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+{% endblock %}

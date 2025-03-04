@@ -1,0 +1,354 @@
+{% extends "main/sidebar.html" %}
+
+{% block title %}Perfil de @{{ profile_user.username }}{% endblock %}
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            color: #6a4fb8;
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%; /* Ocupar el máximo ancho disponible */
+            padding: 0; /* Sin padding para que ocupe todo el ancho */
+        }
+
+        .profile-top {
+            background-color: #6a4fb8;
+            color: white;
+            padding: 20px;
+        }
+
+        .profile-picture {
+            border-radius: 50%;
+            border: 4px solid #786dce;
+            width: 100px;
+            height: 100px;
+        }
+
+        .imagen-sin-datos {
+            width: 150px;
+            height: auto;
+        }
+
+        @media (min-width: 768px) {
+            .profile-picture {
+                width: 150px;
+                height: 150px; /* Tamaño para pantallas más grandes */
+            }
+
+            .imagen-sin-datos {
+                width: 200px;
+                height: auto;
+            }
+        }
+
+        .profile-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .profile-section p {
+            align-items: center;
+            text-align: center;
+        }
+
+        hr {
+            border: 1px solid #6a4fb8;
+            margin-left: 5%;
+            margin-right: 5%;
+        }
+
+        .bi-arrow-left-short {
+            font-size: 2em;
+        }
+
+        /* Estilos para hacer la vista más responsiva */
+        @media (max-width: 767px) {
+            .profile-top {
+                flex-direction: column;
+                text-align: center;
+            }
+            .usuario-y-nombre {
+                margin-bottom: 15px;
+            }
+        }
+
+        .btn-add-product {
+            color: white; /* Color del texto */
+            background-color: #6a4fb8; /* Fondo blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            padding: 10px 20px; /* Espaciado interno */
+            text-decoration: none; /* Sin subrayado */
+            display: inline-block; /* Que el enlace se comporte como un bloque en línea */
+            text-align: center; /* Centrar el texto */
+            font-weight: bold; /* Hacer el texto más destacado */
+        }
+
+        .btn-add-product:hover {
+            background-color: white; /* Fondo color cuando el enlace está sobrevolado */
+            color: #6a4fb8; /* Cambiar color del texto al blanco */
+            border: 2px solid #6a4fb8; /* Contorno con color #6a4fb8 */
+            border-radius: 25px; /* Bordes redondeados */
+            text-decoration: none;
+        }
+
+        /* Estilo común para los botones no seleccionados */
+        .btn-custom {
+            background-color: white;
+            color: #6a4fb8;
+            border: 2px solid #6a4fb8;
+        }
+
+        /* Estilo para los botones seleccionados */
+        .btn-custom-selected {
+            background-color: #6a4fb8;
+            color: white;
+            border: 2px solid #6a4fb8;
+        }
+
+        .card-text {
+            display: -webkit-box; /* Caja flexible para truncado */
+            -webkit-line-clamp: 3; /* Número máximo de líneas */
+            -webkit-box-orient: vertical; /* Orientación de la caja */
+            overflow: hidden; /* Oculta el texto sobrante */
+            text-overflow: ellipsis; /* Agrega los "..." */
+            white-space: normal; /* Permite varias líneas */
+        }
+
+        .badge-highlighted {
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container profile-container">
+        <div class="profile-top d-flex justify-content-between align-items-center">
+            <div>
+                <button onclick="goBack()" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white; font-size: 2em;">
+                    <h3 style="font-size:12px;">Volver</h3>
+                </button>
+            </div>
+            <div>
+                {% if profile_user.profile_picture and profile_user.profile_picture.url %}
+                    <img src="{{ profile_user.profile_picture.url }}" class="profile-picture" alt="Perfil de {{ profile_user.username }}">
+                {% else %}
+                    <i class="bi bi-person-circle" style="font-size: 120px; color: #a6a0d6;"></i>
+                {% endif %}
+            </div>
+            <div class="usuario-y-nombre text-center">
+                <h2>@{{ profile_user }}</h2>
+                <p>{{ profile_user.first_name }} {{ profile_user.last_name }}</p>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'market:market_profile_other_user' profile_user.username %}" class="text-white text-decoration-none" style="background-color: transparent; border-color: white;">
+                    <h5>Anuncios</h5>
+                    <p>{{ announce_count }}</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'followers_and_following' username=profile_user.username %}" class="text-white text-decoration-none" 
+                style="background-color: transparent; border-color: white;" id="followers-count">
+                    <h5>Seguidores</h5>
+                    <p>{{ user_followers }}</p>
+                </a>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'followers_and_following' username=profile_user.username %}" class="text-white text-decoration-none" 
+                style="background-color: transparent; border-color: white;" id="following-count">
+                    <h5>Seguidos</h5>
+                    <p>{{ user_following }}</p>
+                </a>
+            </div>
+            {% if not is_own_profile %}
+                <div class="text-center" style="margin-top: 10px;">
+                    <form action="{% url 'followers_count' username=profile_user.username %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="user" value="{{ current_user.username }}" readonly/>
+                        <input type="hidden" name="follower" value="{{ profile_user.username }}" readonly/>
+                        <input type="hidden" name="value" value="{{ follow_button_value }}" readonly/>
+                        <button type="submit" class="btn" 
+                        style="margin-top:-5%; width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                            {% if profile_user.account_visibility == 'private' and not is_following %}
+                                {% if pending_follow_request %}
+                                    Solicitado
+                                {% else %}
+                                    Solicitar seguimiento
+                                {% endif %}
+                            {% else %}
+                                {% if follow_button_value == 'follow' %}
+                                    Seguir
+                                {% else %}
+                                    Dejar de seguir
+                                {% endif %}
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+
+
+            <a href="{% url 'market:market_profile_other_user' profile_user.username %}" class="btn btn-primary" style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px;">
+                <i class="bi bi-shop"></i>
+                PERFIL DE MERCADO
+            </a>
+
+
+        </div>
+        
+        {% if is_following or profile_user.account_visibility == 'public' %}
+            <div class="profile-section">
+                <h3>SOBRE MÍ</h3>
+                <p>
+                {% if not profile_user.description and not profile_user.birthday and not profile_user.city and not profile_user.erasmus %}
+                    <img src="{% static 'images/sobre_mi.png' %}" class="imagen-sin-datos" alt="Imagen sobre mi"><br>
+                    <b><strong>@{{ profile_user.username }}</strong> no tiene datos guardados . . .</b>
+                {% endif %}
+                    
+                <p>{% if profile_user.description %}{{ profile_user.description }}{% endif %}</p>
+                <p>{% if profile_user.age and profile_user.show_age %}Edad: {{ profile_user.age }}{% endif %}</p>
+                <p>{% if profile_user.city %}Ciudad de residencia: {{ profile_user.city }}{% endif %}</p>
+                <p>{% if profile_user.erasmus %}Estoy de Erasmus{% endif %}</p>
+                <p>{% for hobby in profile_user.aficiones.all %}
+                    <button class=btn btn-primary style=" width:auto; background-color:#786dce; color:white; border-color:white; font-size:20px; outline:none; box-shadow:none;">
+                        {{hobby.name}}
+                    </button>
+                {% endfor %}</p>
+            </div>
+
+            <hr>
+            <div class="profile-section">
+            {% if announce_count < 1 %}
+                <h2>NO HAY ANUNCIOS ACTIVOS</h2>
+                    
+            {% else %}
+                <h1>ANUNCIOS ACTIVOS</h1>
+            {% endif %}
+            {% if announce_count != 0 %}
+                <div class="btn-group" role="group" aria-label="Botones de filtro">
+                    <a href="?filter=articulos" class="btn {% if filter_option == 'articulos' %}btn-custom-selected{% else %}btn-custom{% endif %}">ARTÍCULOS</a>
+                    <a href="?filter=alquileres" class="btn {% if filter_option == 'alquileres' %}btn-custom-selected{% else %}btn-custom{% endif %}">ALQUILERES</a>
+                </div>
+            {% endif %}
+            
+            {% if filter_option == 'articulos' %}
+                    {% if user_products|length == 0 %}
+                        <p class="mt-5"><strong>@{{ profile_user.username }}</strong> no tiene a la venta ningun artículo actualmente.<br>
+                    {% else %}
+                        {% for product in user_products %}
+                            {% if product.status == 'on_sale' or product.status == 'booked' %}
+                                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
+                                    <div class="col">
+                                        <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                            {% if product.highlighted %}
+                                                <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                    PRODUCTO DESTACADO 
+                                                </div>
+                                            {% endif %}
+                                            <img class="card-img-top" src="{{ product.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                {% if product.status == 'booked' %}
+                                                    <span class="badge bg-danger text-white mb-2">RESERVADO</span>
+                                                {% endif %}
+                                                <h5 class="card-title text-truncate">{{ product.title }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ product.price }}{{ product.money_associated }}</strong></h6>
+                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ product.city_associated }}</h6>
+                                                <p class="card-text text-truncate">{{ product.description }}</p>
+                                            </div>
+                                            <div class="card-footer justify-content-center">
+                                                <a href="{% url 'market:product_details' product_id=product.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                {% if product.status != 'sold' %}
+                                    <p class="mt-5"><strong>@{{ profile_user.username }}</strong> no tiene a la venta ningun artículo actualmente.<br> </p>
+                                {% endif %}
+                            {% endif %}                                
+                        {% endfor %}
+                       
+                    {% endif %}
+                    {% elif filter_option == 'alquileres' %}
+                    {% if user_rentings|length == 0 %}
+                        <p class="mt-5">
+                            <strong>@{{ profile_user.username }}</strong> no tiene ningún anuncio de alquiler activo actualmente.<br>
+                        </p>
+                    {% else %}
+                        {% for rental in user_rentings %}
+                            {% if rental.status == 'on_sale' or rental.status == 'booked' %}
+                                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mt-5">
+                                    <div class="col">
+                                        <div class="card d-flex flex-column" style="width: 18rem; height: 100%; border-color:#6a4fb8; border-width:2px;">
+                                            {% if rental.highlighted %}
+                                                <div class="badge-highlighted position-absolute top-0 end-0 bg-warning text-dark p-2">
+                                                    ALQUILER DESTACADO 
+                                                </div>
+                                            {% endif %}
+                                            <img class="card-img-top" src="{{ rental.images.first.image.url }}" alt="Imagen de producto" style="object-fit: cover; height: 200px;">
+                                            <div class="card-body d-flex flex-column" style="flex-grow: 1;">
+                                                {% if rental.status == 'booked' %}
+                                                    <span class="badge bg-danger text-white mb-2">RESERVADO</span>
+                                                {% endif %}
+                                                <h5 class="card-title">{{ rental.title }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted"><strong>{{ rental.price }}{{ rental.money_associated }}</strong></h6>
+                                                <h6 class="card-subtitle mb-2 text-muted"><i class="bi bi-geo-alt-fill"></i> Mercado de {{ rental.city_associated }}</h6>
+                                                <p class="card-text text-truncate">{{ rental.description }}</p>
+                                            </div>
+                                            <div class="card-footer justify-content-center">
+                                                <a href="{% url 'market:renting_details' renting_id=rental.id %}" class="btn-add-product me-2">Ver detalles</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                {% if rental.status != 'sold' %}
+                                    <p class="mt-5">
+                                        <strong>@{{ profile_user.username }}</strong> no tiene ningún anuncio de alquiler activo actualmente.<br>
+                                    </p>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                    {% endif %}
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="profile-section">
+            <h3>PERFIL PRIVADO</h3>
+            <p>Para ver información de este usuario, solicita seguirle.</p>
+            <img src="{% static 'images/lock.png' %}" class="imagen-sin-datos" style="margin-bottom:15px;" alt="Perfil privado"><br>
+
+        </div>
+            
+    {% endif %}
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+    
+
+</body>
+
+{% endblock %}

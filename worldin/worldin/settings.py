@@ -13,11 +13,34 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
+STRIPE_SECRET_KEY = 'sk_test_51QOx27ENztMUMranSbK8UhBwddamJyLTSB78Yn9iP0lAm4e5hBuS8jKMbCNCVW6CaGWOI73I8GagLLEypARTtgVU004JVP0t5O'
+STRIPE_TEST_PUBLISHABLE_KEY = 'pk_test_51QOx27ENztMUMranmtmQc3zDNsin6haDWD9aYdR2RvgLSBoJLeeGLUxq9BQzd5ix4x5FFkp8cFyWIal8bubHtiOU00cbesioIN'
+STRIPE_ENDPOINT_SECRET = 'whsec_5cd0eb8a8a437d434c9f628131213a54d896ccf23fa10423b5d16f7c2e2027b5'
+STRIPE_API_KEY = STRIPE_SECRET_KEY
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+BASE_DIR2 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/world/'
+LOGOUT_REDIRECT_URL = '/home/'
+
+
+# Configuración SMTP para enviar emails reales
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'noreply.confirmation.worldin@gmail.com'
+EMAIL_HOST_PASSWORD = 'aebg yhfr iktu tuno'
+
+EMAIL_TEMPLATE_NAME = "registration/password_reset_email.html"
+PASSWORD_RESET_SUBJECT_TEMPLATE_NAME = "registration/password_reset_subject.txt"
+
+# Dirección de correo predeterminada
+DEFAULT_FROM_EMAIL = 'noreply.confirmation.worldin@gmail.com'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -41,7 +64,50 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'main.market.apps.MarketConfig',
+    'main.community.apps.CommunityConfig',
+    'main.events.apps.EventsConfig',
+    'main.turism.apps.TurismConfig',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'widget_tweaks',
 ]
+
+TEST_DISCOVERY_PATTERN = 'test*.py'
+
+#Si falla probar 2,3,4...
+SITE_ID = 1
+SITE_NAME = 'WORLDIN'
+DOMAIN = "localhost:8000"
+
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',  # Para usar allauth
+)
+
+
+# Configuración del email
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # O puedes usar 'none' si no quieres verificación de email
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+
+SOCIALACCOUNT_ADAPTER = 'main.views.MySocialAccountAdapter'
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': '591159284903-ne46njmqjain4c2hf235s28tehcbic88.apps.googleusercontent.com',
+            'secret': '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',
+            'key': ''
+        },
+        'VERIFIED_EMAIL': True,
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -52,6 +118,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'worldin.urls'
@@ -64,12 +131,10 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates', 'registration'),
             os.path.join(BASE_DIR, 'main', 'templates', 'profile'),
             os.path.join(BASE_DIR, 'main', 'templates', 'world'),
+            os.path.join(BASE_DIR, 'main', 'templates', 'market'),
             os.path.join(BASE_DIR, 'main', 'templates', 'community'),
             os.path.join(BASE_DIR, 'main', 'templates', 'events'),
-            os.path.join(BASE_DIR, 'main', 'templates', 'market'),
             os.path.join(BASE_DIR, 'main', 'templates', 'turism'),
-
-
 
             ],
         'APP_DIRS': True,
@@ -100,7 +165,7 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
+AUTH_USER_MODEL = 'main.CustomUser'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -145,13 +210,15 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'main', 'static'),
 ]
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR2, 'media')
 
 
 

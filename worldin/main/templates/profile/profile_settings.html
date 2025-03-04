@@ -1,0 +1,221 @@
+{% extends "main/base.html" %}
+
+{% block title %}Configuración de la cuenta{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Incluyendo Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Incluyendo jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Incluyendo Bootstrap Bundle JS (que incluye Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+
+
+  <link href="https://fonts.googleapis.com/css2?family=NTR&family=Palanquin:wght@100;200;300;400;500;600;700&family=Work+Sans:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #6a4fb8; /* Background color para todo el cuerpo */
+      color: white; /* Color de texto */
+      font-family: 'Work Sans', sans-serif; /* Fuente */
+      font-weight: 500; /* Peso de la fuente */
+      font-size: 25px; /* Tamaño de la fuente */
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh; /* Set minimum height for full viewport */
+    }
+
+    .profile-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh; /* Fills entire viewport height */
+    }
+
+    .bi-arrow-left-short {
+        font-size: 1.5em;
+        position: fixed; /* Fix arrow position */
+        top: 3%; /* Adjust top margin */
+        left: 3%; /* Adjust left margin */
+    }
+
+    .form-group{
+        padding:20px;
+    }
+
+    .form-group p{
+        font-size: 20px;
+    }
+
+    .form-group h3{
+        font-size: 24px;
+        font-weight:bold;
+    }
+  </style>
+</head>
+
+<body>
+  <a href="{% url 'my_profile' %}" class="btn btn-primary bi-arrow-left-short d-none d-md-block" style="background-color: transparent; border-color: white;"></a>
+
+  <div class="profile-container">
+
+    <div class="profile-bottom d-flex align-items-center justify-content-center mt-5"> <!-- Centrar vertical y horizontalmente -->
+        <h1><strong>CONFIGURACIÓN DE LA CUENTA</strong></h1>
+    </div>
+    <div class="d-flex align-items-center justify-content-center"> <!-- Centrar vertical y horizontalmente -->
+      <p><i class="bi bi-exclamation-circle-fill"></i> Asegúrate de guardar los cambios antes de salir.</p>
+    </div>
+    
+
+    <div class="container mt-4">
+      {% if error_messages %}
+            {% for message in error_messages %}
+                <div id="alertMessage" class="alert alert-danger" style="font-size: 18px;">
+                    {{ message }}
+                    <button type="button" class="close" onclick="this.parentElement.style.display='none';" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+      <form method="POST" action="{% url 'profile_settings' %}">
+        {% csrf_token %}
+        
+        <!-- Opción para mostrar la edad -->
+        <div class="form-group">
+            <h3>MOSTRAR EDAD EN EL PERFIL</h3>
+            <p>
+                Si esta casilla está marcada, significa que, en caso de tener asignada una fecha de nacimiento a tu perfil, 
+                se mostrará en la sección "SOBRE Mí" de tu perfil la cifra con la edad que corresponde a la fecha de nacimiento.<br>
+            </p>
+          <label>
+            ¿Deseas mostrar tu edad en el perfil? <input type="checkbox" name="show_age" {% if user.show_age %}checked{% endif %}>
+          </label>
+        </div>
+        <hr>
+
+        <div class="form-group">
+          <h3>VER MIS PROPIOS ANUNCIOS EN EL MERCADO</h3>
+          <p>
+              Si esta casilla está marcada, podrás ver los anuncios que tú mismo has publicado en el mercado.<br>
+              Para editarlos o eliminarlos, tendrás que acudir a tu perfil.
+          </p>
+          <label>
+              ¿Deseas ver tus propios anuncios en el mercado? 
+              <input type="checkbox" name="see_own_products" {% if user.see_own_products %}checked{% endif %}>
+          </label>
+        </div>
+        <hr>
+        
+        <!-- Opción para hacer cuenta pública o privada -->
+        <div class="form-group">
+          <label for="account_visibility"><h3>VISIBILIDAD DE LA CUENTA</h3></label>
+          <select name="account_visibility" id="account_visibility" class="form-control">
+            <option value="public" {% if user.account_visibility == 'public' %}selected{% endif %}>Pública</option>
+            <option value="private" {% if user.account_visibility == 'private' %}selected{% endif %}>Privada</option>
+          </select>
+          <p>
+            Con una cuenta pública, cualquier usuario que te busque podrá ver la información de tu cuenta. <br>
+            Con una cuenta privada, solo los usuarios que te sigan podrán ver la información de tu cuenta.
+          </p>
+        </div>
+        <hr>
+
+        <!-- Botón para borrar la cuenta -->
+        <div class="form-group">
+          <h3>SOLICITAR PERFIL DE ADMINISTRADOR</h3>
+          {% if request.user.is_city_admin %}
+            <p>
+              Ya cuentas con perfil de administrador de ciudad. La ciudad de la que eres administrador es {{ request.user.city }}.<br>
+              Si deseas dejar de ser administrador de ciudad, envía un email a la dirección <b>"noreply.confirmation.worldin@gmail.com"</b> con el asunto <b>"ELIMINACIÓN PERFIL ADMIN - CIUDAD"</b>
+              indicando de qué ciudad quieres dejar de ser administrador. <br>
+              Los administradores de Worldin analizarán la solicitud y la tramitarán lo más rápido posible.
+            </p>
+
+          {% else %}
+            <p>
+              Solicita un perfil de administrador de tu ciudad.<br>
+              Con un perfil de administrador podrás publicar y administrar eventos y ser RRPP de tu ciudad.<br>
+              Envía un email a la dirección <b>"noreply.confirmation.worldin@gmail.com"</b> con el asunto <b>"SOLICITUD PERFIL ADMIN - CIUDAD"</b> indicando de qué ciudad quieres ser administrador. <br>
+              Los administradores de Worldin analizarán la solicitud y la tramitarán lo más rápido posible.
+            </p>
+          {% endif %}
+      </div>
+      <hr>
+
+        <!-- Botón para borrar la cuenta -->
+        <div class="form-group">
+            <h3>BORRAR CUENTA</h3>
+            <p>
+                Elimina tu usuario y todos sus datos asociados.<br>
+                Esta acción es irreversible. No se podrá volver a acceder a los datos de la cuenta eliminada.
+            </p>
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+            Borrar cuenta
+          </button>
+        </div>
+        <hr>
+
+        <!-- Botón para guardar cambios -->
+        <button type="submit" class="btn btn-primary" style="background-color:#786dce; color:white; border-color:white; margin-bottom:2%; font-size:20px;">Guardar cambios</button>
+
+      </form>
+    </div>
+
+    <!-- Modal de confirmación para borrar cuenta -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteAccountModalLabel" style="color:black;">Confirmar borrado de cuenta</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" style="color:black;">
+            ¿Estás seguro de que deseas borrar tu cuenta? Esta acción no se puede deshacer.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <form method="POST" action="{% url 'delete_account' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Borrar cuenta</button>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Mostrar el mensaje de advertencia si tiene solicitudes pendientes y elige cuenta pública
+    document.getElementById("account_visibility").addEventListener("change", function () {
+      const hasPendingRequests = {{ has_pending_requests|yesno:"true,false" }};
+      const visibilityOption = this.value;
+      if (hasPendingRequests && visibilityOption === "public") {
+        document.getElementById("alertMessage").style.display = "block";
+      } else {
+        document.getElementById("alertMessage").style.display = "none";
+      }
+    });
+  </script>
+
+</body>
+
+{% endblock %}
